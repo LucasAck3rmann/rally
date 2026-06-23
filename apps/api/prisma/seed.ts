@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Seed de exemplo do Rally. Rode com: pnpm prisma db seed
 import { PrismaClient } from "@prisma/client";
-import { hash } from "argon2";
+import { hash } from "@node-rs/argon2";
 
 const db = new PrismaClient();
 
