@@ -12,7 +12,13 @@ e versionamento [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Monorepo Turborepo + pnpm; `docker-compose` de desenvolvimento com LocalStack (S3/SES).
 - CI (GitHub Actions): lint, typecheck, test, build e build de imagens.
 - **Segurança/governança:** Dependabot, **CodeQL** e varredura de segredos (**gitleaks**) no CI; `GOVERNANCE.md`, `SUPPORT.md`, `CHANGELOG.md`.
-- Padronização de código: `.editorconfig`, `.nvmrc`, Prettier e `.dockerignore`.
+- Padronização de código: `.editorconfig`, `.nvmrc`, Prettier, `.dockerignore` e `.gitattributes` (LF).
+- `apps/api/prisma/migrations/README.md` — documenta a constraint anti-overbooking (RN-01).
+
+### Alterado
+- **Hardening de CI:** `permissions: contents: read` (privilégio mínimo do `GITHUB_TOKEN`).
+- **Dependabot:** agrupa PRs de GitHub Actions e de npm (minor/patch) e **trava o Node 22 LTS** no Docker (ignora bumps de major).
+- Integração do fix do Copilot (PR #1): `pnpm-lock.yaml` e `packageManager` pinado (`pnpm@9.15.9`).
 
 ---
 

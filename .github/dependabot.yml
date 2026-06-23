@@ -6,6 +6,9 @@ updates:
     schedule:
       interval: "weekly"
     open-pull-requests-limit: 10
+    groups:
+      npm-minor-patch:                  # agrupa minor/patch num PR só
+        update-types: ["minor", "patch"]
     commit-message:
       prefix: "chore"
       include: "scope"
@@ -16,6 +19,9 @@ updates:
     directory: "/"
     schedule:
       interval: "weekly"
+    groups:
+      github-actions:                   # todas as actions num PR só (menos ruído)
+        patterns: ["*"]
     commit-message:
       prefix: "ci"
     labels: ["ci", "dependencies"]
@@ -26,6 +32,10 @@ updates:
     schedule:
       interval: "weekly"
     labels: ["docker", "dependencies"]
+    ignore:
+      # mantém Node 22 LTS — ignora bumps de major do Node (ex.: 26)
+      - dependency-name: "node"
+        update-types: ["version-update:semver-major"]
 
   # Pacotes Dart/Flutter
   - package-ecosystem: "pub"
