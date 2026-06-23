@@ -1,0 +1,326 @@
+// Rally — schema de dados (PostgreSQL + Prisma)
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Multi-tenant por estabelecimentoId (ver docs/adr/0011-multi-tenant.md).
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ───────────── Enums ─────────────
+enum Role { CLIENTE ATENDENTE FINANCEIRO ADMIN MANTENEDOR }
+enum ModalidadeTipo { BEACH_TENNIS FUTEVOLEI VOLEI OUTRO }
+enum ReservaStatus { PENDENTE_PAGAMENTO CONFIRMADA CANCELADA CONCLUIDA NO_SHOW BLOQUEIO }
+enum ReservaOrigem { APP WEB BALCAO }
+enum PagamentoMetodo { PIX CARTAO }
+enum PagamentoStatus { PENDENTE PAGO EXPIRADO ESTORNADO FALHOU }
+enum PromocaoTipo { PERCENTUAL VALOR_FIXO }
+enum PlanoTipo { FREE PRO CLUBE }
+enum ReplayStatus { PROCESSANDO PRONTO ERRO }
+
+// ───────────── Núcleo / tenant ─────────────
+model Estabelecimento {
+  id                   String    @id @default(cuid())
+  nome                 String
+  slug                 String    @unique
+  cnpj                 String?
+  cidade               String?
+  uf                   String?
+  timezone             String    @default("America/Sao_Paulo")
+  plano                PlanoTipo @default(FREE)
+  ativo                Boolean   @default(true)
+  slotMinutos          Int       @default(60)
+  antecedenciaMinHoras Int       @default(1)
+  antecedenciaMaxDias  Int       @default(30)
+  cancelamentoHoras    Int       @default(12)
+  descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2)
+  pixExpiraMinutos     Int       @default(30)
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  quadras   Quadra[]
+  membros   Membership[]
+  horarios  HorarioFuncionamento[]
+  reservas  Reserva[]
+  materiais Material[]
+  promocoes Promocao[]
+  eventos   Evento[]
+  replays   Replay[]
+  auditLogs AuditLog[]
+}
+
+model HorarioFuncionamento {
+  id                String  @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  diaSemana         Int
+  abre              String
+  fecha             String
+
+  @@unique([estabelecimentoId, diaSemana])
+}
+
+model Usuario {
+  id            String    @id @default(cuid())
+  nome          String
+  email         String    @unique
+  senhaHash     String?
+  telefone      String?
+  avatarUrl     String?
+  consentLgpdEm DateTime?
+  anonimizadoEm DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  memberships   Membership[]
+  reservas      Reserva[]               @relation("ReservaCliente")
+  replays       Replay[]                @relation("ReplayCliente")
+  accounts      Account[]
+  refreshTokens RefreshToken[]
+  notifPref     NotificationPreference?
+  waitlist      WaitlistEntry[]
+  auditLogs     AuditLog[]              @relation("AuditAutor")
+}
+
+model Account {
+  id                String  @id @default(cuid())
+  usuario           Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId         String
+  provider          String
+  providerAccountId String
+
+  @@unique([provider, providerAccountId])
+  @@index([usuarioId])
+}
+
+model RefreshToken {
+  id         String    @id @default(cuid())
+  usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId  String
+  tokenHash  String    @unique
+  expiraEm   DateTime
+  revogadoEm DateTime?
+  criadoEm   DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
+model NotificationPreference {
+  id             String  @id @default(cuid())
+  usuario        Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId      String  @unique
+  canalWhatsapp  Boolean @default(true)
+  canalEmail     Boolean @default(true)
+  canalPush      Boolean @default(true)
+  marketingOptIn Boolean @default(false)
+}
+
+model Membership {
+  id                String   @id @default(cuid())
+  usuario           Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId         String
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  role              Role     @default(CLIENTE)
+  createdAt         DateTime @default(now())
+
+  @@unique([usuarioId, estabelecimentoId])
+  @@index([estabelecimentoId])
+}
+
+model Modalidade {
+  id      String         @id @default(cuid())
+  nome    String         @unique
+  tipo    ModalidadeTipo @default(OUTRO)
+  quadras Quadra[]       @relation("QuadraModalidade")
+}
+
+model Quadra {
+  id                String   @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  nome              String
+  descricao         String?
+  precoHora         Decimal  @db.Decimal(10, 2)
+  capacidade        Int?
+  fotos             String[]
+  ativo             Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  modalidades Modalidade[]    @relation("QuadraModalidade")
+  faixasPreco FaixaPreco[]
+  reservas    Reserva[]
+  replays     Replay[]
+  waitlist    WaitlistEntry[]
+
+  @@index([estabelecimentoId])
+}
+
+model FaixaPreco {
+  id         String  @id @default(cuid())
+  quadra     Quadra  @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  quadraId   String
+  diaSemana  Int?
+  horaInicio String
+  horaFim    String
+  precoHora  Decimal @db.Decimal(10, 2)
+
+  @@index([quadraId])
+}
+
+// ───────────── Reserva & pagamento ─────────────
+model Reserva {
+  id                 String        @id @default(cuid())
+  estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  estabelecimentoId  String
+  quadra             Quadra        @relation(fields: [quadraId], references: [id])
+  quadraId           String
+  cliente            Usuario?      @relation("ReservaCliente", fields: [clienteId], references: [id])
+  clienteId          String?
+  inicio             DateTime
+  fim                DateTime
+  status             ReservaStatus @default(PENDENTE_PAGAMENTO)
+  origem             ReservaOrigem @default(APP)
+  preco              Decimal       @db.Decimal(10, 2)
+  promocao           Promocao?     @relation(fields: [promocaoId], references: [id])
+  promocaoId         String?
+  canceladaEm        DateTime?
+  motivoCancelamento String?
+  createdAt          DateTime      @default(now())
+  updatedAt          DateTime      @updatedAt
+
+  pagamento Pagamento?
+  replays   Replay[]
+
+  // 1ª linha contra overbooking; trava real = exclusion constraint (migração SQL).
+  @@unique([quadraId, inicio])
+  @@index([estabelecimentoId, inicio])
+  @@index([quadraId, inicio, fim])
+}
+
+model Pagamento {
+  id           String          @id @default(cuid())
+  reserva      Reserva         @relation(fields: [reservaId], references: [id], onDelete: Cascade)
+  reservaId    String          @unique
+  valor        Decimal         @db.Decimal(10, 2)
+  metodo       PagamentoMetodo @default(PIX)
+  status       PagamentoStatus @default(PENDENTE)
+  gatewayId    String?         @unique
+  pixCopiaCola String?
+  qrCodeUrl    String?
+  expiraEm     DateTime?
+  criadoEm     DateTime        @default(now())
+  pagoEm       DateTime?
+
+  @@index([status])
+}
+
+// ───────────── Apoio à gestão ─────────────
+model Material {
+  id                String   @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  nome              String
+  quantidade        Int      @default(0)
+  unidade           String?
+  estoqueMinimo     Int?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([estabelecimentoId])
+}
+
+model Promocao {
+  id                String       @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  codigo            String
+  tipo              PromocaoTipo @default(PERCENTUAL)
+  valor             Decimal      @db.Decimal(10, 2)
+  validadeInicio    DateTime
+  validadeFim       DateTime
+  usosMax           Int?
+  usosFeitos        Int          @default(0)
+  ativo             Boolean      @default(true)
+  createdAt         DateTime     @default(now())
+
+  reservas Reserva[]
+
+  @@unique([estabelecimentoId, codigo])
+  @@index([estabelecimentoId])
+}
+
+model Evento {
+  id                String   @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  nome              String
+  descricao         String?
+  inicio            DateTime
+  fim               DateTime
+  vagas             Int?
+  createdAt         DateTime @default(now())
+
+  @@index([estabelecimentoId])
+}
+
+model Replay {
+  id                String       @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  quadra            Quadra       @relation(fields: [quadraId], references: [id])
+  quadraId          String
+  reserva           Reserva?     @relation(fields: [reservaId], references: [id])
+  reservaId         String?
+  cliente           Usuario?     @relation("ReplayCliente", fields: [clienteId], references: [id])
+  clienteId         String?
+  s3Key             String
+  url               String?
+  duracaoSeg        Int?
+  status            ReplayStatus @default(PROCESSANDO)
+  expiraEm          DateTime?
+  criadoEm          DateTime     @default(now())
+
+  @@index([estabelecimentoId])
+  @@index([clienteId])
+}
+
+model WaitlistEntry {
+  id           String    @id @default(cuid())
+  quadra       Quadra    @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  quadraId     String
+  cliente      Usuario   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  clienteId    String
+  inicio       DateTime
+  fim          DateTime
+  notificadoEm DateTime?
+  criadoEm     DateTime  @default(now())
+
+  @@index([quadraId, inicio])
+}
+
+model AuditLog {
+  id                String   @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
+  estabelecimentoId String
+  autor             Usuario? @relation("AuditAutor", fields: [autorId], references: [id])
+  autorId           String?
+  acao              String
+  entidade          String
+  entidadeId        String?
+  dados             Json?
+  criadoEm          DateTime @default(now())
+
+  @@index([estabelecimentoId, criadoEm])
+}
+
+// ───────────── Futuro (clubes) — descomentar quando entrar ─────────────
+// model Jogador { id String @id @default(cuid()) }
+// model Time    { id String @id @default(cuid()) }
+// model Plano   { id String @id @default(cuid()) }
+// model Aula    { id String @id @default(cuid()) }

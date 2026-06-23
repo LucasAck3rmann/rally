@@ -1,0 +1,42 @@
+# Dependências
+node_modules/
+.pnpm-store/
+
+# Build / saída
+dist/
+.next/
+out/
+build/
+coverage/
+
+# Ambiente / segredos
+.env
+.env.*
+!.env.example
+
+# Prisma
+apps/api/prisma/*.db
+
+# Flutter / Dart
+apps/mobile/.dart_tool/
+apps/mobile/build/
+apps/mobile/.flutter-plugins*
+
+# Terraform
+infra/**/.terraform/
+*.tfstate
+*.tfstate.*
+
+# Turbo / cache
+.turbo/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS / IDE
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/*
+!.vscode/extensions.json

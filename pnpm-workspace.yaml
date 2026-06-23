@@ -1,0 +1,4 @@
+packages:
+  - "apps/*"
+  - "packages/*"
+# apps/mobile (Flutter) é gerenciado pelo pub do Dart, fora do workspace pnpm.
