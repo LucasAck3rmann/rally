@@ -12,15 +12,65 @@ datasource db {
 }
 
 // ───────────── Enums ─────────────
-enum Role { CLIENTE ATENDENTE FINANCEIRO ADMIN MANTENEDOR }
-enum ModalidadeTipo { BEACH_TENNIS FUTEVOLEI VOLEI OUTRO }
-enum ReservaStatus { PENDENTE_PAGAMENTO CONFIRMADA CANCELADA CONCLUIDA NO_SHOW BLOQUEIO }
-enum ReservaOrigem { APP WEB BALCAO }
-enum PagamentoMetodo { PIX CARTAO }
-enum PagamentoStatus { PENDENTE PAGO EXPIRADO ESTORNADO FALHOU }
-enum PromocaoTipo { PERCENTUAL VALOR_FIXO }
-enum PlanoTipo { FREE PRO CLUBE }
-enum ReplayStatus { PROCESSANDO PRONTO ERRO }
+enum Role {
+  CLIENTE
+  ATENDENTE
+  FINANCEIRO
+  ADMIN
+  MANTENEDOR
+}
+
+enum ModalidadeTipo {
+  BEACH_TENNIS
+  FUTEVOLEI
+  VOLEI
+  OUTRO
+}
+
+enum ReservaStatus {
+  PENDENTE_PAGAMENTO
+  CONFIRMADA
+  CANCELADA
+  CONCLUIDA
+  NO_SHOW
+  BLOQUEIO
+}
+
+enum ReservaOrigem {
+  APP
+  WEB
+  BALCAO
+}
+
+enum PagamentoMetodo {
+  PIX
+  CARTAO
+}
+
+enum PagamentoStatus {
+  PENDENTE
+  PAGO
+  EXPIRADO
+  ESTORNADO
+  FALHOU
+}
+
+enum PromocaoTipo {
+  PERCENTUAL
+  VALOR_FIXO
+}
+
+enum PlanoTipo {
+  FREE
+  PRO
+  CLUBE
+}
+
+enum ReplayStatus {
+  PROCESSANDO
+  PRONTO
+  ERRO
+}
 
 // ───────────── Núcleo / tenant ─────────────
 model Estabelecimento {
