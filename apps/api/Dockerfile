@@ -1,5 +1,5 @@
 # base
-FROM node:22-alpine AS base
+FROM node:26-alpine AS base
 RUN corepack enable
 WORKDIR /app
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
@@ -16,7 +16,7 @@ FROM base AS build
 COPY . .
 RUN pnpm --filter @rally/api build && pnpm prisma generate
 
-FROM node:22-alpine AS prod
+FROM node:26-alpine AS prod
 WORKDIR /app
 COPY --from=build /app/apps/api/dist ./dist
 COPY --from=build /app/node_modules ./node_modules
