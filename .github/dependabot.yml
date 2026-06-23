@@ -1,0 +1,35 @@
+version: 2
+updates:
+  # Dependências JS/TS do monorepo
+  - package-ecosystem: "npm"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    open-pull-requests-limit: 10
+    commit-message:
+      prefix: "chore"
+      include: "scope"
+    labels: ["dependencies"]
+
+  # GitHub Actions
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+    commit-message:
+      prefix: "ci"
+    labels: ["ci", "dependencies"]
+
+  # Imagens Docker da API
+  - package-ecosystem: "docker"
+    directory: "/apps/api"
+    schedule:
+      interval: "weekly"
+    labels: ["docker", "dependencies"]
+
+  # Pacotes Dart/Flutter
+  - package-ecosystem: "pub"
+    directory: "/apps/mobile"
+    schedule:
+      interval: "weekly"
+    labels: ["mobile", "dependencies"]

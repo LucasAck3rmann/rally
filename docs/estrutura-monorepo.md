@@ -48,21 +48,21 @@ rally/
 │  ├─ adr/                      # 0001-nestjs.md, 0002-flutter.md, ...
 │  └─ DESIGN.md
 ├─ infra/                       # Terraform (AWS) + Dockerfiles base
-│  └─ terraform/
+│  ├─ README.md
+│  └─ terraform/README.md
 ├─ .github/
-│  ├─ workflows/ci.yml
-│  ├─ ISSUE_TEMPLATE/
-│  └─ pull_request_template.md
+│  ├─ workflows/ci.yml · codeql.yml     # build/test + segurança (CodeQL)
+│  ├─ dependabot.yml                     # atualização de dependências
+│  ├─ ISSUE_TEMPLATE/  ·  pull_request_template.md
+│  └─ CODEOWNERS
 ├─ .husky/                      # hooks git (commit-msg, pre-commit)
 ├─ docker-compose.yml           # postgres + redis + localstack + api + web
-├─ commitlint.config.js
-├─ turbo.json
-├─ pnpm-workspace.yaml
-├─ package.json                 # raiz (scripts + devDeps de tooling)
-├─ .env.example
-├─ .gitignore
+├─ commitlint.config.js · turbo.json · pnpm-workspace.yaml · package.json
+├─ .editorconfig · .nvmrc · .prettierrc.json · .prettierignore
+├─ .env.example · .gitignore · .dockerignore
 ├─ CLAUDE.md  ·  DESIGN.md  ·  README.md
 ├─ LICENSE (AGPL-3.0)  ·  CONTRIBUTING.md  ·  CODE_OF_CONDUCT.md  ·  SECURITY.md
+├─ GOVERNANCE.md  ·  SUPPORT.md  ·  CHANGELOG.md
 ```
 
 ## 2. `pnpm-workspace.yaml`

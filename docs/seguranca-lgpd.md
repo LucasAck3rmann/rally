@@ -80,4 +80,9 @@
 - [ ] Backups testados; Sentry e logs ativos
 - [ ] Política de Privacidade, Termos, consentimento e fluxo de exclusão (LGPD)
 
+## 11. Automação de segurança no repositório
+- **CodeQL** (análise estática), **Dependabot** (dependências/alertas) e **gitleaks** (varredura de segredos) rodando no **CI** — ver `SECURITY.md`, `.github/workflows/codeql.yml`, `.github/dependabot.yml` e o job `security` em `ci.yml`.
+- **SBOM** (CycloneDX) planejado para as releases; política de **divulgação responsável** em `SECURITY.md`.
+- `.gitignore`/`.dockerignore` impedem commit/imagem com `.env`; segredos só em **AWS Secrets Manager**.
+
 > Referências: OWASP Top 10 / ASVS · AWS Well-Architected (Security) · LGPD (Lei 13.709/2018) · ANPD. Base teórica em [Fundamentação Teórica e Padrões](fundamentacao.md) · implementação em [Arquitetura e Stack](arquitetura.md).

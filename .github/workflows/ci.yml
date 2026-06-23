@@ -18,6 +18,17 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  security:
+    name: Varredura de segredos
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with: { fetch-depth: 0 }
+      - name: gitleaks
+        uses: gitleaks/gitleaks-action@v2
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
   docker:
     needs: build-test
     runs-on: ubuntu-latest

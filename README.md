@@ -3,6 +3,8 @@
 <p align="center">
   <img alt="license" src="https://img.shields.io/badge/license-AGPL--3.0-blue">
   <img alt="status" src="https://img.shields.io/badge/status-em%20desenvolvimento-orange">
+  <img alt="ci" src="https://github.com/LucasAck3rmann/rally/actions/workflows/ci.yml/badge.svg">
+  <img alt="codeql" src="https://github.com/LucasAck3rmann/rally/actions/workflows/codeql.yml/badge.svg">
 </p>
 
 Plataforma **open source** de **agendamento, gestão e replays** para quadras de areia
@@ -42,6 +44,11 @@ pnpm prisma db seed
 ## Contribuindo
 Veja [CONTRIBUTING.md](CONTRIBUTING.md) e o [Código de Conduta](CODE_OF_CONDUCT.md).
 Decisões de arquitetura ficam em [`docs/adr/`](docs/adr/).
+
+## Segurança
+Encontrou uma vulnerabilidade? **Não** abra issue pública — siga o [SECURITY.md](SECURITY.md).
+O CI roda **CodeQL**, **Dependabot** e varredura de segredos. Governança do projeto em
+[GOVERNANCE.md](GOVERNANCE.md); como obter ajuda em [SUPPORT.md](SUPPORT.md).
 
 ## Licença
 Core sob **AGPL-3.0** (ver [LICENSE](LICENSE)). Pacotes/SDK em Apache-2.0.

@@ -1,0 +1,18 @@
+# Normaliza quebras de linha: LF no repositório (evita ruído entre Windows/Linux/Mac)
+* text=auto eol=lf
+
+# Scripts que precisam de LF
+*.sh text eol=lf
+
+# Arquivos binários (não normalizar/diffar)
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Lockfile: sem diff ruidoso
+pnpm-lock.yaml -diff
