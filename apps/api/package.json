@@ -6,8 +6,9 @@
     "dev": "nest start --watch",
     "build": "nest build",
     "start": "node dist/main.js",
+    "lint": "eslint src",
     "typecheck": "tsc --noEmit",
-    "test": "jest --passWithNoTests",
+    "test": "jest",
     "prisma:generate": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts"
   },
@@ -30,13 +31,11 @@
     "@types/express": "^5.0.0",
     "@types/jest": "^29.5.12",
     "@types/node": "^22.0.0",
+    "dotenv": "^16.4.5",
     "jest": "^29.7.0",
     "prisma": "^6.0.0",
     "ts-jest": "^29.2.5",
     "ts-node": "^10.9.2",
     "typescript": "^5.6.3"
-  },
-  "prisma": {
-    "seed": "ts-node prisma/seed.ts"
   }
 }
