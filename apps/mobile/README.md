@@ -22,9 +22,10 @@ lib/
 flutter pub get
 flutter run
 ```
-> Requer o **Flutter SDK** instalado. Login está **stubado** (simula a rede e guarda
-> um token de exemplo no `flutter_secure_storage`); a integração real com a API
-> (`POST /api/v1/auth/login` via Dio) entra no Marco **M3**.
+> Requer o **Flutter SDK** instalado. O login chama a **API real** (`POST /api/v1/auth/login`,
+> JWT + argon2) via **Dio**; o token fica no `flutter_secure_storage` e é injetado
+> automaticamente nas próximas requisições. Suba a API antes (`docker compose up` +
+> `pnpm --filter @rally/api dev`) — no emulador Android a base é `http://10.0.2.2:3333/api/v1`.
 
 ## Segurança
 - Token em **armazenamento seguro do dispositivo** (`flutter_secure_storage`), nunca em texto puro.
