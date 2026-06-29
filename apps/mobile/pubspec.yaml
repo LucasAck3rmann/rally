@@ -1,0 +1,23 @@
+name: rally_mobile
+description: "Aplicativo mobile do Rally — agendamento de quadras de areia."
+publish_to: "none"
+version: 0.1.0+1
+
+environment:
+  sdk: ">=3.4.0 <4.0.0"
+
+dependencies:
+  flutter:
+    sdk: flutter
+  flutter_riverpod: ^2.5.1 # estado
+  go_router: ^14.2.0 # navegação + guard de auth
+  flutter_secure_storage: ^9.2.2 # token em armazenamento seguro
+  google_fonts: ^6.2.1 # Sora / Inter / Space Mono
+
+dev_dependencies:
+  flutter_lints: ^4.0.0
+  flutter_test:
+    sdk: flutter
+
+flutter:
+  uses-material-design: true
