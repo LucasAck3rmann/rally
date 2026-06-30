@@ -10,7 +10,7 @@ dependencies:
   flutter:
     sdk: flutter
   flutter_riverpod: ^2.5.1 # estado
-  go_router: ^14.2.0 # navegação + guard de auth
+  go_router: ^17.3.0 # navegação + guard de auth
   dio: ^5.5.0 # cliente HTTP (chamadas à API)
   flutter_secure_storage: ^9.2.2 # token em armazenamento seguro
   google_fonts: ^6.2.1 # Sora / Inter / Space Mono
