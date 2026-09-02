@@ -1,0 +1,3 @@
+Diretório de arquivos estáticos servidos pela raiz do site (favicon, imagens,
+robots.txt). O Dockerfile de produção copia esta pasta, então ela precisa
+existir mesmo vazia.
