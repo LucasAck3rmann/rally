@@ -15,7 +15,7 @@
     "*.{json,md,yml}": ["prettier --write"]
   },
   "devDependencies": {
-    "@commitlint/cli": "^19",
+    "@commitlint/cli": "^21",
     "@commitlint/config-conventional": "^19",
     "@eslint/js": "^9",
     "eslint": "^9",
