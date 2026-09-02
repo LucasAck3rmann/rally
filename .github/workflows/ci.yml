@@ -11,8 +11,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v7
+      # Sem `version` aqui: a partir do action-setup v6, declarar a versão nos
+      # dois lugares é erro. A fonte única é `packageManager` no package.json.
       - uses: pnpm/action-setup@v6
-        with: { version: 9 }
       - uses: actions/setup-node@v6
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
