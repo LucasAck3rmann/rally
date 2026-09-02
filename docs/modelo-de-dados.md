@@ -87,8 +87,11 @@ model Estabelecimento {
   nome                 String
   slug                 String    @unique
   cnpj                 String?
+  bairro               String?
   cidade               String?
   uf                   String?
+  nota                 Decimal?  @db.Decimal(2, 1) // média das avaliações
+  avaliacoes           Int       @default(0)
   timezone             String    @default("America/Sao_Paulo")
   plano                PlanoTipo @default(FREE)
   ativo                Boolean   @default(true)
@@ -210,6 +213,7 @@ model Quadra {
   precoHora         Decimal  @db.Decimal(10, 2) // preço base
   capacidade        Int?
   fotos             String[] // chaves S3
+  comodidades       String[] // vestiário, iluminação, bar...
   ativo             Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
