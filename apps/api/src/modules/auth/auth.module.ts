@@ -20,5 +20,7 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
   ],
   controllers: [AuthController],
   providers: [AuthService, JwtAuthGuard],
+  // O guard protege rotas de outros módulos (reservas, replays).
+  exports: [JwtAuthGuard, JwtModule],
 })
 export class AuthModule {}
