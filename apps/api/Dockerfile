@@ -4,6 +4,9 @@ RUN corepack enable
 WORKDIR /app
 COPY pnpm-lock.yaml package.json pnpm-workspace.yaml ./
 COPY apps/api/package.json apps/api/
+# O schema entra antes do install porque o `postinstall` gera o Prisma Client.
+COPY apps/api/prisma.config.ts apps/api/
+COPY apps/api/prisma apps/api/prisma
 RUN pnpm install --frozen-lockfile
 
 # dev
@@ -14,7 +17,7 @@ CMD ["pnpm", "--filter", "@rally/api", "dev"]
 # build → produção
 FROM base AS build
 COPY . .
-RUN pnpm --filter @rally/api build && pnpm prisma generate
+RUN pnpm --filter @rally/api build
 
 FROM node:22-alpine AS prod
 WORKDIR /app
