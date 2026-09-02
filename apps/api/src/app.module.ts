@@ -3,6 +3,10 @@ import { ConfigModule } from "@nestjs/config";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { ReservasModule } from "./modules/reservas/reservas.module";
+import { QuadrasModule } from "./modules/quadras/quadras.module";
+import { ReplaysModule } from "./modules/replays/replays.module";
+import { PagamentosModule } from "./modules/pagamentos/pagamentos.module";
+import { PromocoesModule } from "./modules/promocoes/promocoes.module";
 import { AuthModule } from "./modules/auth/auth.module";
 
 @Module({
@@ -11,7 +15,11 @@ import { AuthModule } from "./modules/auth/auth.module";
     PrismaModule,
     AuthModule,
     HealthModule,
+    QuadrasModule,
+    PromocoesModule,
+    PagamentosModule,
     ReservasModule,
+    ReplaysModule,
   ],
 })
 export class AppModule {}
