@@ -3,6 +3,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:google_fonts/google_fonts.dart";
 
 import "../../../core/theme/app_colors.dart";
+import "../../../core/widgets/rally_icon.dart";
 import "auth_controller.dart";
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -150,25 +151,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   }
 
   Widget _emblema() {
-    return Center(
-      child: Container(
-        width: 72,
-        height: 72,
-        alignment: Alignment.center,
-        decoration: BoxDecoration(
-          color: AppColors.coral,
-          borderRadius: BorderRadius.circular(20),
-        ),
-        child: Text(
-          "R",
-          style: GoogleFonts.sora(
-            fontSize: 38,
-            fontWeight: FontWeight.w800,
-            color: AppColors.ink,
-          ),
-        ),
-      ),
-    );
+    return const Center(child: RallyEmblema(tamanho: 72));
   }
 
   Widget _divisor() {

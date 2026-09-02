@@ -1,8 +1,9 @@
 import "package:dio/dio.dart";
 
+import "../../../core/network/erro_api.dart";
+import "../../../core/network/token_store.dart";
 import "../domain/auth_repository.dart";
 import "../domain/auth_user.dart";
-import "token_store.dart";
 
 /// Implementação que fala com a API do Rally (`/auth/*`):
 /// faz login, guarda o token (seguro) e recupera a sessão atual.
@@ -21,7 +22,7 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return _saveAndParse(res.data);
     } on DioException catch (e) {
-      throw AuthException(_messageFromDio(e));
+      throw AuthException(mensagemDeDio(e, padrao: "Não foi possível entrar. Tente novamente."));
     }
   }
 
@@ -60,20 +61,5 @@ class AuthRepositoryImpl implements AuthRepository {
       nome: user["nome"] as String? ?? "Jogador",
       email: user["email"] as String? ?? "",
     );
-  }
-
-  String _messageFromDio(DioException e) {
-    final data = e.response?.data;
-    if (data is Map) {
-      final msg = data["message"];
-      if (msg is String) return msg;
-      if (msg is List && msg.isNotEmpty) return msg.first.toString();
-    }
-    if (e.type == DioExceptionType.connectionError ||
-        e.type == DioExceptionType.connectionTimeout ||
-        e.type == DioExceptionType.receiveTimeout) {
-      return "Sem conexão com o servidor.";
-    }
-    return "Não foi possível entrar. Tente novamente.";
   }
 }

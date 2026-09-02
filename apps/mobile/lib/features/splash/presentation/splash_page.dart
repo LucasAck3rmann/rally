@@ -2,6 +2,7 @@ import "package:flutter/material.dart";
 import "package:google_fonts/google_fonts.dart";
 
 import "../../../core/theme/app_colors.dart";
+import "../../../core/widgets/rally_icon.dart";
 
 /// Tela de abertura. O destino (login x home) é decidido pelo guard do
 /// router conforme o estado de autenticação.
@@ -16,23 +17,7 @@ class SplashPage extends StatelessWidget {
         child: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
-            Container(
-              width: 88,
-              height: 88,
-              alignment: Alignment.center,
-              decoration: BoxDecoration(
-                color: AppColors.coral,
-                borderRadius: BorderRadius.circular(24),
-              ),
-              child: Text(
-                "R",
-                style: GoogleFonts.sora(
-                  fontSize: 46,
-                  fontWeight: FontWeight.w800,
-                  color: AppColors.ink,
-                ),
-              ),
-            ),
+            const RallyEmblema(tamanho: 88),
             const SizedBox(height: 22),
             Text(
               "Rally",

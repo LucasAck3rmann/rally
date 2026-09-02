@@ -1,151 +1,312 @@
+import "dart:async";
+
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
-import "package:google_fonts/google_fonts.dart";
+import "package:go_router/go_router.dart";
 
 import "../../../core/theme/app_colors.dart";
+import "../../../core/theme/app_text.dart";
+import "../../../core/widgets/brand_bar.dart";
+import "../../../core/widgets/marquee.dart";
+import "../../../core/widgets/rally_chip.dart";
+import "../../../core/widgets/rally_icon.dart";
+import "../../../core/widgets/secao.dart";
 import "../../auth/presentation/auth_controller.dart";
+import "../../promocoes/domain/promocao.dart";
+import "../../quadras/domain/quadra.dart";
+import "../../quadras/presentation/quadra_card.dart";
+import "../../quadras/presentation/quadras_providers.dart";
 
-class HomePage extends ConsumerWidget {
+/// Home do cliente: busca, filtro por modalidade, vitrine de quadras e promoção.
+class HomePage extends ConsumerStatefulWidget {
   const HomePage({super.key});
 
   @override
-  Widget build(BuildContext context, WidgetRef ref) {
-    final user = ref.watch(authControllerProvider).valueOrNull;
-    final nome = user?.nome ?? "Jogador";
+  ConsumerState<HomePage> createState() => _HomePageState();
+}
 
-    return Scaffold(
-      body: SafeArea(
-        child: ListView(
-          padding: const EdgeInsets.all(20),
-          children: [
-            Row(
-              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+class _HomePageState extends ConsumerState<HomePage> {
+  static const _modalidades = ["Beach Tennis", "Futevôlei", "Vôlei"];
+
+  final _busca = TextEditingController();
+  Timer? _debounce;
+
+  @override
+  void dispose() {
+    _debounce?.cancel();
+    _busca.dispose();
+    super.dispose();
+  }
+
+  void _aoDigitar(String texto) {
+    _debounce?.cancel();
+    _debounce = Timer(const Duration(milliseconds: 350), () {
+      ref.read(buscaProvider.notifier).state = texto.trim();
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    final quadras = ref.watch(quadrasProvider);
+    final promocao = ref.watch(promocaoDestaqueProvider);
+    final usuario = ref.watch(authControllerProvider).valueOrNull;
+    final modalidade = ref.watch(modalidadeFiltroProvider);
+
+    return Column(
+      children: [
+        MarqueeMarca(
+          texto: _textoMarquee(quadras.valueOrNull),
+        ),
+        Expanded(
+          child: RefreshIndicator(
+            color: AppColors.coral,
+            onRefresh: () async {
+              ref.invalidate(quadrasProvider);
+              ref.invalidate(promocaoDestaqueProvider);
+            },
+            child: ListView(
+              padding: EdgeInsets.zero,
               children: [
-                Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      "OLÁ",
-                      style: GoogleFonts.spaceMono(
-                        fontSize: 11,
-                        letterSpacing: 2,
-                        color: AppColors.gray,
-                      ),
-                    ),
-                    Text(
-                      nome,
-                      style: GoogleFonts.sora(
-                        fontSize: 26,
-                        fontWeight: FontWeight.w800,
-                        color: AppColors.ink,
-                      ),
-                    ),
-                  ],
+                HeaderCard(
+                  aplicarAreaSegura: false,
+                  paddingTop: 26,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      const BrandBar(rotuloDireita: "Sapiranga/RS"),
+                      const SizedBox(height: 18),
+                      _saudacao(usuario?.nome ?? "Jogador"),
+                      const SizedBox(height: 18),
+                      _campoBusca(),
+                      const SizedBox(height: 18),
+                      _chips(modalidade),
+                    ],
+                  ),
                 ),
-                IconButton(
-                  tooltip: "Sair",
-                  onPressed: () =>
-                      ref.read(authControllerProvider.notifier).logout(),
-                  icon: const Icon(Icons.logout, color: AppColors.ink),
+                Padding(
+                  padding: const EdgeInsets.all(20),
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      CabecalhoSecao(
+                        titulo: "Quadras perto de você",
+                        acao: modalidade == null ? null : "Ver todas",
+                        onAcao: () =>
+                            ref.read(modalidadeFiltroProvider.notifier).state = null,
+                      ),
+                      const SizedBox(height: 14),
+                      _vitrine(quadras),
+                      const SizedBox(height: 14),
+                      promocao.maybeWhen(
+                        data: (p) => p == null
+                            ? const SizedBox.shrink()
+                            : _CardPromo(promocao: p),
+                        orElse: () => const SizedBox.shrink(),
+                      ),
+                    ],
+                  ),
                 ),
               ],
             ),
-            const SizedBox(height: 20),
-            _banner(),
-            const SizedBox(height: 22),
-            Text(
-              "Comece por aqui",
-              style: GoogleFonts.sora(
-                fontSize: 17,
-                fontWeight: FontWeight.w700,
-                color: AppColors.ink,
-              ),
-            ),
-            const SizedBox(height: 12),
-            _card(Icons.search, "Buscar quadras", "Encontre uma quadra perto de você"),
-            const SizedBox(height: 10),
-            _card(Icons.calendar_today, "Minhas reservas", "Acompanhe seus horários"),
-            const SizedBox(height: 10),
-            _card(Icons.sports_tennis, "Meus replays", "Reveja os melhores pontos"),
-          ],
+          ),
         ),
+      ],
+    );
+  }
+
+  String _textoMarquee(List<Quadra>? quadras) {
+    final aoVivo = quadras?.where((q) => q.aoVivo).length ?? 0;
+    final chamada = aoVivo > 0
+        ? "$aoVivo ${aoVivo == 1 ? "quadra jogando" : "quadras jogando"} agora"
+        : "quadras livres agora";
+    return "● ao vivo · $chamada · reserve a sua · bora pra areia · ";
+  }
+
+  Widget _saudacao(String nome) {
+    return Row(
+      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+      children: [
+        Expanded(
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text("BORA JOGAR,", style: AppText.rotulo(13, espacamento: 0.5)),
+              const SizedBox(height: 2),
+              Text(
+                nome,
+                maxLines: 1,
+                overflow: TextOverflow.ellipsis,
+                style: AppText.titulo(20),
+              ),
+            ],
+          ),
+        ),
+        const SizedBox(width: 12),
+        _Avatar(nome: nome),
+      ],
+    );
+  }
+
+  Widget _campoBusca() {
+    return TextField(
+      controller: _busca,
+      onChanged: _aoDigitar,
+      textInputAction: TextInputAction.search,
+      style: AppText.corpo(14),
+      decoration: InputDecoration(
+        hintText: "Buscar quadra, modalidade, bairro...",
+        hintStyle: AppText.corpo(14, cor: AppColors.gray),
+        filled: true,
+        fillColor: AppColors.bg,
+        prefixIcon: const Padding(
+          padding: EdgeInsets.fromLTRB(16, 0, 10, 0),
+          child: RallyIcon("busca", tamanho: 18, cor: AppColors.gray),
+        ),
+        prefixIconConstraints: const BoxConstraints(minWidth: 0, minHeight: 0),
+        contentPadding: const EdgeInsets.symmetric(vertical: 14),
+        border: _borda(AppColors.line),
+        enabledBorder: _borda(AppColors.line),
+        focusedBorder: _borda(AppColors.coral, largura: 2),
       ),
     );
   }
 
-  Widget _banner() {
-    return Container(
-      padding: const EdgeInsets.all(20),
-      decoration: BoxDecoration(
-        color: AppColors.ink,
-        borderRadius: BorderRadius.circular(18),
-      ),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.start,
+  OutlineInputBorder _borda(Color cor, {double largura = 1}) {
+    return OutlineInputBorder(
+      borderRadius: BorderRadius.circular(14),
+      borderSide: BorderSide(color: cor, width: largura),
+    );
+  }
+
+  Widget _chips(String? selecionada) {
+    return SingleChildScrollView(
+      scrollDirection: Axis.horizontal,
+      child: Row(
         children: [
-          Text(
-            "Bora jogar hoje?",
-            style: GoogleFonts.sora(
-              fontSize: 20,
-              fontWeight: FontWeight.w700,
-              color: AppColors.white,
+          for (final m in _modalidades) ...[
+            RallyChip(
+              rotulo: m,
+              ativo: selecionada == m,
+              // Tocar de novo no chip ativo limpa o filtro.
+              onTap: () => ref.read(modalidadeFiltroProvider.notifier).state =
+                  selecionada == m ? null : m,
             ),
-          ),
-          const SizedBox(height: 6),
-          const Text(
-            "Reserve sua quadra de areia em segundos.",
-            style: TextStyle(color: AppColors.sand),
-          ),
-          const SizedBox(height: 14),
-          FilledButton(
-            onPressed: () {},
-            child: const Text("Reservar agora"),
-          ),
+            const SizedBox(width: 8),
+          ],
         ],
       ),
     );
   }
 
-  Widget _card(IconData icon, String titulo, String sub) {
+  Widget _vitrine(AsyncValue<List<Quadra>> quadras) {
+    return quadras.when(
+      loading: () => const Padding(
+        padding: EdgeInsets.symmetric(vertical: 48),
+        child: Center(
+          child: CircularProgressIndicator(color: AppColors.coral),
+        ),
+      ),
+      error: (erro, _) => EstadoErro(
+        mensagem: erro.toString(),
+        onTentarDeNovo: () => ref.invalidate(quadrasProvider),
+      ),
+      data: (lista) {
+        if (lista.isEmpty) {
+          return const EstadoVazio(
+            titulo: "Nenhuma quadra por aqui",
+            descricao: "Tente outra modalidade ou limpe a busca.",
+          );
+        }
+        return Column(
+          children: [
+            for (final quadra in lista) ...[
+              QuadraCard(
+                quadra: quadra,
+                onReservar: () => context.push("/quadras/${quadra.id}"),
+              ),
+              const SizedBox(height: 14),
+            ],
+          ],
+        );
+      },
+    );
+  }
+}
+
+class _Avatar extends StatelessWidget {
+  const _Avatar({required this.nome});
+
+  final String nome;
+
+  /// Iniciais do nome ("Lucas Ackermann" → "LA").
+  String get _iniciais {
+    final partes = nome.trim().split(RegExp(r"\s+"));
+    if (partes.isEmpty || partes.first.isEmpty) return "?";
+    if (partes.length == 1) return partes.first[0].toUpperCase();
+    return (partes.first[0] + partes.last[0]).toUpperCase();
+  }
+
+  @override
+  Widget build(BuildContext context) {
     return Container(
-      padding: const EdgeInsets.all(16),
+      width: 46,
+      height: 46,
+      alignment: Alignment.center,
+      decoration: const BoxDecoration(
+        color: AppColors.ink,
+        shape: BoxShape.circle,
+      ),
+      child: Text(_iniciais, style: AppText.titulo(15, cor: AppColors.white)),
+    );
+  }
+}
+
+class _CardPromo extends StatelessWidget {
+  const _CardPromo({required this.promocao});
+
+  final PromocaoDestaque promocao;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      padding: const EdgeInsets.symmetric(horizontal: 18, vertical: 16),
       decoration: BoxDecoration(
-        color: AppColors.white,
-        borderRadius: BorderRadius.circular(16),
-        border: Border.all(color: AppColors.line),
+        color: AppColors.ink,
+        borderRadius: BorderRadius.circular(18),
       ),
       child: Row(
         children: [
-          Container(
-            width: 44,
-            height: 44,
-            alignment: Alignment.center,
-            decoration: BoxDecoration(
-              color: AppColors.sand,
-              borderRadius: BorderRadius.circular(12),
-            ),
-            child: Icon(icon, color: AppColors.coralDeep),
-          ),
-          const SizedBox(width: 14),
           Expanded(
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.start,
               children: [
                 Text(
-                  titulo,
-                  style: const TextStyle(
-                    fontWeight: FontWeight.w600,
-                    color: AppColors.ink,
-                  ),
+                  promocao.titulo,
+                  style: AppText.titulo(15, cor: AppColors.white),
                 ),
+                const SizedBox(height: 3),
                 Text(
-                  sub,
-                  style: const TextStyle(color: AppColors.gray, fontSize: 13),
+                  promocao.chamada,
+                  style: AppText.corpo(
+                    12,
+                    cor: AppColors.onInkMuted,
+                    peso: FontWeight.w500,
+                  ),
                 ),
               ],
             ),
           ),
-          const Icon(Icons.chevron_right, color: AppColors.gray),
+          const SizedBox(width: 12),
+          Container(
+            width: 48,
+            height: 48,
+            alignment: Alignment.center,
+            decoration: const BoxDecoration(
+              color: AppColors.sun,
+              shape: BoxShape.circle,
+            ),
+            child: Text(promocao.selo, style: AppText.titulo(20)),
+          ),
         ],
       ),
     );
