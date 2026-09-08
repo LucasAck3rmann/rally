@@ -14,7 +14,7 @@ jobs:
       # Sem `version` aqui: a partir do action-setup v6, declarar a versão nos
       # dois lugares é erro. A fonte única é `packageManager` no package.json.
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
