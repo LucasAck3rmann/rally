@@ -6,6 +6,7 @@ import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
 import "../../features/home/presentation/home_page.dart";
+import "../../features/notificacoes/presentation/notificacoes_page.dart";
 import "../../features/perfil/presentation/perfil_page.dart";
 import "../../features/quadras/presentation/quadra_detalhe_page.dart";
 import "../../features/replays/presentation/replays_page.dart";
@@ -92,6 +93,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             ],
           ),
         ],
+      ),
+      GoRoute(
+        path: "/notificacoes",
+        parentNavigatorKey: _raiz,
+        builder: (_, __) => const NotificacoesPage(),
       ),
       GoRoute(
         path: "/quadras/:id",
