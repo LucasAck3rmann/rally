@@ -1,5 +1,6 @@
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
+import "package:go_router/go_router.dart";
 import "package:google_fonts/google_fonts.dart";
 
 import "../../../core/theme/app_colors.dart";
@@ -134,7 +135,7 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     _social("Continuar com Instagram"),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: () {},
+                      onPressed: loading ? null : () => context.push("/cadastro"),
                       child: const Text(
                         "Criar conta",
                         style: TextStyle(color: AppColors.coralDeep),

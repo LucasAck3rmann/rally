@@ -6,7 +6,7 @@ import "../domain/auth_repository.dart";
 import "../domain/auth_user.dart";
 
 /// Implementação que fala com a API do Rally (`/auth/*`):
-/// faz login, guarda o token (seguro) e recupera a sessão atual.
+/// faz login, cria conta, guarda o token (seguro) e recupera a sessão atual.
 class AuthRepositoryImpl implements AuthRepository {
   const AuthRepositoryImpl(this._dio, this._tokens);
 
@@ -20,9 +20,30 @@ class AuthRepositoryImpl implements AuthRepository {
         "/auth/login",
         data: {"email": email, "senha": senha},
       );
-      return _saveAndParse(res.data);
+      return await _saveAndParse(res.data);
     } on DioException catch (e) {
       throw AuthException(mensagemDeDio(e, padrao: "Não foi possível entrar. Tente novamente."));
+    }
+  }
+
+  @override
+  Future<AuthUser> register({
+    required String nome,
+    required String email,
+    required String senha,
+  }) async {
+    try {
+      // A API devolve o mesmo envelope do login, então o cadastro já
+      // entra com a sessão aberta — o cliente não digita a senha duas vezes.
+      final res = await _dio.post<Map<String, dynamic>>(
+        "/auth/register",
+        data: {"nome": nome, "email": email, "senha": senha},
+      );
+      return await _saveAndParse(res.data);
+    } on DioException catch (e) {
+      throw AuthException(
+        mensagemDeDio(e, padrao: "Não foi possível criar a conta. Tente novamente."),
+      );
     }
   }
 
