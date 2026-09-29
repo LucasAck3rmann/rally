@@ -53,6 +53,9 @@ class FakeReservasRepository implements ReservasRepository {
   /// Quando definido, o próximo `cancelar` falha com este erro.
   Object? erroAoCancelar;
 
+  /// Quando definido, o próximo `remarcar` falha com este erro.
+  Object? erroAoRemarcar;
+
   @override
   Future<List<Reserva>> minhas() async => lista;
 
@@ -68,6 +71,20 @@ class FakeReservasRepository implements ReservasRepository {
     required String metodo,
   }) {
     throw UnimplementedError();
+  }
+
+  /// Argumentos da última chamada a `remarcar`.
+  ( String id, DateTime inicio, DateTime fim )? remarcacao;
+
+  @override
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
+  }) async {
+    remarcacao = (id, inicio, fim);
+    if (erroAoRemarcar != null) throw erroAoRemarcar!;
+    return lista.firstWhere((r) => r.id == id);
   }
 
   @override

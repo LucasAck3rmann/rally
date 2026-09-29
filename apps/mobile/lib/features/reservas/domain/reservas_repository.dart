@@ -27,6 +27,13 @@ abstract interface class ReservasRepository {
     required String metodo,
   });
 
+  /// Move a reserva para outro horário (RF-09).
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
+  });
+
   /// Cancela a reserva e libera o horário (RF-09).
   Future<ResultadoCancelamento> cancelar(String id, {String? motivo});
 

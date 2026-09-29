@@ -8,6 +8,7 @@ import "../../../core/widgets/brand_bar.dart";
 import "../../../core/formato.dart";
 import "../../../core/widgets/secao.dart";
 import "../domain/reserva.dart";
+import "remarcar_sheet.dart";
 import "reservas_providers.dart";
 
 /// Aba "Reservas": histórico do cliente, com os jogos que ainda vêm no topo.
@@ -259,49 +260,83 @@ class _CardReservaState extends ConsumerState<_CardReserva> {
                 ),
               ),
             ),
-            if (reserva.cancelavel) _rodapeCancelar(),
+            if (reserva.cancelavel) _rodapeAcoes(),
           ],
         ),
       ),
     );
   }
 
-  Widget _rodapeCancelar() {
+  /// Abre a folha de remarcação; o aviso de sucesso fica aqui porque a folha
+  /// se fecha antes de poder mostrá-lo.
+  Future<void> _remarcar() async {
+    final moveu = await FolhaRemarcar.abrir(context, reserva);
+    if (moveu == true && mounted) {
+      _aviso("Reserva remarcada.");
+    }
+  }
+
+  Widget _rodapeAcoes() {
+    // Remarcar só aparece dentro do prazo, pela mesma razão que a API recusa
+    // fora dele: senão bastava empurrar a reserva para longe e cancelar
+    // de graça depois, e a janela da RN-02 não valeria nada.
+    final podeRemarcar = reserva.cancelamentoGratuito;
+
     return Column(
       children: [
         const Divider(height: 1, thickness: 1, color: AppColors.line),
-        TextButton(
-          onPressed: _cancelando ? null : _confirmarCancelamento,
-          style: TextButton.styleFrom(
-            // Alvo de toque de 44px, como pede o DESIGN.md.
-            minimumSize: const Size.fromHeight(44),
-            shape: const RoundedRectangleBorder(
-              borderRadius: BorderRadius.vertical(
-                bottom: Radius.circular(16),
-              ),
-            ),
-          ),
-          child: _cancelando
-              ? const SizedBox(
-                  width: 18,
-                  height: 18,
-                  child: CircularProgressIndicator(
-                    strokeWidth: 2,
-                    color: AppColors.coralDeep,
-                  ),
-                )
-              : Text(
-                  reserva.cancelamentoGratuito
-                      ? "Cancelar reserva"
-                      : "Cancelar (fora do prazo)",
-                  style: AppText.corpo(
-                    13,
-                    cor: AppColors.coralDeep,
-                    peso: FontWeight.w600,
-                  ),
-                ),
+        Row(
+          children: [
+            if (podeRemarcar) ...[
+              Expanded(child: _acaoRemarcar()),
+              Container(width: 1, height: 26, color: AppColors.line),
+            ],
+            Expanded(child: _acaoCancelar()),
+          ],
         ),
       ],
+    );
+  }
+
+  Widget _acaoRemarcar() {
+    return TextButton(
+      onPressed: _cancelando ? null : _remarcar,
+      style: TextButton.styleFrom(
+        // Alvo de toque de 44px, como pede o DESIGN.md.
+        minimumSize: const Size.fromHeight(44),
+      ),
+      child: Text(
+        "Remarcar",
+        style: AppText.corpo(13, peso: FontWeight.w600),
+      ),
+    );
+  }
+
+  Widget _acaoCancelar() {
+    return TextButton(
+      onPressed: _cancelando ? null : _confirmarCancelamento,
+      style: TextButton.styleFrom(
+        minimumSize: const Size.fromHeight(44),
+      ),
+      child: _cancelando
+          ? const SizedBox(
+              width: 18,
+              height: 18,
+              child: CircularProgressIndicator(
+                strokeWidth: 2,
+                color: AppColors.coralDeep,
+              ),
+            )
+          : Text(
+              reserva.cancelamentoGratuito
+                  ? "Cancelar reserva"
+                  : "Cancelar (fora do prazo)",
+              style: AppText.corpo(
+                13,
+                cor: AppColors.coralDeep,
+                peso: FontWeight.w600,
+              ),
+            ),
     );
   }
 

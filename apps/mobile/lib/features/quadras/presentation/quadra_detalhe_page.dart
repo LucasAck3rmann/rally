@@ -11,6 +11,7 @@ import "../../../core/widgets/rally_chip.dart";
 import "../../../core/widgets/rally_icon.dart";
 import "../../../core/widgets/secao.dart";
 import "../domain/quadra.dart";
+import "agenda_widgets.dart";
 import "quadras_providers.dart";
 
 /// Detalhe da quadra: apresentação, comodidades e escolha do horário.
@@ -263,7 +264,7 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
         itemBuilder: (context, i) {
           final dia = hoje.add(Duration(days: i));
           final ativo = dia == _dia;
-          return _CartaoDia(
+          return CartaoDia(
             rotulo: i == 0 ? "Hoje" : Formato.diaSemana(dia),
             numero: dia.day,
             ativo: ativo,
@@ -302,7 +303,7 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
           runSpacing: 10,
           children: [
             for (final slot in disponibilidade.slots)
-              _CartaoSlot(
+              CartaoSlot(
                 slot: slot,
                 escolhido: _slotEscolhido?.inicio == slot.inicio,
                 onTap: slot.disponivel
@@ -327,121 +328,6 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
                 "/quadras/${widget.quadraId}/checkout",
                 extra: (quadra: quadra, slot: slot),
               ),
-    );
-  }
-}
-
-class _CartaoDia extends StatelessWidget {
-  const _CartaoDia({
-    required this.rotulo,
-    required this.numero,
-    required this.ativo,
-    required this.onTap,
-  });
-
-  final String rotulo;
-  final int numero;
-  final bool ativo;
-  final VoidCallback onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    return Semantics(
-      button: true,
-      selected: ativo,
-      child: Material(
-        color: ativo ? AppColors.coral : AppColors.white,
-        borderRadius: BorderRadius.circular(14),
-        child: InkWell(
-          onTap: onTap,
-          borderRadius: BorderRadius.circular(14),
-          child: Container(
-            width: 62,
-            padding: const EdgeInsets.symmetric(vertical: 10),
-            decoration: BoxDecoration(
-              borderRadius: BorderRadius.circular(14),
-              border: ativo ? null : Border.all(color: AppColors.line),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Text(
-                  rotulo,
-                  style: AppText.corpo(
-                    11,
-                    cor: ativo ? AppColors.ink : AppColors.gray,
-                    peso: FontWeight.w500,
-                  ),
-                ),
-                const SizedBox(height: 2),
-                Text("$numero", style: AppText.titulo(15)),
-              ],
-            ),
-          ),
-        ),
-      ),
-    );
-  }
-}
-
-class _CartaoSlot extends StatelessWidget {
-  const _CartaoSlot({
-    required this.slot,
-    required this.escolhido,
-    required this.onTap,
-  });
-
-  final Slot slot;
-  final bool escolhido;
-  final VoidCallback? onTap;
-
-  @override
-  Widget build(BuildContext context) {
-    final indisponivel = !slot.disponivel;
-
-    return Semantics(
-      button: true,
-      selected: escolhido,
-      enabled: !indisponivel,
-      label: indisponivel ? "${slot.hora}, indisponível" : slot.hora,
-      child: Opacity(
-        opacity: indisponivel ? 0.55 : 1,
-        child: Material(
-          color: indisponivel
-              ? AppColors.sand
-              : escolhido
-                  ? AppColors.coral
-                  : AppColors.white,
-          borderRadius: BorderRadius.circular(12),
-          child: InkWell(
-            onTap: onTap,
-            borderRadius: BorderRadius.circular(12),
-            child: Container(
-              height: 44,
-              alignment: Alignment.center,
-              padding: const EdgeInsets.symmetric(horizontal: 18),
-              decoration: BoxDecoration(
-                borderRadius: BorderRadius.circular(12),
-                border: indisponivel || escolhido
-                    ? null
-                    : Border.all(color: AppColors.line),
-              ),
-              child: Text(
-                slot.hora,
-                style: AppText.corpo(
-                  14,
-                  cor: indisponivel ? AppColors.gray : AppColors.ink,
-                  peso: escolhido
-                      ? FontWeight.w700
-                      : indisponivel
-                          ? FontWeight.w500
-                          : FontWeight.w600,
-                ),
-              ),
-            ),
-          ),
-        ),
-      ),
     );
   }
 }

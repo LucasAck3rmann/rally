@@ -17,6 +17,7 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
 import { QuadrasService } from "../quadras/quadras.service";
 import { CreateReservaDto } from "./dto/create-reserva.dto";
+import { RemarcarReservaDto } from "./dto/remarcar-reserva.dto";
 
 /** Como a reserva é devolvida ao app (traz quadra e estabelecimento juntos). */
 const COM_CONTEXTO = {
@@ -285,6 +286,159 @@ export class ReservasService {
     });
 
     return { ...(await this.detalhe(id, usuarioId)), dentroDoPrazo };
+  }
+
+  /**
+   * Move a reserva para outro horário (RF-09).
+   *
+   * Remarcar só vale **dentro da janela de cancelamento** (RN-02), e não por
+   * capricho: se desse para remarcar fora do prazo, a política não valeria
+   * nada — bastava empurrar a reserva para daqui a um mês, onde a janela
+   * volta a estar aberta, e cancelar de graça.
+   *
+   * O horário novo é revalidado contra a mesma grade que o app consultou e o
+   * preço é recalculado pela faixa do novo slot. Se a reserva já está paga e o
+   * preço muda, a remarcação é recusada: devolver ou cobrar a diferença é
+   * RF-14/RF-15 e ainda não existe.
+   */
+  async remarcar(id: string, usuarioId: string, dto: RemarcarReservaDto) {
+    const inicio = new Date(dto.inicio);
+    const fim = new Date(dto.fim);
+    if (!(fim > inicio)) {
+      throw new BadRequestException("O fim deve ser depois do início.");
+    }
+
+    const reserva = await this.prisma.reserva.findFirst({
+      where: { id, clienteId: usuarioId },
+      select: {
+        id: true,
+        inicio: true,
+        fim: true,
+        status: true,
+        quadraId: true,
+        quadra: {
+          select: {
+            nome: true,
+            estabelecimento: {
+              select: {
+                nome: true,
+                timezone: true,
+                cancelamentoHoras: true,
+                descontoPixPct: true,
+                pixExpiraMinutos: true,
+              },
+            },
+          },
+        },
+        pagamento: {
+          select: { id: true, status: true, metodo: true, valor: true },
+        },
+      },
+    });
+    if (!reserva) {
+      throw new NotFoundException("Reserva não encontrada.");
+    }
+    if (
+      reserva.status !== ReservaStatus.PENDENTE_PAGAMENTO &&
+      reserva.status !== ReservaStatus.CONFIRMADA
+    ) {
+      throw new ConflictException("Esta reserva não pode ser remarcada.");
+    }
+
+    const agora = new Date();
+    if (reserva.inicio <= agora) {
+      throw new ConflictException("O horário da reserva já começou.");
+    }
+    if (
+      reserva.inicio.getTime() === inicio.getTime() &&
+      reserva.fim.getTime() === fim.getTime()
+    ) {
+      throw new BadRequestException("A reserva já está nesse horário.");
+    }
+
+    const est = reserva.quadra.estabelecimento;
+    const horas = est.cancelamentoHoras;
+    const dentroDoPrazo =
+      agora <= new Date(reserva.inicio.getTime() - horas * 60 * 60 * 1000);
+    if (!dentroDoPrazo) {
+      throw new ConflictException(
+        `A remarcação vale até ${horas} h antes do horário.`,
+      );
+    }
+
+    const dataLocal = new Intl.DateTimeFormat("en-CA", {
+      timeZone: est.timezone,
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).format(inicio);
+    const { slots } = await this.quadras.disponibilidade(
+      reserva.quadraId,
+      dataLocal,
+    );
+    const slot = slots.find(
+      (s) =>
+        new Date(s.inicio).getTime() === inicio.getTime() &&
+        new Date(s.fim).getTime() === fim.getTime(),
+    );
+    if (!slot) {
+      throw new BadRequestException("Horário fora da grade da quadra.");
+    }
+    if (!slot.disponivel) {
+      throw new ConflictException("Horário indisponível.");
+    }
+
+    const pagamento = reserva.pagamento;
+    const jaPago = pagamento?.status === PagamentoStatus.PAGO;
+    const desconto =
+      pagamento?.metodo === PagamentoMetodo.PIX
+        ? Number(est.descontoPixPct)
+        : 0;
+    const novoValor = Number((slot.preco * (1 - desconto / 100)).toFixed(2));
+
+    if (jaPago && Number(pagamento.valor) !== novoValor) {
+      throw new ConflictException(
+        "O novo horário tem preço diferente. Cancele e faça uma nova reserva.",
+      );
+    }
+
+    try {
+      await this.prisma.reserva.update({
+        where: { id: reserva.id },
+        data: { inicio, fim, preco: new Prisma.Decimal(slot.preco) },
+      });
+    } catch (erro) {
+      if (ehConflitoDeHorario(erro)) {
+        throw new ConflictException("Esse horário acabou de ser reservado.");
+      }
+      throw erro;
+    }
+
+    // O BR Code carrega o valor dentro dele, então mudar de preço obriga a
+    // emitir outra cobrança — a antiga cobraria o valor errado.
+    if (pagamento && !jaPago && Number(pagamento.valor) !== novoValor) {
+      const dados: Prisma.PagamentoUpdateInput = {
+        valor: new Prisma.Decimal(novoValor),
+      };
+      if (pagamento.metodo === PagamentoMetodo.PIX) {
+        const cobranca = await this.pagamentos.criarCobrancaPix({
+          reservaId: reserva.id,
+          valor: novoValor,
+          descricao: `${est.nome} · ${reserva.quadra.nome}`,
+          expiraEmMinutos: est.pixExpiraMinutos,
+        });
+        dados.gatewayId = cobranca.gatewayId;
+        dados.pixCopiaCola = cobranca.copiaCola;
+        dados.qrCodeUrl = cobranca.qrCodeUrl;
+        dados.expiraEm = cobranca.expiraEm;
+      }
+      await this.prisma.pagamento.update({
+        where: { id: pagamento.id },
+        data: dados,
+      });
+    }
+
+    return this.detalhe(id, usuarioId);
   }
 
   private paraDto(r: {
