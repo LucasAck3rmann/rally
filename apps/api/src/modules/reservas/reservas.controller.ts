@@ -5,6 +5,7 @@ import { CurrentUser } from "../auth/decorators/current-user.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { JwtPayload } from "../auth/types/jwt-payload";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
+import { CancelarReservaDto } from "./dto/cancelar-reserva.dto";
 import { CreateReservaDto } from "./dto/create-reserva.dto";
 import { ReservasService } from "./reservas.service";
 
@@ -30,6 +31,15 @@ export class ReservasController {
   @Post()
   criar(@Body() dto: CreateReservaDto, @CurrentUser() user: JwtPayload) {
     return this.reservas.criar(dto, user.sub);
+  }
+
+  @Post(":id/cancelar")
+  cancelar(
+    @Param("id") id: string,
+    @Body() dto: CancelarReservaDto,
+    @CurrentUser() user: JwtPayload,
+  ) {
+    return this.reservas.cancelar(id, user.sub, dto.motivo);
   }
 
   /** Só em desenvolvimento: faz o papel do webhook do gateway. */
