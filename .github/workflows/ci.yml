@@ -22,6 +22,22 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  mobile:
+    name: App Flutter
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+      # Versão fixa, como o Node 22 do job acima: CI e máquina de
+      # desenvolvimento compilam o app com o mesmo SDK.
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: 3.47.5, channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
   security:
     name: Varredura de segredos
     runs-on: ubuntu-latest

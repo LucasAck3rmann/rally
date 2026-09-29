@@ -356,10 +356,10 @@ class _BotaoPlay extends StatelessWidget {
       width: tamanho,
       height: tamanho,
       alignment: Alignment.center,
-      decoration: BoxDecoration(
+      decoration: const BoxDecoration(
         color: AppColors.white,
         shape: BoxShape.circle,
-        boxShadow: const [
+        boxShadow: [
           BoxShadow(
             color: Color(0x2E000000),
             blurRadius: 4,

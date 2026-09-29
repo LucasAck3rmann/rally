@@ -313,7 +313,7 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
     return Row(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
-        RallyIcon("relogio", tamanho: 16, cor: AppColors.coralDeep),
+        const RallyIcon("relogio", tamanho: 16, cor: AppColors.coralDeep),
         const SizedBox(width: 7),
         Text(
           expirou ? "COBRANÇA EXPIRADA" : "EXPIRA EM ${Formato.contagem(_restante)}",
