@@ -16,7 +16,8 @@ abstract final class Formato {
   /// "R$ 80" para valores redondos, "R$ 76,50" quando há centavos —
   /// é assim que o preço aparece nos cards e na barra de reserva.
   static String moeda(double valor) {
-    final texto = valor % 1 == 0 ? _inteiro.format(valor) : _comCentavos.format(valor);
+    final texto =
+        valor % 1 == 0 ? _inteiro.format(valor) : _comCentavos.format(valor);
     return texto.replaceAll("\u00A0", " ");
   }
 
@@ -54,8 +55,7 @@ abstract final class Formato {
   }
 
   /// Data-calendário "YYYY-MM-DD" para conversar com a API.
-  static String dataIso(DateTime data) =>
-      DateFormat("yyyy-MM-dd").format(data);
+  static String dataIso(DateTime data) => DateFormat("yyyy-MM-dd").format(data);
 
   static String _capitalizar(String texto) {
     final limpo = texto.replaceAll(".", "");

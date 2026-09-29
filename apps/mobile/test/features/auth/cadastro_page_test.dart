@@ -132,8 +132,8 @@ void main() {
     await tester.tap(botaoCriar);
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(SnackBar, "E-mail já cadastrado."),
-        findsOneWidget);
+    expect(
+        find.widgetWithText(SnackBar, "E-mail já cadastrado."), findsOneWidget);
     // A tela continua no ar para o cliente corrigir o e-mail.
     expect(find.byType(CadastroPage), findsOneWidget);
   });

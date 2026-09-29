@@ -108,7 +108,8 @@ class QuadraCard extends StatelessWidget {
             Image.network(
               quadra.fotoPrincipal!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.sand),
+              errorBuilder: (_, __, ___) =>
+                  const ColoredBox(color: AppColors.sand),
             )
           else
             const ColoredBox(color: AppColors.sand),
@@ -150,7 +151,8 @@ class QuadraCard extends StatelessWidget {
           height: 44, // alvo de toque mínimo
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Reservar", style: AppText.corpo(13, peso: FontWeight.w700)),
+          child:
+              Text("Reservar", style: AppText.corpo(13, peso: FontWeight.w700)),
         ),
       ),
     );

@@ -189,8 +189,7 @@ class _FolhaRemarcarState extends ConsumerState<FolhaRemarcar> {
       ),
       error: (erro, _) => EstadoErro(
         mensagem: erro.toString(),
-        onTentarDeNovo: () =>
-            ref.invalidate(disponibilidadeProvider(consulta)),
+        onTentarDeNovo: () => ref.invalidate(disponibilidadeProvider(consulta)),
       ),
       data: (disponibilidade) {
         if (disponibilidade.slots.isEmpty) {
@@ -207,9 +206,8 @@ class _FolhaRemarcarState extends ConsumerState<FolhaRemarcar> {
               CartaoSlot(
                 slot: slot,
                 escolhido: _slot?.inicio == slot.inicio,
-                onTap: slot.disponivel
-                    ? () => setState(() => _slot = slot)
-                    : null,
+                onTap:
+                    slot.disponivel ? () => setState(() => _slot = slot) : null,
               ),
           ],
         );

@@ -135,8 +135,7 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
                             decoration: const InputDecoration(
                               labelText: "E-mail",
                             ),
-                            validator: (v) =>
-                                (v == null ||
+                            validator: (v) => (v == null ||
                                     !v.contains("@") ||
                                     !v.contains("."))
                                 ? "Informe um e-mail válido"

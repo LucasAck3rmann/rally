@@ -135,7 +135,8 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     _social("Continuar com Instagram"),
                     const SizedBox(height: 12),
                     TextButton(
-                      onPressed: loading ? null : () => context.push("/cadastro"),
+                      onPressed:
+                          loading ? null : () => context.push("/cadastro"),
                       child: const Text(
                         "Criar conta",
                         style: TextStyle(color: AppColors.coralDeep),

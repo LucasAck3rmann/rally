@@ -22,7 +22,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return await _saveAndParse(res.data);
     } on DioException catch (e) {
-      throw AuthException(mensagemDeDio(e, padrao: "Não foi possível entrar. Tente novamente."));
+      throw AuthException(mensagemDeDio(e,
+          padrao: "Não foi possível entrar. Tente novamente."));
     }
   }
 
@@ -42,7 +43,8 @@ class AuthRepositoryImpl implements AuthRepository {
       return await _saveAndParse(res.data);
     } on DioException catch (e) {
       throw AuthException(
-        mensagemDeDio(e, padrao: "Não foi possível criar a conta. Tente novamente."),
+        mensagemDeDio(e,
+            padrao: "Não foi possível criar a conta. Tente novamente."),
       );
     }
   }

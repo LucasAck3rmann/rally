@@ -66,7 +66,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: "/splash", builder: (_, __) => const SplashPage()),
       GoRoute(path: "/login", builder: (_, __) => const LoginPage()),
       GoRoute(path: "/cadastro", builder: (_, __) => const CadastroPage()),
-
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -83,7 +82,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: "/replays", builder: (_, __) => const ReplaysPage()),
+              GoRoute(
+                  path: "/replays", builder: (_, __) => const ReplaysPage()),
             ],
           ),
           StatefulShellBranch(
@@ -93,7 +93,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-
       GoRoute(
         path: "/quadras/:id",
         parentNavigatorKey: _raiz,

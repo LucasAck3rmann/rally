@@ -116,7 +116,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                 const SizedBox(height: 16),
                 Row(
                   children: [
-                    const RallyIcon("cadeado", tamanho: 16, cor: AppColors.gray),
+                    const RallyIcon("cadeado",
+                        tamanho: 16, cor: AppColors.gray),
                     const SizedBox(width: 8),
                     Flexible(
                       child: Text(
@@ -267,7 +268,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
                       color: AppColors.coral,
                       borderRadius: BorderRadius.circular(999),
                     ),
-                    child: Text(selo, style: AppText.rotulo(10, cor: AppColors.ink)),
+                    child: Text(selo,
+                        style: AppText.rotulo(10, cor: AppColors.ink)),
                   ),
                 ],
               ],
@@ -347,7 +349,8 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
         Flexible(
           child: Text(
             rotulo,
-            style: AppText.corpo(14, cor: AppColors.gray, peso: FontWeight.w500),
+            style:
+                AppText.corpo(14, cor: AppColors.gray, peso: FontWeight.w500),
           ),
         ),
         const SizedBox(width: 12),
