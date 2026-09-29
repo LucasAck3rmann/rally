@@ -16,7 +16,7 @@ services:
     image: redis:7
     ports: ["6379:6379"]
 
-  localstack:                     # emula S3 + SES da AWS no dev
+  localstack: # emula S3 + SES da AWS no dev
     image: localstack/localstack:3
     environment:
       SERVICES: s3,ses
@@ -27,7 +27,7 @@ services:
     env_file: .env
     depends_on:
       postgres: { condition: service_healthy }
-      redis:    { condition: service_started }
+      redis: { condition: service_started }
     ports: ["3333:3333"]
     volumes: ["./apps/api:/app/apps/api", "/app/node_modules"]
     command: pnpm --filter @rally/api dev
@@ -35,6 +35,9 @@ services:
   web:
     build: { context: ., dockerfile: apps/web/Dockerfile, target: dev }
     env_file: .env
+    # Dentro da rede do compose o site fala com a API pelo nome do serviço.
+    environment:
+      API_URL: http://api:3333/api/v1
     depends_on: ["api"]
     ports: ["3000:3000"]
     volumes: ["./apps/web:/app/apps/web", "/app/node_modules"]

@@ -36,7 +36,9 @@ describe("Landing", () => {
     const ctas = screen.getAllByRole("link", { name: /começar/i });
     expect(ctas.length).toBeGreaterThan(0);
     for (const cta of ctas) {
-      expect(cta).toHaveAttribute("href", "#comecar");
+      // O cabeçalho é compartilhado com /quadras, então usa "/#comecar";
+      // dentro da landing a âncora relativa basta.
+      expect(cta.getAttribute("href")).toMatch(/^\/?#comecar$/);
     }
   });
 

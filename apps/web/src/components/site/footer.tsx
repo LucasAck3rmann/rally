@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import Link from "next/link";
 import { Container } from "@/components/ui/container";
 import { Emblem } from "@/components/ui/emblem";
 import { DOCS_URL, EMAIL_CONTATO, LICENSE_URL, REPO_URL } from "@/lib/site";
@@ -7,10 +8,11 @@ const colunas = [
   {
     titulo: "Produto",
     links: [
-      { rotulo: "Recursos", href: "#recursos" },
-      { rotulo: "Como funciona", href: "#como-funciona" },
-      { rotulo: "Preços", href: "#precos" },
-      { rotulo: "Dúvidas", href: "#faq" },
+      { rotulo: "Quadras", href: "/quadras" },
+      { rotulo: "Recursos", href: "/#recursos" },
+      { rotulo: "Como funciona", href: "/#como-funciona" },
+      { rotulo: "Preços", href: "/#precos" },
+      { rotulo: "Dúvidas", href: "/#faq" },
     ],
   },
   {
@@ -56,15 +58,20 @@ export function Footer() {
               <ul className="mt-5 flex flex-col gap-3 text-[15px] text-ink">
                 {coluna.links.map((link) => (
                   <li key={link.rotulo}>
-                    <a
-                      href={link.href}
-                      {...("externo" in link && link.externo
-                        ? { target: "_blank", rel: "noreferrer" }
-                        : {})}
-                      className="transition-colors hover:text-coral-deep"
-                    >
-                      {link.rotulo}
-                    </a>
+                    {"externo" in link && link.externo ? (
+                      <a
+                        href={link.href}
+                        target="_blank"
+                        rel="noreferrer"
+                        className="transition-colors hover:text-coral-deep"
+                      >
+                        {link.rotulo}
+                      </a>
+                    ) : (
+                      <Link href={link.href} className="transition-colors hover:text-coral-deep">
+                        {link.rotulo}
+                      </Link>
+                    )}
                   </li>
                 ))}
               </ul>
