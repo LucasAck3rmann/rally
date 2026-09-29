@@ -33,7 +33,22 @@ e versionamento [Semantic Versioning](https://semver.org/lang/pt-BR/).
 - Testes da API: fuso horário (incluindo virada de DST), grade de disponibilidade, BR Code e
   compilação do grafo de injeção + rotas.
 
+- **Landing v3 (web):** a página pública do Rally em `apps/web` — faixa "ao vivo",
+  hero com foto real e selos flutuantes, manifesto, bento de recursos, como funciona,
+  galeria com arrasto, citação do Projeto de Pesquisa, planos (RF-33), integrações,
+  dúvidas em `details/summary` e chamada final texturizada, com rodapé de wordmark.
+  Sora/Inter/Space Mono pelo `next/font`, rolagem suave (Lenis) e reveals (Framer
+  Motion) respeitando `prefers-reduced-motion`; metadados, imagem de Open Graph
+  gerada na build e dados estruturados (SoftwareApplication + FAQPage).
+- **Primeiros testes da web:** `apps/web` ganhou Vitest + Testing Library (15 testes)
+  cobrindo marcos de navegação, texto alternativo das fotos, âncoras com destino,
+  dúvidas, planos e a regra de contraste do botão coral — `pnpm test` passa a cobrir
+  também o site na CI.
+
 ### Alterado
+- **Web:** as famílias de fonte do Tailwind passam a vir do `next/font` por variável
+  CSS. O scaffold declarava Sora/Inter/Space Mono, mas nenhuma fonte era carregada —
+  a página caía no sans-serif do sistema.
 - **Hardening de CI:** `permissions: contents: read` (privilégio mínimo do `GITHUB_TOKEN`).
 - **Dependabot:** agrupa PRs de GitHub Actions e de npm (minor/patch) e **trava o Node 22 LTS** no Docker (ignora bumps de major).
 - Integração do fix do Copilot (PR #1): `pnpm-lock.yaml` e `packageManager` pinado (`pnpm@9.15.9`).
