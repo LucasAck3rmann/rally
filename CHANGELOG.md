@@ -44,6 +44,17 @@ e versionamento [Semantic Versioning](https://semver.org/lang/pt-BR/).
   cobrindo marcos de navegação, texto alternativo das fotos, âncoras com destino,
   dúvidas, planos e a regra de contraste do botão coral — `pnpm test` passa a cobrir
   também o site na CI.
+- **Autorização por papel (RF-02):** `PapelGuard` + decorador `@Papeis`. O papel é lido do
+  `Membership` do usuário **no estabelecimento da rota**, nunca do token — o isolamento do
+  ADR-0011 passa a ser decidido num lugar só. Quem não tem vínculo recebe **404** (não 403),
+  para não confirmar a existência do estabelecimento; quem é da equipe mas não tem o papel
+  exigido recebe 403.
+- **API de gestão — quadras (RF-20):** `GET /gestao/estabelecimentos` (o que eu administro,
+  para o seletor da barra lateral) e o CRUD de quadras em
+  `/gestao/estabelecimentos/:estabelecimentoId/quadras`, com faixas de preço por janela de
+  horário. Ler é liberado a toda a equipe; **escrever é só do admin** — atendente não mexe em
+  preço. Faixas são validadas contra intervalo invertido e sobreposição, porque o preço do slot
+  é a primeira faixa que casa e a sobreposição deixaria o valor dependendo da ordem da lista.
 
 ### Alterado
 - **Web:** as famílias de fonte do Tailwind passam a vir do `next/font` por variável
