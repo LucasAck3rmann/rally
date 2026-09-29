@@ -49,21 +49,40 @@ class BarraPrecoCta extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(Formato.moeda(valor), style: AppText.titulo(20)),
-              const SizedBox(height: 1),
-              Text(legenda.toUpperCase(), style: AppText.rotulo(11, espacamento: 0.5)),
-            ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  Formato.moeda(valor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titulo(20),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  legenda.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.rotulo(11, espacamento: 0.5),
+                ),
+              ],
+            ),
           ),
-          BotaoPrimario(
-            rotulo: rotuloCta,
-            onPressed: onCta,
-            icone: iconeCta,
-            carregando: carregando,
-            expandir: false,
+          const SizedBox(width: 12),
+          // O rótulo do CTA varia bastante entre as telas ("Reservar 19:00",
+          // "Mover para 20:00", "Escolha um horário"). Sem `Flexible`, um
+          // rótulo mais longo estoura a linha em telas estreitas — o botão já
+          // sabe truncar o próprio texto, só precisava poder encolher.
+          Flexible(
+            child: BotaoPrimario(
+              rotulo: rotuloCta,
+              onPressed: onCta,
+              icone: iconeCta,
+              carregando: carregando,
+              expandir: false,
+            ),
           ),
         ],
       ),

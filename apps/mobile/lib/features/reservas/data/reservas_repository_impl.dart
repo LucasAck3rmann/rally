@@ -60,6 +60,27 @@ class ReservasRepositoryImpl implements ReservasRepository {
   }
 
   @override
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
+  }) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/reservas/$id/remarcar",
+          data: {
+            "inicio": inicio.toUtc().toIso8601String(),
+            "fim": fim.toUtc().toIso8601String(),
+          },
+        );
+        return Reserva.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível remarcar a reserva.",
+    );
+  }
+
+  @override
   Future<ResultadoCancelamento> cancelar(String id, {String? motivo}) {
     return chamarApi(
       () async {
