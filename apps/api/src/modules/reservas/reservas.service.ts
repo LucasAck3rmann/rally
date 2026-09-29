@@ -50,6 +50,27 @@ const COM_CONTEXTO = {
   },
 } satisfies Prisma.ReservaSelect;
 
+/**
+ * A corrida por um mesmo horário estoura no banco, não na aplicação.
+ *
+ * Com o índice único era um `P2002` limpo. Com a exclusion constraint o
+ * Postgres levanta 23P01 (`exclusion_violation`), que o Prisma ainda não
+ * mapeia para um código próprio — sobra reconhecer a constraint pelo nome.
+ * O `P2002` fica no teste para cobrir bancos que ainda não receberam a
+ * migração.
+ */
+export function ehConflitoDeHorario(erro: unknown): boolean {
+  if (
+    erro instanceof Prisma.PrismaClientKnownRequestError &&
+    erro.code === "P2002"
+  ) {
+    return true;
+  }
+  return (
+    erro instanceof Error && erro.message.includes("reserva_sem_sobreposicao")
+  );
+}
+
 @Injectable()
 export class ReservasService {
   constructor(
@@ -163,7 +184,7 @@ export class ReservasService {
         select: { id: true },
       });
     } catch (erro) {
-      if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
+      if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
       }
       throw erro;

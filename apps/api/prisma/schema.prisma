@@ -251,8 +251,10 @@ model Reserva {
   pagamento Pagamento?
   replays   Replay[]
 
-  // 1ª linha contra overbooking; trava real = exclusion constraint (migração SQL).
-  @@unique([quadraId, inicio])
+  // Sem índice único aqui: a trava contra overbooking é a exclusion constraint
+  // `reserva_sem_sobreposicao` (ver migrations). Ela cobre sobreposição parcial
+  // e ignora reservas canceladas — um único (quadraId, inicio) faria o oposto:
+  // deixava passar 19:30 sobre 19:00 e prendia para sempre um horário cancelado.
   @@index([estabelecimentoId, inicio])
   @@index([quadraId, inicio, fim])
 }
