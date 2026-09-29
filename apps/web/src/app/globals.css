@@ -11,3 +11,62 @@ body {
   background: var(--bg);
   color: var(--ink);
 }
+
+@layer base {
+  /* Foco sempre visível, em qualquer fundo (WCAG 2.2 AA — RNF-08). */
+  :focus-visible {
+    outline: 2px solid theme(colors.coral-deep);
+    outline-offset: 3px;
+    border-radius: 4px;
+  }
+
+  ::selection {
+    background: theme(colors.sun);
+    color: theme(colors.ink);
+  }
+
+  /* Fallback de rolagem quando o Lenis não roda (reduced motion, JS off).
+     Com o Lenis ativo o <html> ganha a classe `lenis` e sai daqui — os dois
+     juntos brigam pelo controle da âncora. */
+  html:not(.lenis) {
+    scroll-behavior: smooth;
+  }
+
+  /* Âncora não pode parar embaixo do cabeçalho fixo. */
+  [id] {
+    scroll-margin-top: 6rem;
+  }
+}
+
+@layer components {
+  /* Grão sobre superfície escura: só alfa, nenhuma cor fora da paleta. */
+  .grain {
+    position: relative;
+    isolation: isolate;
+  }
+
+  .grain::after {
+    content: "";
+    position: absolute;
+    inset: 0;
+    z-index: -1;
+    opacity: 0.35;
+    pointer-events: none;
+    background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.8' numOctaves='3'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)' opacity='0.35'/%3E%3C/svg%3E");
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  html {
+    scroll-behavior: auto;
+  }
+
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
+}

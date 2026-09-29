@@ -1,30 +1,63 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { Faq } from "@/components/landing/faq";
+import { Features } from "@/components/landing/features";
+import { FinalCta } from "@/components/landing/final-cta";
+import { Footer } from "@/components/landing/footer";
+import { Gallery } from "@/components/landing/gallery";
+import { Header } from "@/components/landing/header";
+import { Hero } from "@/components/landing/hero";
+import { HowItWorks } from "@/components/landing/how-it-works";
+import { Integrations } from "@/components/landing/integrations";
+import { Manifesto } from "@/components/landing/manifesto";
+import { Marquee } from "@/components/landing/marquee";
+import { Pricing } from "@/components/landing/pricing";
+import { Quote } from "@/components/landing/quote";
+import { REPO_URL } from "@/lib/site";
+
+const dadosEstruturados = {
+  "@context": "https://schema.org",
+  "@type": "SoftwareApplication",
+  name: "Rally",
+  applicationCategory: "BusinessApplication",
+  operatingSystem: "Web, iOS, Android",
+  description:
+    "Plataforma de gestão, agendamento e replays para quadras de areia: agenda em tempo real, pagamento no Pix e relatórios.",
+  inLanguage: "pt-BR",
+  isAccessibleForFree: true,
+  license: "https://www.gnu.org/licenses/agpl-3.0.html",
+  codeRepository: REPO_URL,
+  offers: [
+    { "@type": "Offer", name: "Free", price: "0", priceCurrency: "BRL" },
+    { "@type": "Offer", name: "Pro", price: "149", priceCurrency: "BRL" },
+  ],
+};
+
 export default function Home() {
   return (
-    <main className="mx-auto max-w-3xl px-5 py-24">
-      <p className="font-mono text-xs uppercase tracking-[0.2em] text-coral-deep">
-        EST. 2026 · scaffold
-      </p>
-      <h1 className="mt-3 font-display text-5xl font-extrabold leading-tight text-ink">
-        Do agendamento ao <span className="text-coral">replay</span>.
-      </h1>
-      <p className="mt-4 max-w-xl text-gray">
-        Plataforma de gestão, agendamento e replays para quadras de areia. Este é o
-        esqueleto inicial do front — as telas entram conforme o roadmap (marco M2+).
-      </p>
-      <div className="mt-8 flex gap-3">
-        <a
-          href="/api/v1/health"
-          className="inline-block rounded-chip bg-coral px-5 py-3 font-semibold text-ink"
-        >
-          Bora jogar
-        </a>
-        <a
-          href="https://github.com/LucasAck3rmann/rally"
-          className="inline-block rounded-chip border border-line bg-white px-5 py-3 font-semibold text-ink"
-        >
-          Ver no GitHub
-        </a>
-      </div>
-    </main>
+    <>
+      <Header />
+
+      {/* pt-16 = altura do cabeçalho fixo. */}
+      <main id="conteudo" className="pt-16">
+        <Marquee />
+        <Hero />
+        <Manifesto />
+        <Features />
+        <HowItWorks />
+        <Gallery />
+        <Quote />
+        <Pricing />
+        <Integrations />
+        <Faq />
+        <FinalCta />
+      </main>
+
+      <Footer />
+
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(dadosEstruturados) }}
+      />
+    </>
   );
 }
