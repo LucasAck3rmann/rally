@@ -1,16 +1,25 @@
-# Modelo de Dados — `schema.prisma` (v2) + seed
+# Modelo de Dados — `schema.prisma` (v3) + migrações + seed
 
-> Entidades do [§15 de Arquitetura](Arquitetura%20e%20Stack.md) em **schema Prisma** pronto pra `apps/api/prisma/schema.prisma`, agora com os campos de **configuração** que sustentam as regras de negócio ([Requisitos](requisitos.md) §5), **auth/OAuth**, **auditoria**, **preço por faixa**, **lista de espera** e **preferências de notificação** — mais um **seed** de exemplo. Multi-tenant por `estabelecimentoId` (estratégia detalhada em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). ORM em [Decisões de Arquitetura (ADRs)](adr/README.md) (ADR-0004).
+> **Espelho do schema real.** A fonte de verdade é `apps/api/prisma/schema.prisma`; este documento reproduz o que está lá e explica **por que** está assim. Sincronizado em **29/09/2026** (`main`). Ao mudar o modelo, mude o schema primeiro e traga a mudança para cá no mesmo *pull request* — foi por não fazer isso que este arquivo passou a descrever uma trava anti-overbooking que já não existia.
+>
+> São **19 entidades e 10 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
 
 ## Decisões de modelagem
-- **Multi-tenancy:** tudo pendura em **`Estabelecimento`** (o *tenant*); papéis em **`Membership`** (Usuario × Estabelecimento × Role).
-- **Dinheiro:** `Decimal` — nunca `Float`. **IDs:** `cuid()`. **Horas:** `HorarioFuncionamento` guarda `"HH:mm"` (string) + timezone do estabelecimento.
-- **Config por estabelecimento:** slot, antecedência, cancelamento e desconto Pix são **dados** (não código) — RN-02/03/07/08.
-- **Anti-overbooking (RN-01):** `@@unique([quadraId, inicio])` como 1ª linha + **exclusion constraint** na migração (ver fim).
-- **LGPD/auditoria:** `AuditLog` para ações sensíveis (RN-05); consentimento no `Usuario`; exclusão anonimiza (RN-18).
+
+- **Multi-tenancy:** tudo pendura em **`Estabelecimento`** (o *tenant*); papéis em **`Membership`** (Usuario × Estabelecimento × Role). O papel é lido do vínculo, nunca do token.
+- **Dinheiro:** `Decimal` — nunca `Float`. Ponto flutuante tem erro de representação em base 2, e dinheiro exige exatidão decimal. **IDs:** `cuid()`. **Horas de funcionamento:** `"HH:mm"` em texto + `timezone` do estabelecimento.
+- **Config por estabelecimento:** slot, antecedência, janela de cancelamento, desconto Pix e expiração do Pix são **dados, não código** — RN-02/03/07/08/13. É o que permite mudar a regra de um cliente sem *deploy*.
+- **Anti-overbooking (RN-01):** a trava é a *exclusion constraint* **`reserva_sem_sobreposicao`**, aplicada por migração. **Não há `@@unique([quadraId, inicio])`** — ele foi removido por proteger pouco e atrapalhar muito (ver a seção de migrações).
+- **Notificação (RF-16):** `Notificacao` é o aviso in-app já emitido; `NotificationPreference` é a preferência de canal, que existe desde junho e ainda não tem canal externo para preferir.
+- **LGPD/auditoria:** `AuditLog` para ações sensíveis (RN-05) — a entidade existe e **ainda não é escrita**; consentimento no `Usuario`; exclusão anonimiza em vez de apagar, preservando o registro financeiro que a lei exige manter (RN-18).
 
 ## `schema.prisma`
+
 ```prisma
+// Rally — schema de dados (PostgreSQL + Prisma)
+// SPDX-License-Identifier: AGPL-3.0-or-later
+// Multi-tenant por estabelecimentoId (ver docs/adr/0011-multi-tenant.md).
+
 generator client {
   provider = "prisma-client-js"
 }
@@ -90,71 +99,70 @@ model Estabelecimento {
   bairro               String?
   cidade               String?
   uf                   String?
-  nota                 Decimal?  @db.Decimal(2, 1) // média das avaliações
+  nota                 Decimal?  @db.Decimal(2, 1)
   avaliacoes           Int       @default(0)
   timezone             String    @default("America/Sao_Paulo")
   plano                PlanoTipo @default(FREE)
   ativo                Boolean   @default(true)
-  // configuração (regras de negócio)
-  slotMinutos          Int       @default(60)   // RN-08
-  antecedenciaMinHoras Int       @default(1)    // RN-07
-  antecedenciaMaxDias  Int       @default(30)   // RN-07
-  cancelamentoHoras    Int       @default(12)   // RN-02
-  descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2) // RN-03
-  pixExpiraMinutos     Int       @default(30)   // RN-13
+  slotMinutos          Int       @default(60)
+  antecedenciaMinHoras Int       @default(1)
+  antecedenciaMaxDias  Int       @default(30)
+  cancelamentoHoras    Int       @default(12)
+  descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2)
+  pixExpiraMinutos     Int       @default(30)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  quadras    Quadra[]
-  membros    Membership[]
-  horarios   HorarioFuncionamento[]
-  reservas   Reserva[]
-  materiais  Material[]
-  promocoes  Promocao[]
-  eventos    Evento[]
-  replays    Replay[]
-  auditLogs  AuditLog[]
+  quadras   Quadra[]
+  membros   Membership[]
+  horarios  HorarioFuncionamento[]
+  reservas  Reserva[]
+  materiais Material[]
+  promocoes Promocao[]
+  eventos   Evento[]
+  replays   Replay[]
+  auditLogs AuditLog[]
 }
 
 model HorarioFuncionamento {
-  id                String   @id @default(cuid())
+  id                String  @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
-  diaSemana         Int      // 0=domingo … 6=sábado
-  abre              String   // "08:00"
-  fecha             String   // "22:00"
+  diaSemana         Int
+  abre              String
+  fecha             String
 
   @@unique([estabelecimentoId, diaSemana])
 }
 
 model Usuario {
-  id            String   @id @default(cuid())
+  id            String    @id @default(cuid())
   nome          String
-  email         String   @unique
-  senhaHash     String?  // null quando entra só por OAuth
+  email         String    @unique
+  senhaHash     String?
   telefone      String?
   avatarUrl     String?
   consentLgpdEm DateTime?
-  anonimizadoEm DateTime? // RN-18 (exclusão de conta)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
+  anonimizadoEm DateTime?
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
 
   memberships   Membership[]
-  reservas      Reserva[]            @relation("ReservaCliente")
-  replays       Replay[]             @relation("ReplayCliente")
+  reservas      Reserva[]               @relation("ReservaCliente")
+  replays       Replay[]                @relation("ReplayCliente")
   accounts      Account[]
   refreshTokens RefreshToken[]
   notifPref     NotificationPreference?
+  notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
-  auditLogs     AuditLog[]           @relation("AuditAutor")
+  auditLogs     AuditLog[]              @relation("AuditAutor")
 }
 
-// OAuth (Google/Instagram)
 model Account {
   id                String  @id @default(cuid())
   usuario           Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   usuarioId         String
-  provider          String  // "google" | "instagram"
+  provider          String
   providerAccountId String
 
   @@unique([provider, providerAccountId])
@@ -173,17 +181,42 @@ model RefreshToken {
   @@index([usuarioId])
 }
 
-model NotificationPreference {
-  id            String  @id @default(cuid())
-  usuario       Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
-  usuarioId     String  @unique
-  canalWhatsapp Boolean @default(true)
-  canalEmail    Boolean @default(true)
-  canalPush     Boolean @default(true)
-  marketingOptIn Boolean @default(false) // LGPD: consentimento p/ marketing
+/// Tipos que a tela de Notificações agrupa (ver Telas e Fluxos).
+enum NotificacaoTipo {
+  RESERVA
+  PAGAMENTO
+  REPLAY
+  PROMOCAO
+  LEMBRETE
 }
 
-// Papel do usuário DENTRO de um estabelecimento (RBAC + multi-papel)
+/// Aviso in-app (RF-16). O e-mail é outro canal e ainda não existe.
+model Notificacao {
+  id        String          @id @default(cuid())
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tipo      NotificacaoTipo
+  titulo    String
+  corpo     String
+
+  /// Rota do app que o toque abre, ex.: "/reservas/abc/confirmacao".
+  destino   String?
+  lidaEm    DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([usuarioId, createdAt])
+}
+
+model NotificationPreference {
+  id             String  @id @default(cuid())
+  usuario        Usuario @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId      String  @unique
+  canalWhatsapp  Boolean @default(true)
+  canalEmail     Boolean @default(true)
+  canalPush      Boolean @default(true)
+  marketingOptIn Boolean @default(false)
+}
+
 model Membership {
   id                String   @id @default(cuid())
   usuario           Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -210,15 +243,15 @@ model Quadra {
   estabelecimentoId String
   nome              String
   descricao         String?
-  precoHora         Decimal  @db.Decimal(10, 2) // preço base
+  precoHora         Decimal  @db.Decimal(10, 2)
   capacidade        Int?
-  fotos             String[] // chaves S3
-  comodidades       String[] // vestiário, iluminação, bar...
+  fotos             String[]
+  comodidades       String[]
   ativo             Boolean  @default(true)
   createdAt         DateTime @default(now())
   updatedAt         DateTime @updatedAt
 
-  modalidades Modalidade[] @relation("QuadraModalidade")
+  modalidades Modalidade[]    @relation("QuadraModalidade")
   faixasPreco FaixaPreco[]
   reservas    Reserva[]
   replays     Replay[]
@@ -227,14 +260,13 @@ model Quadra {
   @@index([estabelecimentoId])
 }
 
-// Preço por faixa de horário/dia (RN-04 — pico/fora de pico)
 model FaixaPreco {
   id         String  @id @default(cuid())
   quadra     Quadra  @relation(fields: [quadraId], references: [id], onDelete: Cascade)
   quadraId   String
-  diaSemana  Int?    // null = todos os dias
-  horaInicio String  // "18:00"
-  horaFim    String  // "22:00"
+  diaSemana  Int?
+  horaInicio String
+  horaFim    String
   precoHora  Decimal @db.Decimal(10, 2)
 
   @@index([quadraId])
@@ -248,12 +280,12 @@ model Reserva {
   quadra             Quadra        @relation(fields: [quadraId], references: [id])
   quadraId           String
   cliente            Usuario?      @relation("ReservaCliente", fields: [clienteId], references: [id])
-  clienteId          String?       // null em BLOQUEIO
+  clienteId          String?
   inicio             DateTime
   fim                DateTime
   status             ReservaStatus @default(PENDENTE_PAGAMENTO)
   origem             ReservaOrigem @default(APP)
-  preco              Decimal       @db.Decimal(10, 2) // congelado na criação (RN-12)
+  preco              Decimal       @db.Decimal(10, 2)
   promocao           Promocao?     @relation(fields: [promocaoId], references: [id])
   promocaoId         String?
   canceladaEm        DateTime?
@@ -264,8 +296,10 @@ model Reserva {
   pagamento Pagamento?
   replays   Replay[]
 
-  // 1ª linha contra overbooking; trava real = exclusion constraint (ver fim)
-  @@unique([quadraId, inicio])
+  // Sem índice único aqui: a trava contra overbooking é a exclusion constraint
+  // `reserva_sem_sobreposicao` (ver migrations). Ela cobre sobreposição parcial
+  // e ignora reservas canceladas — um único (quadraId, inicio) faria o oposto:
+  // deixava passar 19:30 sobre 19:00 e prendia para sempre um horário cancelado.
   @@index([estabelecimentoId, inicio])
   @@index([quadraId, inicio, fim])
 }
@@ -277,10 +311,10 @@ model Pagamento {
   valor        Decimal         @db.Decimal(10, 2)
   metodo       PagamentoMetodo @default(PIX)
   status       PagamentoStatus @default(PENDENTE)
-  gatewayId    String?         @unique // id da cobrança no AbacatePay
+  gatewayId    String?         @unique
   pixCopiaCola String?
   qrCodeUrl    String?
-  expiraEm     DateTime?       // RN-13
+  expiraEm     DateTime?
   criadoEm     DateTime        @default(now())
   pagoEm       DateTime?
 
@@ -308,7 +342,7 @@ model Promocao {
   estabelecimentoId String
   codigo            String
   tipo              PromocaoTipo @default(PERCENTUAL)
-  valor             Decimal      @db.Decimal(10, 2) // % ou R$ conforme tipo
+  valor             Decimal      @db.Decimal(10, 2)
   validadeInicio    DateTime
   validadeFim       DateTime
   usosMax           Int?
@@ -350,36 +384,34 @@ model Replay {
   url               String?
   duracaoSeg        Int?
   status            ReplayStatus @default(PROCESSANDO)
-  expiraEm          DateTime?    // retenção (RN-17)
+  expiraEm          DateTime?
   criadoEm          DateTime     @default(now())
 
   @@index([estabelecimentoId])
   @@index([clienteId])
 }
 
-// Lista de espera (RN-11)
 model WaitlistEntry {
-  id          String    @id @default(cuid())
-  quadra      Quadra    @relation(fields: [quadraId], references: [id], onDelete: Cascade)
-  quadraId    String
-  cliente     Usuario   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
-  clienteId   String
-  inicio      DateTime
-  fim         DateTime
+  id           String    @id @default(cuid())
+  quadra       Quadra    @relation(fields: [quadraId], references: [id], onDelete: Cascade)
+  quadraId     String
+  cliente      Usuario   @relation(fields: [clienteId], references: [id], onDelete: Cascade)
+  clienteId    String
+  inicio       DateTime
+  fim          DateTime
   notificadoEm DateTime?
-  criadoEm    DateTime  @default(now())
+  criadoEm     DateTime  @default(now())
 
   @@index([quadraId, inicio])
 }
 
-// Auditoria de ações sensíveis (RN-05)
 model AuditLog {
   id                String   @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   estabelecimentoId String
   autor             Usuario? @relation("AuditAutor", fields: [autorId], references: [id])
   autorId           String?
-  acao              String   // "reserva.cancelar", "preco.alterar", ...
+  acao              String
   entidade          String
   entidadeId        String?
   dados             Json?
@@ -389,16 +421,34 @@ model AuditLog {
 }
 
 // ───────────── Futuro (clubes) — descomentar quando entrar ─────────────
-// model Jogador { id String @id @default(cuid()) /* ... */ }
-// model Time    { id String @id @default(cuid()) /* ... */ }
-// model Plano   { id String @id @default(cuid()) /* mensalidade */ }
-// model Aula    { id String @id @default(cuid()) /* ... */ }
+// model Jogador { id String @id @default(cuid()) }
+// model Time    { id String @id @default(cuid()) }
+// model Plano   { id String @id @default(cuid()) }
+// model Aula    { id String @id @default(cuid()) }
 ```
 
-## Migração anti-overbooking (SQL — RN-01)
-Após `prisma migrate dev`, adicionar uma migração manual:
+## Migrações
+
+Em `apps/api/prisma/migrations/`, aplicadas e verificadas contra PostgreSQL real na CI (job "Migrações e concorrência"):
+
+| Migração | O que faz |
+|---|---|
+| `20260928233000_init` | Linha de base, gerada com `prisma migrate diff --from-empty` (dispensa banco rodando) |
+| `20260928233100_reserva_sem_sobreposicao` | Troca o índice único pela *exclusion constraint* — ver abaixo |
+| `20260929170713_notificacoes` | `Notificacao` e `NotificacaoTipo` (RF-16) |
+
+### Anti-overbooking (RN-01) — por que deixou de ser índice único
+
+O índice único `(quadraId, inicio)` que o schema gerava protegia pouco e atrapalhava muito, porque cobre só o **instante** de início, não o **intervalo**, e vale para **todas** as linhas — inclusive as canceladas. Dois furos:
+
+1. **Sobreposição parcial passava batido:** 19:00–20:00 e 19:30–20:30 têm inícios diferentes, então o índice não via conflito nenhum e o overbooking acontecia.
+2. **O horário cancelado ficava preso para sempre:** a linha cancelada seguia ocupando a chave única, e a criação da nova reserva morria com violação de unicidade — enquanto a grade de disponibilidade já mostrava o horário como livre. O cancelamento (RF-09) tornou esse caminho comum, não teórico.
+
 ```sql
 CREATE EXTENSION IF NOT EXISTS btree_gist;
+
+DROP INDEX IF EXISTS "Reserva_quadraId_inicio_key";
+
 ALTER TABLE "Reserva"
   ADD CONSTRAINT reserva_sem_sobreposicao
   EXCLUDE USING gist (
@@ -408,99 +458,30 @@ ALTER TABLE "Reserva"
   WHERE (status <> 'CANCELADA');
 ```
 
-## Seed de exemplo — `prisma/seed.ts`
-```ts
-import { PrismaClient } from "@prisma/client";
-import { hash } from "argon2";
+- **`btree_gist`** é o que permite misturar a *igualdade* de `quadraId` (texto) com o operador de intervalo no mesmo índice GiST.
+- **`tsrange` usa limites `[início, fim)`** — fechado à esquerda, aberto à direita. É isso que deixa 19:00–20:00 e 20:00–21:00 coexistirem, comportamento esperado de uma grade de slots encostados. Com limites fechados dos dois lados, a grade inteira travaria.
+- **`WHERE (status <> 'CANCELADA')`** devolve o horário ao mercado depois de um cancelamento.
 
-const db = new PrismaClient();
+**Do lado da aplicação:** a violação deixa de ser `P2002` e passa a ser **`23P01`** (`exclusion_violation`), que o Prisma ainda não mapeia para um código próprio — chega como `PrismaClientUnknownRequestError`, sem `code`, com o nome da restrição na mensagem. Por isso `ehConflitoDeHorario` em `reservas.service.ts` reconhece os dois formatos; o `P2002` fica de propósito, para bancos que ainda não receberam a migração. A colisão vira **HTTP 409**, não overbooking.
 
-async function main() {
-  // Estabelecimento + horário (seg–sáb 08:00–22:00)
-  const estab = await db.estabelecimento.upsert({
-    where: { slug: "arena-sapiranga" },
-    update: {},
-    create: {
-      nome: "Arena Sapiranga",
-      slug: "arena-sapiranga",
-      cidade: "Sapiranga",
-      uf: "RS",
-      plano: "PRO",
-      descontoPixPct: 5,
-      horarios: {
-        create: [1, 2, 3, 4, 5, 6].map((d) => ({
-          diaSemana: d, abre: "08:00", fecha: "22:00",
-        })),
-      },
-    },
-  });
+## Seed — `apps/api/prisma/seed.ts`
 
-  // Modalidades
-  const [beach, fute] = await Promise.all([
-    db.modalidade.upsert({ where: { nome: "Beach Tennis" }, update: {},
-      create: { nome: "Beach Tennis", tipo: "BEACH_TENNIS" } }),
-    db.modalidade.upsert({ where: { nome: "Futevôlei" }, update: {},
-      create: { nome: "Futevôlei", tipo: "FUTEVOLEI" } }),
-  ]);
+Idempotente (pode rodar quantas vezes quiser) e desenhado para reproduzir os dados das telas do Figma, de modo que o app suba com conteúdo real:
 
-  // Quadras (com preço de pico 18h–22h)
-  const quadra1 = await db.quadra.create({
-    data: {
-      estabelecimentoId: estab.id,
-      nome: "Quadra 1",
-      precoHora: 80,
-      capacidade: 4,
-      modalidades: { connect: [{ id: beach.id }, { id: fute.id }] },
-      faixasPreco: { create: [{ horaInicio: "18:00", horaFim: "22:00", precoHora: 110 }] },
-    },
-  });
+- **Modalidades:** Beach Tennis, Futevôlei e Vôlei.
+- **Dois estabelecimentos:** *Arena Beach Sapiranga* e *Vila do Vôlei*, com horário de funcionamento, quadras, fotos, comodidades e faixas de preço de pico.
+- **Dois usuários:** um dono (com `Membership` de `ADMIN`) e um cliente. Senha de desenvolvimento igual para os dois.
+- **Promoção** do card da Home e **replays** do cliente para a tela de Replays.
 
-  // Usuários: admin (dono) + cliente
-  const senha = await hash("rally123");
-  const admin = await db.usuario.create({
-    data: {
-      nome: "Lucas (Dono)", email: "dono@arena.com", senhaHash: senha,
-      memberships: { create: { estabelecimentoId: estab.id, role: "ADMIN" } },
-    },
-  });
-  const cliente = await db.usuario.create({
-    data: {
-      nome: "Maria Cliente", email: "maria@email.com", senhaHash: senha,
-      notifPref: { create: { marketingOptIn: true } },
-    },
-  });
-
-  // Promoção
-  await db.promocao.create({
-    data: {
-      estabelecimentoId: estab.id, codigo: "BEM-VINDO", tipo: "PERCENTUAL", valor: 10,
-      validadeInicio: new Date(), validadeFim: new Date(Date.now() + 30 * 864e5), usosMax: 100,
-    },
-  });
-
-  // Reserva confirmada + pagamento pago
-  const inicio = new Date(); inicio.setHours(19, 0, 0, 0);
-  const fim = new Date(inicio); fim.setHours(20, 0, 0, 0);
-  await db.reserva.create({
-    data: {
-      estabelecimentoId: estab.id, quadraId: quadra1.id, clienteId: cliente.id,
-      inicio, fim, status: "CONFIRMADA", origem: "APP", preco: 110,
-      pagamento: { create: { valor: 104.5, metodo: "PIX", status: "PAGO", pagoEm: new Date() } },
-    },
-  });
-
-  console.log("Seed concluído:", { estab: estab.slug, admin: admin.email });
-}
-
-main().then(() => db.$disconnect()).catch((e) => { console.error(e); db.$disconnect(); process.exit(1); });
-```
-Registrar no `package.json` da API: `"prisma": { "seed": "tsx prisma/seed.ts" }` e rodar `pnpm prisma db seed`.
+Os dados são **fictícios** — nenhum dado pessoal real é tratado em desenvolvimento.
 
 ## Comandos
+
 ```bash
-pnpm prisma migrate dev --name init   # cria o banco a partir do schema
-pnpm prisma db seed                   # popula com os dados de exemplo
-pnpm prisma studio                    # inspeciona os dados
+pnpm --filter @rally/api exec prisma migrate deploy   # aplica as migrações existentes
+pnpm --filter @rally/api exec prisma migrate dev      # cria migração a partir do schema
+pnpm --filter @rally/api db:seed                      # popula com os dados de exemplo
+pnpm --filter @rally/api exec prisma studio           # inspeciona os dados
 ```
 
 > Conexões: [Arquitetura e Stack](arquitetura.md) (§15) · [Requisitos](requisitos.md) (RF/RN) · [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md) · [Decisões de Arquitetura (ADRs)](adr/README.md) · [Estrutura do Monorepo](estrutura-monorepo.md).
