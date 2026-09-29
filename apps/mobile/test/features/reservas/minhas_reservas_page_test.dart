@@ -125,10 +125,12 @@ void main() {
   ) async {
     final repo = FakeReservasRepository([
       reservaFalsa(cancelamentoGratuito: false),
-    ])..dentroDoPrazo = false;
+    ])
+      ..dentroDoPrazo = false;
     await abrir(tester, repo);
 
-    await tester.tap(find.widgetWithText(TextButton, "Cancelar (fora do prazo)"));
+    await tester
+        .tap(find.widgetWithText(TextButton, "Cancelar (fora do prazo)"));
     await bombearAteSurgir(tester, confirmarNoDialogo);
     await tester.tap(confirmarNoDialogo);
 
@@ -161,4 +163,3 @@ void main() {
     expect(botaoDoCard, findsOneWidget);
   });
 }
-

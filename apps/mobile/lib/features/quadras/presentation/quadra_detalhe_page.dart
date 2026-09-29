@@ -130,7 +130,8 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
             Image.network(
               foto,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.sand),
+              errorBuilder: (_, __, ___) =>
+                  const ColoredBox(color: AppColors.sand),
             )
           else
             const ColoredBox(color: AppColors.sand),
@@ -140,7 +141,11 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
               gradient: LinearGradient(
                 begin: Alignment.topCenter,
                 end: Alignment.bottomCenter,
-                colors: [Color(0x33000000), Colors.transparent, Color(0x22000000)],
+                colors: [
+                  Color(0x33000000),
+                  Colors.transparent,
+                  Color(0x22000000)
+                ],
               ),
             ),
           ),

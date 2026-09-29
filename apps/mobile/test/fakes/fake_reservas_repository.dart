@@ -74,7 +74,7 @@ class FakeReservasRepository implements ReservasRepository {
   }
 
   /// Argumentos da última chamada a `remarcar`.
-  ( String id, DateTime inicio, DateTime fim )? remarcacao;
+  (String id, DateTime inicio, DateTime fim)? remarcacao;
 
   @override
   Future<Reserva> remarcar(

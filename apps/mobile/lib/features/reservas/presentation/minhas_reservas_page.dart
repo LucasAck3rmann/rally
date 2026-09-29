@@ -64,7 +64,8 @@ class MinhasReservasPage extends ConsumerWidget {
                 if (lista.isEmpty) {
                   return const EstadoVazio(
                     titulo: "Nenhuma reserva ainda",
-                    descricao: "Escolha uma quadra na Home e garanta seu horário.",
+                    descricao:
+                        "Escolha uma quadra na Home e garanta seu horário.",
                   );
                 }
                 return Column(
@@ -163,9 +164,8 @@ class _CardReservaState extends ConsumerState<_CardReserva> {
   Future<void> _cancelar() async {
     setState(() => _cancelando = true);
     try {
-      final resultado = await ref
-          .read(reservasRepositoryProvider)
-          .cancelar(reserva.id);
+      final resultado =
+          await ref.read(reservasRepositoryProvider).cancelar(reserva.id);
       if (!mounted) return;
       // A lista se refaz sozinha; este card sai de cena com ela.
       ref.invalidate(minhasReservasProvider);
@@ -354,7 +354,8 @@ class _CardReservaState extends ConsumerState<_CardReserva> {
         color: fundo,
         borderRadius: BorderRadius.circular(999),
       ),
-      child: Text(status.rotulo.toUpperCase(), style: AppText.rotulo(10, cor: texto)),
+      child: Text(status.rotulo.toUpperCase(),
+          style: AppText.rotulo(10, cor: texto)),
     );
   }
 }

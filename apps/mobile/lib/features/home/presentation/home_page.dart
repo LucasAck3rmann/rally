@@ -91,8 +91,9 @@ class _HomePageState extends ConsumerState<HomePage> {
                       CabecalhoSecao(
                         titulo: "Quadras perto de você",
                         acao: modalidade == null ? null : "Ver todas",
-                        onAcao: () =>
-                            ref.read(modalidadeFiltroProvider.notifier).state = null,
+                        onAcao: () => ref
+                            .read(modalidadeFiltroProvider.notifier)
+                            .state = null,
                       ),
                       const SizedBox(height: 14),
                       _vitrine(quadras),

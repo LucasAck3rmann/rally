@@ -117,7 +117,8 @@ class ReplaysPage extends ConsumerWidget {
 /// Abre o arquivo do clipe no navegador/player do sistema, de onde o usuário
 /// salva o vídeo. O download dentro do app entra junto com o player (fase 2).
 Future<void> _baixar(Replay replay) {
-  return launchUrl(Uri.parse(replay.url!), mode: LaunchMode.externalApplication);
+  return launchUrl(Uri.parse(replay.url!),
+      mode: LaunchMode.externalApplication);
 }
 
 /// Compartilha o clipe (link do replay quando já processado).
@@ -295,7 +296,8 @@ class _Linha extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const RallyIcon("relogio", tamanho: 14, cor: AppColors.gray),
+                    const RallyIcon("relogio",
+                        tamanho: 14, cor: AppColors.gray),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
@@ -318,7 +320,8 @@ class _Linha extends StatelessWidget {
           IconButton(
             tooltip: "Compartilhar",
             onPressed: () => _compartilhar(replay),
-            icon: const RallyIcon("compartilhar", tamanho: 20, cor: AppColors.ink),
+            icon: const RallyIcon("compartilhar",
+                tamanho: 20, cor: AppColors.ink),
           ),
         ],
       ),

@@ -61,8 +61,7 @@ class HeaderCard extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final recorte =
-        aplicarAreaSegura ? MediaQuery.paddingOf(context).top : 0.0;
+    final recorte = aplicarAreaSegura ? MediaQuery.paddingOf(context).top : 0.0;
 
     return Container(
       width: double.infinity,

@@ -29,8 +29,7 @@ class RallyIcon extends StatelessWidget {
       "assets/icons/$nome.svg",
       width: tamanho,
       height: tamanho,
-      colorFilter:
-          cor == null ? null : ColorFilter.mode(cor!, BlendMode.srcIn),
+      colorFilter: cor == null ? null : ColorFilter.mode(cor!, BlendMode.srcIn),
     );
   }
 }
