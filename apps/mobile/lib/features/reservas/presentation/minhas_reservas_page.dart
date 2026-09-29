@@ -83,10 +83,110 @@ class MinhasReservasPage extends ConsumerWidget {
   }
 }
 
-class _CardReserva extends StatelessWidget {
+class _CardReserva extends ConsumerStatefulWidget {
   const _CardReserva({required this.reserva});
 
   final Reserva reserva;
+
+  @override
+  ConsumerState<_CardReserva> createState() => _CardReservaState();
+}
+
+class _CardReservaState extends ConsumerState<_CardReserva> {
+  bool _cancelando = false;
+
+  Reserva get reserva => widget.reserva;
+
+  /// Pergunta antes de cancelar, dizendo com todas as letras o que a política
+  /// do estabelecimento (RN-02) implica neste horário — dentro do prazo o
+  /// horário só volta a ficar livre; fora dele, o valor não volta.
+  Future<void> _confirmarCancelamento() async {
+    final gratuito = reserva.cancelamentoGratuito;
+    final horas = reserva.cancelamentoHoras;
+
+    final confirmou = await showDialog<bool>(
+      context: context,
+      builder: (dialogo) => AlertDialog(
+        backgroundColor: AppColors.white,
+        shape: RoundedRectangleBorder(
+          borderRadius: BorderRadius.circular(18),
+        ),
+        title: Text("Cancelar reserva?", style: AppText.titulo(18)),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Text(
+              "${reserva.estabelecimentoNome} · "
+              "${Formato.diaCurto(reserva.inicio)}, ${reserva.faixaHoraria}",
+              style: AppText.corpo(14, peso: FontWeight.w600),
+            ),
+            const SizedBox(height: 12),
+            Text(
+              gratuito
+                  ? "Você está dentro do prazo de $horas h. O horário volta a "
+                      "ficar livre para outras pessoas."
+                  : "Fora do prazo de $horas h: o horário é liberado, mas o "
+                      "valor não é devolvido.",
+              style: AppText.corpo(
+                13,
+                cor: gratuito ? AppColors.gray : AppColors.coralDeep,
+              ),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () => Navigator.of(dialogo).pop(false),
+            child: Text(
+              "Manter",
+              style: AppText.corpo(14, peso: FontWeight.w600),
+            ),
+          ),
+          FilledButton(
+            onPressed: () => Navigator.of(dialogo).pop(true),
+            style: FilledButton.styleFrom(
+              minimumSize: const Size(0, 44),
+              padding: const EdgeInsets.symmetric(horizontal: 18),
+            ),
+            child: const Text("Cancelar reserva"),
+          ),
+        ],
+      ),
+    );
+
+    if (confirmou != true || !mounted) return;
+    await _cancelar();
+  }
+
+  Future<void> _cancelar() async {
+    setState(() => _cancelando = true);
+    try {
+      final resultado = await ref
+          .read(reservasRepositoryProvider)
+          .cancelar(reserva.id);
+      if (!mounted) return;
+      // A lista se refaz sozinha; este card sai de cena com ela.
+      ref.invalidate(minhasReservasProvider);
+      _aviso(
+        resultado.dentroDoPrazo
+            ? "Reserva cancelada dentro do prazo."
+            : "Reserva cancelada fora do prazo — sem devolução do valor.",
+      );
+    } catch (erro) {
+      if (!mounted) return;
+      setState(() => _cancelando = false);
+      _aviso(erro.toString());
+    }
+  }
+
+  void _aviso(String mensagem) {
+    ScaffoldMessenger.of(context)
+      ..hideCurrentSnackBar()
+      ..showSnackBar(
+        SnackBar(backgroundColor: AppColors.ink, content: Text(mensagem)),
+      );
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -95,67 +195,113 @@ class _CardReserva extends StatelessWidget {
     return Material(
       color: AppColors.white,
       borderRadius: BorderRadius.circular(16),
-      child: InkWell(
-        borderRadius: BorderRadius.circular(16),
-        onTap: () => context.push(
-          aguardando
-              ? "/reservas/${reserva.id}/pagamento"
-              : "/reservas/${reserva.id}/confirmacao",
+      child: Container(
+        decoration: BoxDecoration(
+          borderRadius: BorderRadius.circular(16),
+          border: Border.all(color: AppColors.line),
         ),
-        child: Container(
-          padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
-          decoration: BoxDecoration(
-            borderRadius: BorderRadius.circular(16),
-            border: Border.all(color: AppColors.line),
-          ),
-          child: Row(
-            children: [
-              ClipRRect(
-                borderRadius: BorderRadius.circular(12),
-                child: SizedBox(
-                  width: 64,
-                  height: 64,
-                  child: reserva.foto == null
-                      ? const ColoredBox(color: AppColors.sand)
-                      : Image.network(
-                          reserva.foto!,
-                          fit: BoxFit.cover,
-                          errorBuilder: (_, __, ___) =>
-                              const ColoredBox(color: AppColors.sand),
-                        ),
-                ),
+        child: Column(
+          children: [
+            InkWell(
+              borderRadius: BorderRadius.circular(16),
+              onTap: () => context.push(
+                aguardando
+                    ? "/reservas/${reserva.id}/pagamento"
+                    : "/reservas/${reserva.id}/confirmacao",
               ),
-              const SizedBox(width: 12),
-              Expanded(
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(10, 10, 14, 10),
+                child: Row(
                   children: [
+                    ClipRRect(
+                      borderRadius: BorderRadius.circular(12),
+                      child: SizedBox(
+                        width: 64,
+                        height: 64,
+                        child: reserva.foto == null
+                            ? const ColoredBox(color: AppColors.sand)
+                            : Image.network(
+                                reserva.foto!,
+                                fit: BoxFit.cover,
+                                errorBuilder: (_, __, ___) =>
+                                    const ColoredBox(color: AppColors.sand),
+                              ),
+                      ),
+                    ),
+                    const SizedBox(width: 12),
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            reserva.estabelecimentoNome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.titulo(15),
+                          ),
+                          const SizedBox(height: 3),
+                          Text(
+                            "${Formato.diaCurto(reserva.inicio)} · ${reserva.faixaHoraria}"
+                                .toUpperCase(),
+                            style: AppText.rotulo(11),
+                          ),
+                          const SizedBox(height: 6),
+                          _selo(reserva.status),
+                        ],
+                      ),
+                    ),
+                    const SizedBox(width: 10),
                     Text(
-                      reserva.estabelecimentoNome,
-                      maxLines: 1,
-                      overflow: TextOverflow.ellipsis,
+                      Formato.moeda(reserva.valorAPagar),
                       style: AppText.titulo(15),
                     ),
-                    const SizedBox(height: 3),
-                    Text(
-                      "${Formato.diaCurto(reserva.inicio)} · ${reserva.faixaHoraria}"
-                          .toUpperCase(),
-                      style: AppText.rotulo(11),
-                    ),
-                    const SizedBox(height: 6),
-                    _selo(reserva.status),
                   ],
                 ),
               ),
-              const SizedBox(width: 10),
-              Text(
-                Formato.moeda(reserva.valorAPagar),
-                style: AppText.titulo(15),
-              ),
-            ],
-          ),
+            ),
+            if (reserva.cancelavel) _rodapeCancelar(),
+          ],
         ),
       ),
+    );
+  }
+
+  Widget _rodapeCancelar() {
+    return Column(
+      children: [
+        const Divider(height: 1, thickness: 1, color: AppColors.line),
+        TextButton(
+          onPressed: _cancelando ? null : _confirmarCancelamento,
+          style: TextButton.styleFrom(
+            // Alvo de toque de 44px, como pede o DESIGN.md.
+            minimumSize: const Size.fromHeight(44),
+            shape: const RoundedRectangleBorder(
+              borderRadius: BorderRadius.vertical(
+                bottom: Radius.circular(16),
+              ),
+            ),
+          ),
+          child: _cancelando
+              ? const SizedBox(
+                  width: 18,
+                  height: 18,
+                  child: CircularProgressIndicator(
+                    strokeWidth: 2,
+                    color: AppColors.coralDeep,
+                  ),
+                )
+              : Text(
+                  reserva.cancelamentoGratuito
+                      ? "Cancelar reserva"
+                      : "Cancelar (fora do prazo)",
+                  style: AppText.corpo(
+                    13,
+                    cor: AppColors.coralDeep,
+                    peso: FontWeight.w600,
+                  ),
+                ),
+        ),
+      ],
     );
   }
 

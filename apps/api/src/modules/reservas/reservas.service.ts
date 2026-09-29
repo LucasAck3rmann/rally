@@ -26,6 +26,7 @@ const COM_CONTEXTO = {
   status: true,
   preco: true,
   createdAt: true,
+  canceladaEm: true,
   quadra: {
     select: {
       id: true,
@@ -33,7 +34,15 @@ const COM_CONTEXTO = {
       fotos: true,
       modalidades: { select: { nome: true } },
       estabelecimento: {
-        select: { id: true, nome: true, bairro: true, cidade: true, uf: true, timezone: true },
+        select: {
+          id: true,
+          nome: true,
+          bairro: true,
+          cidade: true,
+          uf: true,
+          timezone: true,
+          cancelamentoHoras: true,
+        },
       },
     },
   },
@@ -49,6 +58,27 @@ const COM_CONTEXTO = {
     },
   },
 } satisfies Prisma.ReservaSelect;
+
+/**
+ * A corrida por um mesmo horário estoura no banco, não na aplicação.
+ *
+ * Com o índice único era um `P2002` limpo. Com a exclusion constraint o
+ * Postgres levanta 23P01 (`exclusion_violation`), que o Prisma ainda não
+ * mapeia para um código próprio — sobra reconhecer a constraint pelo nome.
+ * O `P2002` fica no teste para cobrir bancos que ainda não receberam a
+ * migração.
+ */
+export function ehConflitoDeHorario(erro: unknown): boolean {
+  if (
+    erro instanceof Prisma.PrismaClientKnownRequestError &&
+    erro.code === "P2002"
+  ) {
+    return true;
+  }
+  return (
+    erro instanceof Error && erro.message.includes("reserva_sem_sobreposicao")
+  );
+}
 
 @Injectable()
 export class ReservasService {
@@ -163,7 +193,7 @@ export class ReservasService {
         select: { id: true },
       });
     } catch (erro) {
-      if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
+      if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
       }
       throw erro;
@@ -190,6 +220,73 @@ export class ReservasService {
     return this.detalhe(reserva.id, usuarioId);
   }
 
+  /**
+   * Cancela uma reserva do cliente (RF-09, RN-02).
+   *
+   * A janela de `cancelamentoHoras` do estabelecimento não decide *se* dá para
+   * cancelar, e sim se o cancelamento é **no prazo**: fora dele o cliente
+   * ainda libera o slot, mas sem direito a devolução. O estorno em si é o
+   * RF-15 e ainda não existe — por isso devolvemos `dentroDoPrazo`, que é um
+   * fato, em vez de prometer reembolso.
+   */
+  async cancelar(id: string, usuarioId: string, motivo?: string) {
+    const reserva = await this.prisma.reserva.findFirst({
+      where: { id, clienteId: usuarioId },
+      select: {
+        id: true,
+        inicio: true,
+        status: true,
+        quadra: {
+          select: { estabelecimento: { select: { cancelamentoHoras: true } } },
+        },
+        pagamento: { select: { id: true, status: true } },
+      },
+    });
+    if (!reserva) {
+      throw new NotFoundException("Reserva não encontrada.");
+    }
+    if (reserva.status === ReservaStatus.CANCELADA) {
+      throw new ConflictException("Esta reserva já foi cancelada.");
+    }
+    if (
+      reserva.status !== ReservaStatus.PENDENTE_PAGAMENTO &&
+      reserva.status !== ReservaStatus.CONFIRMADA
+    ) {
+      throw new ConflictException("Esta reserva não pode mais ser cancelada.");
+    }
+
+    const agora = new Date();
+    if (reserva.inicio <= agora) {
+      throw new ConflictException("O horário da reserva já começou.");
+    }
+
+    const horas = reserva.quadra.estabelecimento.cancelamentoHoras;
+    const dentroDoPrazo =
+      agora <= new Date(reserva.inicio.getTime() - horas * 60 * 60 * 1000);
+
+    await this.prisma.$transaction(async (tx) => {
+      await tx.reserva.update({
+        where: { id: reserva.id },
+        data: {
+          status: ReservaStatus.CANCELADA,
+          canceladaEm: agora,
+          motivoCancelamento: motivo?.trim() || "Cancelada pelo cliente",
+        },
+      });
+      // A cobrança em aberto morre junto: sem isto o app continuaria
+      // oferecendo "pagar" numa reserva que não existe mais. Um status
+      // próprio (CANCELADO) diria melhor que EXPIRADO, mas pede migração.
+      if (reserva.pagamento?.status === PagamentoStatus.PENDENTE) {
+        await tx.pagamento.update({
+          where: { id: reserva.pagamento.id },
+          data: { status: PagamentoStatus.EXPIRADO },
+        });
+      }
+    });
+
+    return { ...(await this.detalhe(id, usuarioId)), dentroDoPrazo };
+  }
+
   private paraDto(r: {
     id: string;
     inicio: Date;
@@ -197,6 +294,7 @@ export class ReservasService {
     status: ReservaStatus;
     preco: Prisma.Decimal;
     createdAt: Date;
+    canceladaEm: Date | null;
     quadra: {
       id: string;
       nome: string;
@@ -209,6 +307,7 @@ export class ReservasService {
         cidade: string | null;
         uf: string | null;
         timezone: string;
+        cancelamentoHoras: number;
       };
     };
     pagamento: {
@@ -230,6 +329,15 @@ export class ReservasService {
         minute: "2-digit",
       }).format(quando);
 
+    const est = r.quadra.estabelecimento;
+    const agora = new Date();
+    const gratuitoAte = new Date(
+      r.inicio.getTime() - est.cancelamentoHoras * 60 * 60 * 1000,
+    );
+    const ativa =
+      r.status === ReservaStatus.PENDENTE_PAGAMENTO ||
+      r.status === ReservaStatus.CONFIRMADA;
+
     return {
       id: r.id,
       // Código curto e legível, como no comprovante do Figma (#RALLY-7K2P).
@@ -241,6 +349,11 @@ export class ReservasService {
       status: r.status,
       preco: Number(r.preco),
       criadaEm: r.createdAt.toISOString(),
+      canceladaEm: r.canceladaEm?.toISOString() ?? null,
+      cancelavel: ativa && r.inicio > agora,
+      cancelamentoHoras: est.cancelamentoHoras,
+      cancelamentoGratuitoAte: gratuitoAte.toISOString(),
+      cancelamentoGratuito: ativa && agora <= gratuitoAte,
       quadra: {
         id: r.quadra.id,
         nome: r.quadra.nome,

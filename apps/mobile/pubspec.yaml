@@ -18,7 +18,7 @@ dependencies:
   google_fonts: ^6.2.1 # Sora / Inter / Space Mono
   flutter_svg: ^2.0.10 # ícones de linha exportados do Figma
   qr_flutter: ^4.1.0 # QR do Pix desenhado a partir do copia e cola
-  intl: ^0.19.0 # datas e moeda em pt-BR
+  intl: ^0.20.3 # datas e moeda em pt-BR (exigido pelo flutter_localizations)
   share_plus: ^10.0.2 # compartilhar reserva e replay
   url_launcher: ^6.3.0 # "adicionar à agenda" e links externos
 

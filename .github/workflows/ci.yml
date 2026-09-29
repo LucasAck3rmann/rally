@@ -22,6 +22,54 @@ jobs:
       - run: pnpm test
       - run: pnpm build
 
+  mobile:
+    name: App Flutter
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/mobile
+    steps:
+      - uses: actions/checkout@v7
+      # Versão fixa, como o Node 22 do job acima: CI e máquina de
+      # desenvolvimento compilam o app com o mesmo SDK.
+      - uses: subosito/flutter-action@v2
+        with: { flutter-version: 3.47.5, channel: stable, cache: true }
+      - run: flutter pub get
+      - run: flutter analyze
+      - run: flutter test
+
+  banco:
+    name: Migrações e concorrência
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: rally
+          POSTGRES_PASSWORD: rally
+          POSTGRES_DB: rally
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U rally"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://rally:rally@localhost:5432/rally
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      # Rodar as migrações num banco limpo é o que valida o SQL escrito à mão
+      # da exclusion constraint — sem isto, um erro nela só apareceria no deploy.
+      - run: pnpm --filter @rally/api exec prisma migrate deploy
+      - run: pnpm --filter @rally/api exec prisma db seed
+      # Com DATABASE_URL definida, a suíte inclui os testes de integração que
+      # provam a trava contra overbooking (RN-01), inclusive sob corrida.
+      - run: pnpm --filter @rally/api test
+
   security:
     name: Varredura de segredos
     runs-on: ubuntu-latest
