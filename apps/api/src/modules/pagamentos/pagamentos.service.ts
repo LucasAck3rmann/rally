@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ForbiddenException, Inject, Injectable, NotFoundException } from "@nestjs/common";
-import { PagamentoStatus, ReservaStatus } from "@prisma/client";
+import { NotificacaoTipo, PagamentoStatus, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
+import { NotificacoesService } from "../notificacoes/notificacoes.service";
 import { PIX_PROVIDER, PixProvider } from "./pix-provider";
 
 @Injectable()
@@ -10,6 +11,7 @@ export class PagamentosService {
   constructor(
     private readonly prisma: PrismaService,
     @Inject(PIX_PROVIDER) private readonly pix: PixProvider,
+    private readonly notificacoes: NotificacoesService,
   ) {}
 
   /** Cria a cobrança Pix de uma reserva recém-aberta. */
@@ -33,7 +35,18 @@ export class PagamentosService {
 
     const reserva = await this.prisma.reserva.findUnique({
       where: { id: reservaId },
-      select: { id: true, clienteId: true, pagamento: { select: { id: true } } },
+      select: {
+        id: true,
+        clienteId: true,
+        inicio: true,
+        pagamento: { select: { id: true } },
+        quadra: {
+          select: {
+            nome: true,
+            estabelecimento: { select: { nome: true, timezone: true } },
+          },
+        },
+      },
     });
     if (!reserva || !reserva.pagamento) {
       throw new NotFoundException("Reserva ou pagamento não encontrado.");
@@ -53,6 +66,41 @@ export class PagamentosService {
       }),
     ]);
 
+    await this.avisarConfirmacao(reserva);
+
     return { status: PagamentoStatus.PAGO };
+  }
+
+  /**
+   * Avisa o cliente de que a reserva foi confirmada (RF-16).
+   *
+   * Fica depois da transação de propósito: o aviso é consequência do
+   * pagamento, não condição dele.
+   */
+  private avisarConfirmacao(reserva: {
+    id: string;
+    clienteId: string | null;
+    inicio: Date;
+    quadra: { nome: string; estabelecimento: { nome: string; timezone: string } };
+  }) {
+    if (!reserva.clienteId) return Promise.resolve();
+
+    const est = reserva.quadra.estabelecimento;
+    const quando = new Intl.DateTimeFormat("pt-BR", {
+      timeZone: est.timezone,
+      day: "2-digit",
+      month: "2-digit",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).format(reserva.inicio);
+
+    return this.notificacoes.registrar({
+      usuarioId: reserva.clienteId,
+      tipo: NotificacaoTipo.PAGAMENTO,
+      titulo: "Pagamento confirmado",
+      corpo: `${est.nome} · ${reserva.quadra.nome} — ${quando}`,
+      destino: `/reservas/${reserva.id}/confirmacao`,
+    });
   }
 }

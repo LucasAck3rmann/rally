@@ -74,7 +74,11 @@ class PerfilPage extends ConsumerWidget {
               const SizedBox(height: 10),
               const _ItemMenu(icone: "pagamentos", rotulo: "Pagamentos"),
               const SizedBox(height: 10),
-              const _ItemMenu(icone: "sino", rotulo: "Notificações"),
+              _ItemMenu(
+                icone: "sino",
+                rotulo: "Notificações",
+                onTap: () => context.push("/notificacoes"),
+              ),
               const SizedBox(height: 10),
               const _ItemMenu(icone: "ajuda", rotulo: "Ajuda"),
               const SizedBox(height: 10),
@@ -185,7 +189,7 @@ class _ItemMenu extends StatelessWidget {
     final cor = destrutivo ? AppColors.coralDeep : AppColors.ink;
 
     return Opacity(
-      // Itens sem destino ainda (Pagamentos, Notificações, Ajuda) ficam
+      // Itens sem destino ainda (Pagamentos, Ajuda) ficam
       // visivelmente inativos em vez de responder a um toque sem efeito.
       opacity: onTap == null ? 0.6 : 1,
       child: Material(

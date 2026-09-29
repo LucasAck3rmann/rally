@@ -135,6 +135,7 @@ model Usuario {
   accounts      Account[]
   refreshTokens RefreshToken[]
   notifPref     NotificationPreference?
+  notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
   auditLogs     AuditLog[]              @relation("AuditAutor")
 }
@@ -160,6 +161,32 @@ model RefreshToken {
   criadoEm   DateTime  @default(now())
 
   @@index([usuarioId])
+}
+
+/// Tipos que a tela de Notificações agrupa (ver Telas e Fluxos).
+enum NotificacaoTipo {
+  RESERVA
+  PAGAMENTO
+  REPLAY
+  PROMOCAO
+  LEMBRETE
+}
+
+/// Aviso in-app (RF-16). O e-mail é outro canal e ainda não existe.
+model Notificacao {
+  id        String          @id @default(cuid())
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tipo      NotificacaoTipo
+  titulo    String
+  corpo     String
+
+  /// Rota do app que o toque abre, ex.: "/reservas/abc/confirmacao".
+  destino   String?
+  lidaEm    DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([usuarioId, createdAt])
 }
 
 model NotificationPreference {
