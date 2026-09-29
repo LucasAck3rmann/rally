@@ -71,7 +71,12 @@ jobs:
       - run: pnpm --filter @rally/api exec prisma db seed
       # Com DATABASE_URL definida, a suíte inclui os testes de integração que
       # provam a trava contra overbooking (RN-01), inclusive sob corrida.
-      - run: pnpm --filter @rally/api test
+      #
+      # A cobertura (RNF-13) é medida aqui, e não no job sem banco, porque é
+      # aqui que a suíte roda inteira: `criar()` só é exercitado pelos testes
+      # de integração, e medir sem eles produziria um número mais baixo que o
+      # real. O piso está no `coverageThreshold` do jest.config.js.
+      - run: pnpm --filter @rally/api test:cov
 
   security:
     name: Varredura de segredos
