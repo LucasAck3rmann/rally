@@ -35,7 +35,10 @@ class IntersectionObserverStub {
   readonly thresholds: number[] = [];
 }
 
-vi.stubGlobal("IntersectionObserver", IntersectionObserverStub);
+// Atribuição direta, e não `vi.stubGlobal`: um `vi.unstubAllGlobals()` em
+// qualquer teste levaria o stub junto, e o next/link quebraria no prefetch.
+globalThis.IntersectionObserver =
+  IntersectionObserverStub as unknown as typeof IntersectionObserver;
 
 // O next/image depende do pipeline de imagens do Next; no teste interessa só o
 // `alt` e o `src`, então ele vira um `img` comum.

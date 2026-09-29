@@ -1,4 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import Link from "next/link";
 import type { ReactNode } from "react";
 import { cn } from "@/lib/cn";
 
@@ -29,15 +30,28 @@ export function LinkButton({
   className?: string;
   external?: boolean;
 }) {
+  const classes = cn(
+    "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-button px-5 py-3 text-[15px] font-semibold leading-none transition",
+    variantes[variant],
+    className,
+  );
+
+  // Rota interna navega pelo Link do Next; âncora, mailto e link externo são
+  // `a` mesmo — o Link não acrescenta nada a eles.
+  const interno = href.startsWith("/") && !external;
+  if (interno) {
+    return (
+      <Link href={href} className={classes}>
+        {children}
+      </Link>
+    );
+  }
+
   return (
     <a
       href={href}
       {...(external ? { target: "_blank", rel: "noreferrer" } : {})}
-      className={cn(
-        "inline-flex min-h-[44px] items-center justify-center gap-2 rounded-button px-5 py-3 text-[15px] font-semibold leading-none transition",
-        variantes[variant],
-        className,
-      )}
+      className={classes}
     >
       {children}
     </a>

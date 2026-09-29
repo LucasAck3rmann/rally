@@ -2,9 +2,9 @@
 import { Faq } from "@/components/landing/faq";
 import { Features } from "@/components/landing/features";
 import { FinalCta } from "@/components/landing/final-cta";
-import { Footer } from "@/components/landing/footer";
+import { Footer } from "@/components/site/footer";
 import { Gallery } from "@/components/landing/gallery";
-import { Header } from "@/components/landing/header";
+import { Header } from "@/components/site/header";
 import { Hero } from "@/components/landing/hero";
 import { HowItWorks } from "@/components/landing/how-it-works";
 import { Integrations } from "@/components/landing/integrations";
