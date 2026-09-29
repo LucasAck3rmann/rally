@@ -96,6 +96,10 @@ class Reserva {
     required this.estabelecimentoNome,
     required this.modalidades,
     required this.fotos,
+    required this.cancelavel,
+    required this.cancelamentoGratuito,
+    required this.cancelamentoHoras,
+    this.canceladaEm,
     this.pagamento,
   });
 
@@ -116,6 +120,16 @@ class Reserva {
   final String estabelecimentoNome;
   final List<String> modalidades;
   final List<String> fotos;
+
+  /// Quem decide é a API: reserva ativa e horário ainda no futuro (RF-09).
+  final bool cancelavel;
+
+  /// Dentro da janela de cancelamento do estabelecimento (RN-02).
+  final bool cancelamentoGratuito;
+
+  /// Tamanho dessa janela, em horas — o texto da tela usa este número.
+  final int cancelamentoHoras;
+  final DateTime? canceladaEm;
   final Pagamento? pagamento;
 
   String get faixaHoraria => "$horaInicio – $horaFim";
@@ -128,6 +142,7 @@ class Reserva {
     final quadra = json["quadra"] as Map<String, dynamic>;
     final estabelecimento = quadra["estabelecimento"] as Map<String, dynamic>;
     final pagamento = json["pagamento"] as Map<String, dynamic>?;
+    final cancelada = json["canceladaEm"] as String?;
 
     return Reserva(
       id: json["id"] as String,
@@ -143,6 +158,11 @@ class Reserva {
       estabelecimentoNome: estabelecimento["nome"] as String,
       modalidades: (quadra["modalidades"] as List?)?.cast<String>() ?? const [],
       fotos: (quadra["fotos"] as List?)?.cast<String>() ?? const [],
+      cancelavel: json["cancelavel"] as bool? ?? false,
+      cancelamentoGratuito: json["cancelamentoGratuito"] as bool? ?? false,
+      cancelamentoHoras: (json["cancelamentoHoras"] as num?)?.toInt() ?? 0,
+      canceladaEm:
+          cancelada == null ? null : DateTime.parse(cancelada).toLocal(),
       pagamento: pagamento == null ? null : Pagamento.doJson(pagamento),
     );
   }

@@ -60,6 +60,24 @@ class ReservasRepositoryImpl implements ReservasRepository {
   }
 
   @override
+  Future<ResultadoCancelamento> cancelar(String id, {String? motivo}) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/reservas/$id/cancelar",
+          data: {if (motivo != null) "motivo": motivo},
+        );
+        final corpo = res.data!;
+        return ResultadoCancelamento(
+          reserva: Reserva.doJson(corpo),
+          dentroDoPrazo: corpo["dentroDoPrazo"] as bool? ?? false,
+        );
+      },
+      erroPadrao: "Não foi possível cancelar a reserva.",
+    );
+  }
+
+  @override
   Future<void> simularPagamento(String reservaId) {
     return chamarApi(
       () => _dio.post<Map<String, dynamic>>(
