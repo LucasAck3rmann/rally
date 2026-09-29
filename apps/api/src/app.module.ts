@@ -8,6 +8,7 @@ import { ReplaysModule } from "./modules/replays/replays.module";
 import { PagamentosModule } from "./modules/pagamentos/pagamentos.module";
 import { PromocoesModule } from "./modules/promocoes/promocoes.module";
 import { AuthModule } from "./modules/auth/auth.module";
+import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 
 @Module({
   imports: [
@@ -20,6 +21,7 @@ import { AuthModule } from "./modules/auth/auth.module";
     PagamentosModule,
     ReservasModule,
     ReplaysModule,
+    NotificacoesModule,
   ],
 })
 export class AppModule {}

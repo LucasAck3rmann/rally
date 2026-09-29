@@ -6,6 +6,7 @@ import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
 import "../../features/home/presentation/home_page.dart";
+import "../../features/notificacoes/presentation/notificacoes_page.dart";
 import "../../features/perfil/presentation/perfil_page.dart";
 import "../../features/quadras/presentation/quadra_detalhe_page.dart";
 import "../../features/replays/presentation/replays_page.dart";
@@ -66,7 +67,6 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: "/splash", builder: (_, __) => const SplashPage()),
       GoRoute(path: "/login", builder: (_, __) => const LoginPage()),
       GoRoute(path: "/cadastro", builder: (_, __) => const CadastroPage()),
-
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -83,7 +83,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: "/replays", builder: (_, __) => const ReplaysPage()),
+              GoRoute(
+                  path: "/replays", builder: (_, __) => const ReplaysPage()),
             ],
           ),
           StatefulShellBranch(
@@ -93,7 +94,11 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-
+      GoRoute(
+        path: "/notificacoes",
+        parentNavigatorKey: _raiz,
+        builder: (_, __) => const NotificacoesPage(),
+      ),
       GoRoute(
         path: "/quadras/:id",
         parentNavigatorKey: _raiz,
