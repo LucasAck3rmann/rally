@@ -3,6 +3,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 
 import "../../features/auth/presentation/auth_controller.dart";
+import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
 import "../../features/home/presentation/home_page.dart";
 import "../../features/perfil/presentation/perfil_page.dart";
@@ -17,9 +18,12 @@ import "../../features/splash/presentation/splash_page.dart";
 
 final _raiz = GlobalKey<NavigatorState>();
 
+/// Telas que se abrem **sem sessão**: entrar e criar conta.
+const rotasPublicas = {"/login", "/cadastro"};
+
 /// Rotas do app do cliente com **guard de autenticação**:
 /// - carregando (checando token) → `/splash`
-/// - sem sessão → `/login`
+/// - sem sessão → `/login` (ou `/cadastro`)
 /// - com sessão → as abas (`/`, `/reservas`, `/replays`, `/perfil`)
 ///
 /// O fluxo de reserva (detalhe → checkout → Pix → confirmação) fica **fora**
@@ -27,7 +31,15 @@ final _raiz = GlobalKey<NavigatorState>();
 final appRouterProvider = Provider<GoRouter>((ref) {
   // Reavalia o redirect sempre que o estado de auth muda.
   final refresh = ValueNotifier<int>(0);
-  ref.listen(authControllerProvider, (_, __) => refresh.value++);
+
+  // O `/splash` cobre apenas a checagem do token guardado, no arranque.
+  // Depois dela, um `AsyncLoading` é login ou cadastro em curso: a tela
+  // precisa continuar montada para mostrar o spinner e, se falhar, o erro.
+  var sessaoVerificada = false;
+  ref.listen(authControllerProvider, (_, proximo) {
+    if (!proximo.isLoading) sessaoVerificada = true;
+    refresh.value++;
+  });
   ref.onDispose(refresh.dispose);
 
   return GoRouter(
@@ -38,14 +50,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       final auth = ref.read(authControllerProvider);
       final loc = state.matchedLocation;
 
-      if (auth.isLoading) {
+      if (auth.isLoading && !sessaoVerificada) {
         return loc == "/splash" ? null : "/splash";
       }
       final logado = auth.valueOrNull != null;
       if (!logado) {
-        return loc == "/login" ? null : "/login";
+        return rotasPublicas.contains(loc) ? null : "/login";
       }
-      if (loc == "/login" || loc == "/splash") {
+      if (rotasPublicas.contains(loc) || loc == "/splash") {
         return "/";
       }
       return null;
@@ -53,6 +65,7 @@ final appRouterProvider = Provider<GoRouter>((ref) {
     routes: [
       GoRoute(path: "/splash", builder: (_, __) => const SplashPage()),
       GoRoute(path: "/login", builder: (_, __) => const LoginPage()),
+      GoRoute(path: "/cadastro", builder: (_, __) => const CadastroPage()),
 
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),

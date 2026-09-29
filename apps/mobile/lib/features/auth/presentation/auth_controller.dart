@@ -18,6 +18,18 @@ class AuthController extends AsyncNotifier<AuthUser?> {
     );
   }
 
+  /// Cria a conta e já abre a sessão — o guard do router leva para a home.
+  Future<void> register(String nome, String email, String senha) async {
+    state = const AsyncLoading();
+    state = await AsyncValue.guard(
+      () => ref.read(authRepositoryProvider).register(
+            nome: nome,
+            email: email,
+            senha: senha,
+          ),
+    );
+  }
+
   Future<void> logout() async {
     await ref.read(authRepositoryProvider).logout();
     state = const AsyncData(null);
