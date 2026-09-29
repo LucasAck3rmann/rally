@@ -158,6 +158,39 @@ describe("QuadrasGestaoService", () => {
       ).rejects.toBeInstanceOf(BadRequestException);
     });
 
+    it("recusa a sobreposição quando o dia vem como null explícito", async () => {
+      // `@IsOptional()` deixa passar `null` e `undefined`, e o `whitelist` não
+      // remove campo que o DTO declara — então o cliente consegue mandar
+      // `{"diaSemana": null}`, que no banco quer dizer "todos os dias". O caso
+      // acima, com o campo omitido, já era coberto; este não era, e a faixa
+      // ambígua entrava.
+      const { servico: s } = servico();
+      await expect(
+        s.criar("e1", {
+          ...BASE,
+          faixasPreco: [
+            { diaSemana: null, horaInicio: "08:00", horaFim: "18:00", precoHora: 80 },
+            { diaSemana: 6, horaInicio: "10:00", horaFim: "12:00", precoHora: 95 },
+          ],
+        }),
+      ).rejects.toBeInstanceOf(BadRequestException);
+    });
+
+    it("aceita faixa com dia null que não colide com nenhuma outra", async () => {
+      // Contraprova: normalizar o `null` não pode ter virado "recusa qualquer
+      // coisa que tenha null".
+      const { servico: s } = servico();
+      await expect(
+        s.criar("e1", {
+          ...BASE,
+          faixasPreco: [
+            { diaSemana: null, horaInicio: "08:00", horaFim: "10:00", precoHora: 80 },
+            { diaSemana: 6, horaInicio: "10:00", horaFim: "12:00", precoHora: 95 },
+          ],
+        }),
+      ).resolves.toBeDefined();
+    });
+
     it("devolve o preço como número, não como Decimal do Prisma", async () => {
       const { servico: s } = servico();
       const quadra = await s.criar("e1", { ...BASE });

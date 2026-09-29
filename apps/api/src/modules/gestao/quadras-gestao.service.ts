@@ -119,7 +119,11 @@ export class QuadrasGestaoService {
         await tx.faixaPreco.deleteMany({ where: { quadraId } });
       }
       return tx.quadra.update({
-        where: { id: quadraId },
+        // O `estabelecimentoId` vai junto mesmo depois da checagem acima: ela
+        // roda fora da transação, e depender de "nenhuma rota muda o dono de
+        // uma quadra" é uma garantia que mora noutro arquivo. Aqui o escopo
+        // é por construção.
+        where: { id: quadraId, estabelecimentoId },
         data: {
           nome: dto.nome,
           descricao: dto.descricao,
@@ -185,10 +189,14 @@ export class QuadrasGestaoService {
       for (let j = i + 1; j < faixas.length; j++) {
         const a = faixas[i];
         const b = faixas[j];
+        // `null` e `undefined` são a mesma coisa aqui: faixa sem dia vale para
+        // todos eles. Comparar só com `undefined` deixava `{"diaSemana": null}`
+        // escapar da checagem — e é justamente a faixa de todos os dias, a que
+        // mais tem chance de colidir com as outras.
+        const diaA = a.diaSemana ?? undefined;
+        const diaB = b.diaSemana ?? undefined;
         const mesmoDia =
-          a.diaSemana === undefined ||
-          b.diaSemana === undefined ||
-          a.diaSemana === b.diaSemana;
+          diaA === undefined || diaB === undefined || diaA === diaB;
         const sobrepoe =
           emMinutos(a.horaInicio) < emMinutos(b.horaFim) &&
           emMinutos(b.horaInicio) < emMinutos(a.horaFim);
