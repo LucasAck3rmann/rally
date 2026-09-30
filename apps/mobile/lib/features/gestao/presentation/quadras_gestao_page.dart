@@ -75,6 +75,15 @@ class QuadrasGestaoPage extends ConsumerWidget {
                       peso: FontWeight.w500,
                     ),
                   ),
+                  const SizedBox(height: 14),
+                  // Ver o dia é o que o dono faz mais vezes; cadastrar quadra
+                  // ele faz uma vez por quadra. A agenda vem antes da lista.
+                  BotaoSecundario(
+                    rotulo: "Ver agenda do dia",
+                    icone: const RallyIcon("calendario", tamanho: 18),
+                    onPressed: () =>
+                        context.push("/gestao/$estabelecimentoId/agenda"),
+                  ),
                 ],
               ),
             ),

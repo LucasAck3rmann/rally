@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Copyright (C) 2026 Rally
 
+import "package:rally_mobile/features/gestao/domain/agenda.dart";
 import "package:rally_mobile/features/gestao/domain/gestao.dart";
 import "package:rally_mobile/features/gestao/domain/gestao_repository.dart";
 
@@ -84,6 +85,76 @@ class FakeGestaoRepository implements GestaoRepository {
   /// ele desenhou na tela.
   final List<DadosQuadra> salvos = [];
 
+  /// Agenda devolvida por `agenda()`. Cada teste monta a sua.
+  AgendaDoDia? agendaDoDia;
+
+  /// Bloqueios criados, na ordem: (quadra, hora de início, motivo).
+  final List<(String, int, String?)> bloqueios = [];
+
+  /// Ids passados para `removerBloqueio`.
+  final List<String> liberados = [];
+
+  @override
+  Future<AgendaDoDia> agenda(String estabelecimentoId, String data) async {
+    return agendaDoDia ??
+        AgendaDoDia(
+          data: data,
+          timezone: "America/Sao_Paulo",
+          quadras: const [QuadraDaAgenda(id: "q1", nome: "Quadra 1")],
+          itens: const [],
+        );
+  }
+
+  @override
+  Future<ItemAgenda> criarBloqueio(
+    String estabelecimentoId, {
+    required String quadraId,
+    required DateTime inicio,
+    required DateTime fim,
+    String? motivo,
+  }) async {
+    bloqueios.add((quadraId, inicio.hour, motivo));
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    final novo = itemDeAgendaFalso(
+      id: "b${bloqueios.length}",
+      quadraId: quadraId,
+      hora: inicio.hour,
+      ehBloqueio: true,
+      motivo: motivo,
+    );
+    agendaDoDia = _com(novo);
+    return novo;
+  }
+
+  @override
+  Future<void> removerBloqueio(
+    String estabelecimentoId,
+    String bloqueioId,
+  ) async {
+    liberados.add(bloqueioId);
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    final atual = agendaDoDia;
+    if (atual != null) {
+      agendaDoDia = AgendaDoDia(
+        data: atual.data,
+        timezone: atual.timezone,
+        quadras: atual.quadras,
+        itens: atual.itens.where((i) => i.id != bloqueioId).toList(),
+      );
+    }
+  }
+
+  AgendaDoDia _com(ItemAgenda item) {
+    final atual = agendaDoDia;
+    return AgendaDoDia(
+      data: atual?.data ?? "2026-10-05",
+      timezone: atual?.timezone ?? "America/Sao_Paulo",
+      quadras:
+          atual?.quadras ?? const [QuadraDaAgenda(id: "q1", nome: "Quadra 1")],
+      itens: [...?atual?.itens, item],
+    );
+  }
+
   @override
   Future<QuadraGestao> detalheQuadra(
     String estabelecimentoId,
@@ -164,4 +235,50 @@ class FakeGestaoRepository implements GestaoRepository {
     ];
     return nova;
   }
+}
+
+/// Item de agenda de mentira, de uma hora cheia.
+ItemAgenda itemDeAgendaFalso({
+  String id = "a1",
+  String quadraId = "q1",
+  String quadraNome = "Quadra 1",
+  int hora = 19,
+  int duracaoHoras = 1,
+  bool ehBloqueio = false,
+  String? motivo,
+  String? clienteNome = "Lucas",
+  double? preco = 80,
+}) {
+  final inicio = DateTime(2026, 10, 5, hora);
+  return ItemAgenda(
+    id: id,
+    quadraId: quadraId,
+    quadraNome: quadraNome,
+    inicio: inicio,
+    fim: inicio.add(Duration(hours: duracaoHoras)),
+    horaInicio: "${hora.toString().padLeft(2, "0")}:00",
+    horaFim: "${(hora + duracaoHoras).toString().padLeft(2, "0")}:00",
+    status: ehBloqueio ? "BLOQUEIO" : "CONFIRMADA",
+    ehBloqueio: ehBloqueio,
+    preco: ehBloqueio ? null : preco,
+    motivo: ehBloqueio ? motivo : null,
+    clienteNome: ehBloqueio ? null : clienteNome,
+  );
+}
+
+/// Agenda de mentira com os itens informados.
+AgendaDoDia agendaFalsa({
+  List<ItemAgenda> itens = const [],
+  List<QuadraDaAgenda> quadras = const [
+    QuadraDaAgenda(id: "q1", nome: "Quadra 1"),
+    QuadraDaAgenda(id: "q2", nome: "Quadra 2"),
+  ],
+  String data = "2026-10-05",
+}) {
+  return AgendaDoDia(
+    data: data,
+    timezone: "America/Sao_Paulo",
+    quadras: quadras,
+    itens: itens,
+  );
 }
