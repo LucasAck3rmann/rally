@@ -69,18 +69,30 @@ class _MarqueeMarcaState extends State<MarqueeMarca>
                   padding: const EdgeInsets.only(left: 16),
                   child: texto,
                 )
-              : AnimatedBuilder(
-                  animation: _controle,
-                  builder: (context, _) {
-                    return FractionalTranslation(
-                      // Duas cópias lado a lado dão a volta sem emenda.
-                      translation: Offset(-_controle.value / 2, 0),
-                      child: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [texto, texto],
-                      ),
-                    );
-                  },
+              // A faixa é de propósito mais larga que a tela — é o `ClipRect`
+              // acima que esconde o excedente. Sem soltar a restrição de
+              // largura aqui, a `Row` acusa estouro de layout e derruba
+              // qualquer teste de widget que renderize esta tela.
+              //
+              // O scroll (sem física) fica **fora** do `FractionalTranslation` de
+              // propósito: assim a translação continua sendo fração da
+              // largura da `Row`, e não da tela, e o movimento não muda.
+              : SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  physics: const NeverScrollableScrollPhysics(),
+                  child: AnimatedBuilder(
+                    animation: _controle,
+                    builder: (context, _) {
+                      return FractionalTranslation(
+                        // Duas cópias lado a lado dão a volta sem emenda.
+                        translation: Offset(-_controle.value / 2, 0),
+                        child: Row(
+                          mainAxisSize: MainAxisSize.min,
+                          children: [texto, texto],
+                        ),
+                      );
+                    },
+                  ),
                 ),
         ),
       ),
