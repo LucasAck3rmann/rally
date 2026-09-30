@@ -18,6 +18,14 @@ enum PapelGestao {
         _ => PapelGestao.atendente,
       };
 
+  /// O texto que a API espera — o inverso de [doTexto].
+  String get paraApi => switch (this) {
+        PapelGestao.atendente => "ATENDENTE",
+        PapelGestao.financeiro => "FINANCEIRO",
+        PapelGestao.admin => "ADMIN",
+        PapelGestao.mantenedor => "MANTENEDOR",
+      };
+
   String get rotulo => switch (this) {
         PapelGestao.atendente => "Atendente",
         PapelGestao.financeiro => "Financeiro",

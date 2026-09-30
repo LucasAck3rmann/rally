@@ -5,6 +5,7 @@ import "package:dio/dio.dart";
 
 import "../../../core/network/erro_api.dart";
 import "../domain/agenda.dart";
+import "../domain/equipe.dart";
 import "../domain/gestao.dart";
 import "../domain/painel.dart";
 import "../domain/gestao_repository.dart";
@@ -106,6 +107,69 @@ class GestaoRepositoryImpl implements GestaoRepository {
         return AgendaDoDia.doJson(res.data!);
       },
       erroPadrao: "Não foi possível carregar a agenda.",
+    );
+  }
+
+  @override
+  Future<List<MembroEquipe>> equipe(String estabelecimentoId) {
+    return chamarApi(
+      () async {
+        final res = await _dio.get<List<dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/equipe",
+        );
+        return (res.data ?? const [])
+            .map((m) => MembroEquipe.doJson(m as Map<String, dynamic>))
+            .toList();
+      },
+      erroPadrao: "Não foi possível carregar a equipe.",
+    );
+  }
+
+  @override
+  Future<MembroEquipe> adicionarMembro(
+    String estabelecimentoId, {
+    required String email,
+    required PapelGestao papel,
+  }) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/equipe",
+          data: {"email": email, "papel": papel.paraApi},
+        );
+        return MembroEquipe.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível adicionar essa pessoa.",
+    );
+  }
+
+  @override
+  Future<MembroEquipe> trocarPapel(
+    String estabelecimentoId,
+    String usuarioId,
+    PapelGestao papel,
+  ) {
+    return chamarApi(
+      () async {
+        final res = await _dio.patch<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/equipe/$usuarioId",
+          data: {"papel": papel.paraApi},
+        );
+        return MembroEquipe.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível trocar o papel.",
+    );
+  }
+
+  @override
+  Future<void> removerMembro(String estabelecimentoId, String usuarioId) {
+    return chamarApi(
+      () async {
+        await _dio.delete<void>(
+          "/gestao/estabelecimentos/$estabelecimentoId/equipe/$usuarioId",
+        );
+      },
+      erroPadrao: "Não foi possível remover essa pessoa.",
     );
   }
 

@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Rally
 
 import "agenda.dart";
+import "equipe.dart";
 import "gestao.dart";
 import "painel.dart";
 
@@ -29,6 +30,26 @@ abstract interface class GestaoRepository {
 
   /// O dia inteiro do estabelecimento, quadra a quadra (RF-21).
   Future<AgendaDoDia> agenda(String estabelecimentoId, String data);
+
+  /// Quem trabalha no estabelecimento (RF-23). Ver é de toda a equipe.
+  Future<List<MembroEquipe>> equipe(String estabelecimentoId);
+
+  /// Dá acesso a quem já tem conta no Rally. Só admin.
+  Future<MembroEquipe> adicionarMembro(
+    String estabelecimentoId, {
+    required String email,
+    required PapelGestao papel,
+  });
+
+  /// Troca o papel de alguém da equipe. Só admin.
+  Future<MembroEquipe> trocarPapel(
+    String estabelecimentoId,
+    String usuarioId,
+    PapelGestao papel,
+  );
+
+  /// Tira alguém da equipe — o vínculo vira cliente, não some. Só admin.
+  Future<void> removerMembro(String estabelecimentoId, String usuarioId);
 
   /// Ocupação, receita e próximos jogos dos últimos [dias] (RF-22).
   Future<Painel> painel(String estabelecimentoId, {required int dias});
