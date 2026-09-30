@@ -9,11 +9,13 @@ import "package:google_fonts/google_fonts.dart";
 import "package:intl/date_symbol_data_local.dart";
 import "package:rally_mobile/features/auth/domain/auth_user.dart";
 import "package:rally_mobile/features/auth/presentation/auth_providers.dart";
+import "package:rally_mobile/features/gestao/presentation/gestao_providers.dart";
 import "package:rally_mobile/features/perfil/presentation/perfil_page.dart";
 import "package:rally_mobile/features/replays/presentation/replays_providers.dart";
 import "package:rally_mobile/features/reservas/presentation/reservas_providers.dart";
 
 import "../../fakes/fake_auth_repository.dart";
+import "../../fakes/fake_gestao_repository.dart";
 import "../../fakes/fake_replays_repository.dart";
 import "../../fakes/fake_reservas_repository.dart";
 
@@ -41,6 +43,7 @@ void main() {
     String nome = "Lucas Ackermann",
     List<dynamic> reservas = const [],
     int replays = 0,
+    List<dynamic> gerencia = const [],
   }) async {
     tester.view.physicalSize = const Size(1200, 3600);
     tester.view.devicePixelRatio = 3.0;
@@ -59,6 +62,10 @@ void main() {
           path: "/notificacoes",
           builder: (_, __) => const Scaffold(body: Text("tela de avisos")),
         ),
+        GoRoute(
+          path: "/gestao",
+          builder: (_, __) => const Scaffold(body: Text("área de gestão")),
+        ),
       ],
     );
     addTearDown(router.dispose);
@@ -69,6 +76,9 @@ void main() {
           authRepositoryProvider.overrideWithValue(auth),
           reservasRepositoryProvider.overrideWithValue(
             FakeReservasRepository(reservas.cast()),
+          ),
+          gestaoRepositoryProvider.overrideWithValue(
+            FakeGestaoRepository(estabelecimentos: gerencia.cast()),
           ),
           replaysRepositoryProvider.overrideWithValue(
             FakeReplaysRepository([
@@ -123,6 +133,21 @@ void main() {
 
     await tester.tap(find.text("Notificações"));
     await bombearAteSurgir(tester, find.text("tela de avisos"));
+  });
+
+  testWidgets("quem não gerencia nada não vê a área de gestão", (tester) async {
+    await abrir(tester);
+
+    await bombearAteSurgir(tester, find.text("Minhas reservas"));
+    expect(find.text("Gerenciar quadras"), findsNothing);
+  });
+
+  testWidgets("quem tem vínculo entra na gestão pelo Perfil", (tester) async {
+    await abrir(tester, gerencia: [estabelecimentoFalso()]);
+
+    await bombearAteSurgir(tester, find.text("Gerenciar quadras"));
+    await tester.tap(find.text("Gerenciar quadras"));
+    await bombearAteSurgir(tester, find.text("área de gestão"));
   });
 
   testWidgets("sair encerra a sessão", (tester) async {
