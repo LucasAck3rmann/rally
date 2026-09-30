@@ -121,8 +121,13 @@ export class ReservasService {
    *
    * O horário é revalidado contra a mesma grade que o app consultou — nada de
    * confiar no preço vindo do cliente. A corrida entre dois clientes pedindo o
-   * mesmo slot é resolvida pelo índice único `(quadraId, inicio)`: quem perde
-   * recebe 409 em vez de gerar overbooking.
+   * mesmo slot é resolvida **no banco**, pela exclusion constraint
+   * `reserva_sem_sobreposicao`: quem perde recebe 409 em vez de gerar
+   * overbooking.
+   *
+   * A checagem de `slot.disponivel` acima não é a trava — entre ela e o INSERT
+   * existe uma janela na qual outra transação insere. Por isso a garantia mora
+   * no armazenamento, e não aqui.
    */
   async criar(dto: CreateReservaDto, usuarioId: string) {
     const inicio = new Date(dto.inicio);

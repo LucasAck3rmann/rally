@@ -30,6 +30,11 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
   const as2030 = new Date("2030-03-01T20:30:00.000Z");
   const as21 = new Date("2030-03-01T21:00:00.000Z");
 
+  /** 2030-03-01 na hora cheia indicada, em UTC. */
+  function hora(h: number) {
+    return new Date(`2030-03-01T${String(h).padStart(2, "0")}:00:00.000Z`);
+  }
+
   function reservar(sufixo: string, inicio: Date, fim: Date) {
     return prisma.reserva.create({
       data: {
@@ -98,5 +103,68 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     // horário — é isso que vira 409 em vez de 500 para o cliente.
     const motivo = (perdeu[0] as PromiseRejectedResult).reason;
     expect(ehConflitoDeHorario(motivo)).toBe(true);
+  });
+
+  /**
+   * RNF-03: "zero overbooking sob reservas simultâneas".
+   *
+   * A corrida de duas vias acima prova o mecanismo; esta prova a **propriedade
+   * sob carga**, que é o que o requisito pede. Vinte tentativas simultâneas
+   * pelo mesmo horário precisam produzir exatamente uma reserva — não "quase
+   * sempre uma".
+   */
+  it("sob carga, n clientes disputando o mesmo slot produzem exatamente uma reserva", async () => {
+    const TENTATIVAS = 20;
+
+    const resultados = await Promise.allSettled(
+      Array.from({ length: TENTATIVAS }, (_, i) =>
+        reservar(`carga-${i}`, as19, as20),
+      ),
+    );
+
+    const ganharam = resultados.filter((r) => r.status === "fulfilled");
+    const perderam = resultados.filter((r) => r.status === "rejected");
+
+    expect(ganharam).toHaveLength(1);
+    expect(perderam).toHaveLength(TENTATIVAS - 1);
+
+    // Nenhuma derrota pode chegar ao cliente como 500. Todas precisam ser
+    // reconhecidas como conflito de horário, que é o que `criar()` converte em
+    // 409 — um único erro fora desse formato viraria erro de servidor na tela.
+    for (const derrota of perderam) {
+      const motivo = (derrota as PromiseRejectedResult).reason;
+      expect(ehConflitoDeHorario(motivo)).toBe(true);
+    }
+
+    // A prova final é no banco, não no resultado das promessas: é ele que
+    // decide se houve overbooking.
+    const gravadas = await prisma.reserva.count({
+      where: {
+        quadraId,
+        inicio: as19,
+        status: { not: ReservaStatus.CANCELADA },
+      },
+    });
+    expect(gravadas).toBe(1);
+  });
+
+  /**
+   * Contraprova. Recusar a disputa pelo mesmo horário é fácil de acertar de
+   * um jeito errado: um lock de tabela também "resolveria" o overbooking, e
+   * serializaria a agenda inteira. Se alguém trocar a constraint por algo
+   * assim, este teste é o que cai.
+   */
+  it("horários diferentes não se bloqueiam sob concorrência", async () => {
+    const horarios = [8, 9, 10, 11, 12, 13].map((h) => [hora(h), hora(h + 1)]);
+
+    const resultados = await Promise.allSettled(
+      horarios.map(([inicio, fim], i) =>
+        reservar(`paralelo-${i}`, inicio, fim),
+      ),
+    );
+
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(
+      horarios.length,
+    );
   });
 });
