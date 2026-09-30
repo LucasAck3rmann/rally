@@ -17,6 +17,11 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
 import { QuadrasService } from "../quadras/quadras.service";
 import { CreateReservaDto } from "./dto/create-reserva.dto";
+import {
+  estaDentroDoPrazo,
+  garantirQueAceitaMudanca,
+  limiteDoPrazo,
+} from "./politica-reserva";
 import { RemarcarReservaDto } from "./dto/remarcar-reserva.dto";
 
 /** Como a reserva é devolvida ao app (traz quadra e estabelecimento juntos). */
@@ -246,24 +251,14 @@ export class ReservasService {
     if (!reserva) {
       throw new NotFoundException("Reserva não encontrada.");
     }
-    if (reserva.status === ReservaStatus.CANCELADA) {
-      throw new ConflictException("Esta reserva já foi cancelada.");
-    }
-    if (
-      reserva.status !== ReservaStatus.PENDENTE_PAGAMENTO &&
-      reserva.status !== ReservaStatus.CONFIRMADA
-    ) {
-      throw new ConflictException("Esta reserva não pode mais ser cancelada.");
-    }
-
     const agora = new Date();
-    if (reserva.inicio <= agora) {
-      throw new ConflictException("O horário da reserva já começou.");
-    }
+    garantirQueAceitaMudanca(reserva, agora, "cancelada");
 
-    const horas = reserva.quadra.estabelecimento.cancelamentoHoras;
-    const dentroDoPrazo =
-      agora <= new Date(reserva.inicio.getTime() - horas * 60 * 60 * 1000);
+    const dentroDoPrazo = estaDentroDoPrazo(
+      reserva.inicio,
+      reserva.quadra.estabelecimento.cancelamentoHoras,
+      agora,
+    );
 
     await this.prisma.$transaction(async (tx) => {
       await tx.reserva.update({
@@ -338,17 +333,9 @@ export class ReservasService {
     if (!reserva) {
       throw new NotFoundException("Reserva não encontrada.");
     }
-    if (
-      reserva.status !== ReservaStatus.PENDENTE_PAGAMENTO &&
-      reserva.status !== ReservaStatus.CONFIRMADA
-    ) {
-      throw new ConflictException("Esta reserva não pode ser remarcada.");
-    }
-
     const agora = new Date();
-    if (reserva.inicio <= agora) {
-      throw new ConflictException("O horário da reserva já começou.");
-    }
+    garantirQueAceitaMudanca(reserva, agora, "remarcada");
+
     if (
       reserva.inicio.getTime() === inicio.getTime() &&
       reserva.fim.getTime() === fim.getTime()
@@ -358,9 +345,7 @@ export class ReservasService {
 
     const est = reserva.quadra.estabelecimento;
     const horas = est.cancelamentoHoras;
-    const dentroDoPrazo =
-      agora <= new Date(reserva.inicio.getTime() - horas * 60 * 60 * 1000);
-    if (!dentroDoPrazo) {
+    if (!estaDentroDoPrazo(reserva.inicio, horas, agora)) {
       throw new ConflictException(
         `A remarcação vale até ${horas} h antes do horário.`,
       );
@@ -485,9 +470,7 @@ export class ReservasService {
 
     const est = r.quadra.estabelecimento;
     const agora = new Date();
-    const gratuitoAte = new Date(
-      r.inicio.getTime() - est.cancelamentoHoras * 60 * 60 * 1000,
-    );
+    const gratuitoAte = limiteDoPrazo(r.inicio, est.cancelamentoHoras);
     const ativa =
       r.status === ReservaStatus.PENDENTE_PAGAMENTO ||
       r.status === ReservaStatus.CONFIRMADA;
