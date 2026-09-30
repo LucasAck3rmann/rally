@@ -15,9 +15,11 @@ Reserva reservaFalsa({
   bool cancelamentoGratuito = true,
   int cancelamentoHoras = 12,
   String estabelecimentoNome = "Arena Beira-Rio",
+  Pagamento? pagamento,
 }) {
   final inicio = DateTime(2026, 6, 17, 19);
   return Reserva(
+    pagamento: pagamento,
     id: id,
     codigo: "RALLY-7K2P",
     inicio: inicio,
@@ -34,6 +36,23 @@ Reserva reservaFalsa({
     cancelavel: cancelavel,
     cancelamentoGratuito: cancelamentoGratuito,
     cancelamentoHoras: cancelamentoHoras,
+  );
+}
+
+/// Cobrança Pix de mentira. `minutosAteExpirar` negativo = já expirada.
+Pagamento pagamentoFalso({
+  PagamentoStatus status = PagamentoStatus.pendente,
+  double valor = 76,
+  String? pixCopiaCola = "00020126BR.GOV.BCB.PIX-TESTE5204000053039865802BR",
+  int minutosAteExpirar = 30,
+}) {
+  return Pagamento(
+    id: "p1",
+    valor: valor,
+    metodo: "PIX",
+    status: status,
+    pixCopiaCola: pixCopiaCola,
+    expiraEm: DateTime.now().add(Duration(minutes: minutosAteExpirar)),
   );
 }
 

@@ -45,18 +45,24 @@ class ReplaysPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    for (final p in PeriodoReplay.values) ...[
-                      RallyChip(
-                        rotulo: p.rotulo,
-                        ativo: periodo == p,
-                        onTap: () =>
-                            ref.read(periodoReplayProvider.notifier).state = p,
-                      ),
-                      const SizedBox(width: 8),
+                // Rola na horizontal, como os chips de modalidade da Home:
+                // os três rótulos juntos não cabem em tela estreita.
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final p in PeriodoReplay.values) ...[
+                        RallyChip(
+                          rotulo: p.rotulo,
+                          ativo: periodo == p,
+                          onTap: () => ref
+                              .read(periodoReplayProvider.notifier)
+                              .state = p,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -212,18 +218,25 @@ class _Destaque extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // As duas ações dividem a linha: com largura natural elas
+                // estouram o card em tela estreita.
                 Row(
                   children: [
-                    _AcaoAreia(
-                      icone: "compartilhar",
-                      rotulo: "Compartilhar",
-                      onTap: () => _compartilhar(replay),
+                    Expanded(
+                      child: _AcaoAreia(
+                        icone: "compartilhar",
+                        rotulo: "Compartilhar",
+                        onTap: () => _compartilhar(replay),
+                      ),
                     ),
                     const SizedBox(width: 10),
-                    _AcaoAreia(
-                      icone: "baixar",
-                      rotulo: "Baixar",
-                      onTap: replay.url == null ? null : () => _baixar(replay),
+                    Expanded(
+                      child: _AcaoAreia(
+                        icone: "baixar",
+                        rotulo: "Baixar",
+                        onTap:
+                            replay.url == null ? null : () => _baixar(replay),
+                      ),
                     ),
                   ],
                 ),
@@ -405,7 +418,16 @@ class _AcaoAreia extends StatelessWidget {
               children: [
                 RallyIcon(icone, tamanho: 18),
                 const SizedBox(width: 7),
-                Text(rotulo, style: AppText.corpo(13, peso: FontWeight.w600)),
+                // O rótulo cede antes do ícone: "Compartilhar" é o mais
+                // comprido e é ele que estoura quando o card é estreito.
+                Flexible(
+                  child: Text(
+                    rotulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.corpo(13, peso: FontWeight.w600),
+                  ),
+                ),
               ],
             ),
           ),
