@@ -21,15 +21,15 @@ module.exports = {
   // piso junto — é o que impede o número de escorrer para baixo sem ninguém ver.
   //
   // Medido em 30/09/2026, sem banco (integração pulada), logo um piso do
-  // piso: 82,41% de instruções, 81,54% de linhas, 62,42% de ramos e 55,81%
-  // de funções. Os testes do `pagamentos.service` subiram os ramos de 48,76%
-  // para 62,42% — os pisos antigos, de 29/09, já não acusariam regressão.
+  // piso: 83,47% de instruções, 82,67% de linhas, 65,34% de ramos e 57,44%
+  // de funções, depois da agenda entrar. O piso sobe junto com a medida —
+  // piso muito abaixo do real para de acusar regressão, que é o que ele faz.
   coverageThreshold: {
     global: {
-      statements: 80,
-      lines: 79,
-      branches: 58,
-      functions: 52,
+      statements: 82,
+      lines: 81,
+      branches: 62,
+      functions: 55,
     },
   },
 };
