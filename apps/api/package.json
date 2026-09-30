@@ -9,6 +9,7 @@
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "test": "jest",
+    "test:cov": "jest --coverage --coverageReporters=text-summary --coverageReporters=text",
     "prisma:generate": "prisma generate",
     "postinstall": "prisma generate",
     "db:seed": "ts-node prisma/seed.ts"
