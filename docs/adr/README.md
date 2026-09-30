@@ -25,7 +25,7 @@
 **Contexto:** O público é brasileiro e o **Pix** é o meio dominante; precisamos de cobrança simples com webhook confiável.
 **Decisão:** **AbacatePay** como gateway principal (Pix + cartão), confirmação por **webhook assinado** e idempotência.
 **Alternativas:** Stripe (excelente DX, mas Pix limitado e foco internacional); Mercado Pago/Asaas/Pagar.me (válidos — ficam como fallback). 
-**Consequências:** (+) Pix nativo BR, simplicidade, custo. (−) menos maduro que Stripe e menos material — mitigado por isolar o gateway atrás de um **Adapter** (troca sem mexer no domínio).
+**Consequências:** (+) Pix nativo BR, simplicidade, custo. (−) menos maduro que Stripe e menos material — mitigado por isolar o gateway atrás de um **Adapter** (troca sem mexer no domínio). O isolamento em si está no [ADR-0013](#adr-0013--pagamento-pix-atrás-de-uma-porta).
 
 ## ADR-0004 — PostgreSQL + Prisma
 **Status:** Aceito · **Data:** 2026-06-16
@@ -90,6 +90,13 @@
 **Decisão (resumo):** a captação **não é construída internamente** — vem por parceria, com o fornecedor entrando como **adaptador atrás de uma porta**, como já é feito com o Pix. O diferencial passa a ser arquitetural: `Replay` é entidade do domínio ligada a `Reserva` e `Usuario`, então só o Rally sabe qual clipe é de quem.
 **Consequências:** (+) sai da disputa em hardware e visão computacional; o vínculo reserva↔clipe fica no domínio e o fornecedor é substituível. (−) a FilmaEu não tem API pública documentada — **risco declarado**: a integração depende de interface que eles forneçam.
 **Versão por extenso:** [ADR-0012 — Captação de replays por parceria](0012-replays-por-parceria.md).
+
+## ADR-0013 — Pagamento Pix atrás de uma porta
+**Status:** Aceito · **Data:** 2026-09-02 · **Detalha o [ADR-0003](#adr-0003--abacatepay-como-gateway-de-pagamento)**
+**Contexto:** O checkout (RF-12) precisava rodar ponta a ponta para o TCC, mas a integração real depende de **credenciais e contrato comercial** que não dependiam do desenvolvimento. Esperar deixaria a metade mais visível do produto sem poder ser demonstrada nem testada.
+**Decisão (resumo):** o pagamento fica atrás da porta `PixProvider`, injetada por token; o `PixDevProvider` responde por ela até a AbacatePay entrar, como outro adaptador. O provedor de desenvolvimento gera um **BR Code válido de verdade** (payload EMV + CRC-16, conforme o Manual de Padrões do Banco Central), para a tela do Pix continuar honesta — mas não movimenta dinheiro, e a confirmação simulada é **bloqueada fora de desenvolvimento**.
+**Consequências:** (+) o checkout ficou pronto e testado meses antes de existir gateway; trocar de fornecedor custa um `useClass`, então o plano B do ADR-0003 deixou de ser teórico. (−) existe no repositório um caminho que cria cobrança sem gateway — mitigado pela trava de ambiente e por teste, mas é dívida até a integração real. RF-13 (webhook assinado) segue aberto: não há o que assinar ainda.
+**Versão por extenso:** [ADR-0013 — Pagamento Pix atrás de uma porta](0013-porta-de-pagamento-pix.md).
 
 ---
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.
