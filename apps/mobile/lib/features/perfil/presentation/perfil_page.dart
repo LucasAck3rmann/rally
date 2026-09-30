@@ -7,6 +7,7 @@ import "../../../core/theme/app_text.dart";
 import "../../../core/widgets/brand_bar.dart";
 import "../../../core/widgets/rally_icon.dart";
 import "../../auth/presentation/auth_controller.dart";
+import "../../gestao/presentation/gestao_providers.dart";
 import "../../replays/presentation/replays_providers.dart";
 import "../../reservas/presentation/reservas_providers.dart";
 
@@ -19,6 +20,11 @@ class PerfilPage extends ConsumerWidget {
     final usuario = ref.watch(authControllerProvider).valueOrNull;
     final reservas = ref.watch(minhasReservasProvider);
     final replays = ref.watch(meusReplaysProvider);
+
+    // Um cliente comum recebe lista vazia aqui — e a área de gestão
+    // simplesmente não aparece para ele.
+    final gerencia =
+        ref.watch(meusEstabelecimentosProvider).valueOrNull ?? const [];
 
     final listaReservas = reservas.valueOrNull ?? const [];
     final quadrasDistintas =
@@ -71,6 +77,14 @@ class PerfilPage extends ConsumerWidget {
                 rotulo: "Meus replays",
                 onTap: () => context.go("/replays"),
               ),
+              if (gerencia.isNotEmpty) ...[
+                const SizedBox(height: 10),
+                _ItemMenu(
+                  icone: "ajustes",
+                  rotulo: "Gerenciar quadras",
+                  onTap: () => context.push("/gestao"),
+                ),
+              ],
               const SizedBox(height: 10),
               const _ItemMenu(icone: "pagamentos", rotulo: "Pagamentos"),
               const SizedBox(height: 10),

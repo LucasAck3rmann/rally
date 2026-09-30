@@ -19,20 +19,46 @@ class BrandBar extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Row(
-          children: [
-            const RallyEmblema(),
-            const SizedBox(width: 8),
-            Text("Rally", style: AppText.titulo(16)),
-            if (sufixo != null) ...[
+        // Os dois lados cedem: em tela estreita — e mais ainda quando há um
+        // botão de voltar antes da barra — um rótulo comprido estouraria.
+        Flexible(
+          child: Row(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              const RallyEmblema(),
               const SizedBox(width: 8),
-              Text(sufixo!.toUpperCase(), style: AppText.rotulo(11)),
+              // O emblema é fixo; o wordmark e o sufixo cedem. Com o texto
+              // do sistema ampliado, "Rally" sozinho já não cabia.
+              Flexible(
+                child: Text(
+                  "Rally",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titulo(16),
+                ),
+              ),
+              if (sufixo != null) ...[
+                const SizedBox(width: 8),
+                Flexible(
+                  child: Text(
+                    sufixo!.toUpperCase(),
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.rotulo(11),
+                  ),
+                ),
+              ],
             ],
-          ],
+          ),
         ),
-        Text(
-          rotuloDireita.toUpperCase(),
-          style: AppText.rotulo(11, espacamento: 0.5),
+        Flexible(
+          child: Text(
+            rotuloDireita.toUpperCase(),
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            textAlign: TextAlign.right,
+            style: AppText.rotulo(11, espacamento: 0.5),
+          ),
         ),
       ],
     );
@@ -105,7 +131,7 @@ class HeaderFluxo extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          _BotaoCircular(onTap: onVoltar),
+          BotaoVoltarCircular(onTap: onVoltar),
           Flexible(
             child: Text(
               titulo,
@@ -128,8 +154,9 @@ class HeaderFluxo extends StatelessWidget {
   }
 }
 
-class _BotaoCircular extends StatelessWidget {
-  const _BotaoCircular({this.onTap});
+/// Botão circular de voltar (areia, 40px desenhados em alvo de 44px).
+class BotaoVoltarCircular extends StatelessWidget {
+  const BotaoVoltarCircular({super.key, this.onTap});
 
   final VoidCallback? onTap;
 
