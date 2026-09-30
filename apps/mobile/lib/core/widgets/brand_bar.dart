@@ -27,7 +27,16 @@ class BrandBar extends StatelessWidget {
             children: [
               const RallyEmblema(),
               const SizedBox(width: 8),
-              Text("Rally", style: AppText.titulo(16)),
+              // O emblema é fixo; o wordmark e o sufixo cedem. Com o texto
+              // do sistema ampliado, "Rally" sozinho já não cabia.
+              Flexible(
+                child: Text(
+                  "Rally",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titulo(16),
+                ),
+              ),
               if (sufixo != null) ...[
                 const SizedBox(width: 8),
                 Flexible(

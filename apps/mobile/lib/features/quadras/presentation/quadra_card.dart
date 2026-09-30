@@ -72,20 +72,31 @@ class QuadraCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          Formato.moeda(quadra.precoHora),
-                          style: AppText.titulo(17),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          "POR HORA",
-                          style: AppText.rotulo(11, espacamento: 0.5),
-                        ),
-                      ],
+                    // O preço cede, o botão não: ele é a ação do card, e
+                    // empurrá-lo para fora da tela o tira do alcance do
+                    // toque. Com o texto do sistema ampliado, era isso que
+                    // acontecia.
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            Formato.moeda(quadra.precoHora),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.titulo(17),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            "POR HORA",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.rotulo(11, espacamento: 0.5),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 10),
                     _botaoReservar(),
                   ],
                 ),
