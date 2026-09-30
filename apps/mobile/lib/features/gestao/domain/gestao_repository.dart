@@ -11,6 +11,20 @@ abstract interface class GestaoRepository {
 
   Future<List<QuadraGestao>> quadras(String estabelecimentoId);
 
+  /// Uma quadra específica, com tudo que o formulário precisa preencher.
+  Future<QuadraGestao> detalheQuadra(String estabelecimentoId, String quadraId);
+
+  /// Cadastra uma quadra nova. Só admin — a API recusa o resto com 403.
+  Future<QuadraGestao> criarQuadra(String estabelecimentoId, DadosQuadra dados);
+
+  /// Edita uma quadra. Listas informadas **substituem** as antigas por
+  /// inteiro, como manda o `AtualizarQuadraDto`.
+  Future<QuadraGestao> atualizarQuadra(
+    String estabelecimentoId,
+    String quadraId,
+    DadosQuadra dados,
+  );
+
   /// Tira a quadra da vitrine ou devolve — sem apagar histórico.
   Future<QuadraGestao> definirAtivo(
     String estabelecimentoId,

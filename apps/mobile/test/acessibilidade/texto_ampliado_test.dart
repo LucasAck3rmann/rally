@@ -12,6 +12,7 @@ import "package:rally_mobile/features/auth/presentation/auth_providers.dart";
 import "package:rally_mobile/features/auth/presentation/cadastro_page.dart";
 import "package:rally_mobile/features/auth/presentation/login_page.dart";
 import "package:rally_mobile/features/gestao/presentation/gestao_providers.dart";
+import "package:rally_mobile/features/gestao/presentation/quadra_form_page.dart";
 import "package:rally_mobile/features/gestao/presentation/quadras_gestao_page.dart";
 import "package:rally_mobile/features/home/presentation/home_page.dart";
 import "package:rally_mobile/features/notificacoes/presentation/notificacoes_page.dart";
@@ -218,5 +219,18 @@ void main() {
   testWidgets("gestão — quadras", (tester) async {
     await abrir(tester, const QuadrasGestaoPage(estabelecimentoId: "e1"));
     await bombearAteSurgir(tester, find.text("Quadra 2"));
+  });
+
+  testWidgets("gestão — nova quadra", (tester) async {
+    await abrir(tester, const QuadraFormPage(estabelecimentoId: "e1"));
+    await bombearAteSurgir(tester, find.text("Nova quadra"));
+  });
+
+  testWidgets("gestão — editar quadra", (tester) async {
+    await abrir(
+      tester,
+      const QuadraFormPage(estabelecimentoId: "e1", quadraId: "q1"),
+    );
+    await bombearAteSurgir(tester, find.text("Editar quadra"));
   });
 }

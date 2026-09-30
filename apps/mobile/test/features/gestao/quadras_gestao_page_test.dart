@@ -70,6 +70,21 @@ void main() {
               builder: (_, state) => QuadrasGestaoPage(
                 estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
               ),
+              routes: [
+                GoRoute(
+                  path: "nova",
+                  builder: (_, __) =>
+                      const Scaffold(body: Text("formulário de cadastro")),
+                ),
+                GoRoute(
+                  path: ":quadraId/editar",
+                  builder: (_, state) => Scaffold(
+                    body: Text(
+                      "editando ${state.pathParameters["quadraId"]}",
+                    ),
+                  ),
+                ),
+              ],
             ),
           ],
         ),
@@ -198,6 +213,66 @@ void main() {
     // A quadra continua na vitrine e o botão volta a responder.
     expect(find.text("NA VITRINE"), findsOneWidget);
     expect(find.text("Pausar"), findsOneWidget);
+  });
+
+  testWidgets("o administrador tem por onde cadastrar", (tester) async {
+    await abrir(tester, repositorio: FakeGestaoRepository(quadras: []));
+
+    await bombearAteSurgir(tester, find.text("Nenhuma quadra cadastrada"));
+    expect(find.text("Cadastrar quadra"), findsOneWidget);
+  });
+
+  testWidgets("quem não é administrador não vê como cadastrar", (tester) async {
+    await abrir(
+      tester,
+      repositorio: FakeGestaoRepository(
+        estabelecimentos: [estabelecimentoFalso(papel: PapelGestao.financeiro)],
+        quadras: [quadraFalsa()],
+      ),
+    );
+
+    await bombearAteSurgir(tester, find.text("Quadra 1"));
+    expect(find.text("Nova quadra"), findsNothing);
+  });
+
+  testWidgets("tocar no card abre a edição da quadra", (tester) async {
+    await abrir(
+      tester,
+      repositorio: FakeGestaoRepository(
+        quadras: [quadraFalsa(id: "q7", nome: "Quadra do Fundo")],
+      ),
+    );
+
+    await bombearAteSurgir(tester, find.text("Quadra do Fundo"));
+    await tester.tap(find.text("Quadra do Fundo"));
+    await bombearAteSurgir(tester, find.text("editando q7"));
+  });
+
+  testWidgets("o atendente toca no card e nada acontece", (tester) async {
+    // Ele enxerga a quadra; editar é do admin. Um toque que abre um
+    // formulário para depois tomar 403 seria pior que toque nenhum.
+    await abrir(
+      tester,
+      repositorio: FakeGestaoRepository(
+        estabelecimentos: [estabelecimentoFalso(papel: PapelGestao.atendente)],
+        quadras: [quadraFalsa(id: "q7", nome: "Quadra do Fundo")],
+      ),
+    );
+
+    await bombearAteSurgir(tester, find.text("Quadra do Fundo"));
+    await tester.tap(find.text("Quadra do Fundo"));
+    await tester.pump(const Duration(milliseconds: 300));
+
+    expect(find.text("editando q7"), findsNothing);
+    expect(find.text("Quadra do Fundo"), findsOneWidget);
+  });
+
+  testWidgets("cadastrar leva ao formulário em branco", (tester) async {
+    await abrir(tester, repositorio: FakeGestaoRepository(quadras: []));
+
+    await bombearAteSurgir(tester, find.text("Cadastrar quadra"));
+    await tester.tap(find.text("Cadastrar quadra"));
+    await bombearAteSurgir(tester, find.text("formulário de cadastro"));
   });
 
   testWidgets("sem quadras, explica o que fazer", (tester) async {
