@@ -21,6 +21,13 @@ abstract final class Formato {
     return texto.replaceAll("\u00A0", " ");
   }
 
+  /// O número cru para dentro de um campo de texto: "80" ou "76,50", sem
+  /// símbolo de moeda. É o que volta editável para o formulário de quadra.
+  static String numeroSimples(double valor) {
+    if (valor % 1 == 0) return valor.toStringAsFixed(0);
+    return valor.toStringAsFixed(2).replaceAll(".", ",");
+  }
+
   /// Sempre com centavos ("R$ 76,00"), usado no valor da cobrança Pix.
   static String moedaExata(double valor) =>
       _comCentavos.format(valor).replaceAll("\u00A0", " ");

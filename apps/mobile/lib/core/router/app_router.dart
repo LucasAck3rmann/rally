@@ -5,6 +5,7 @@ import "package:go_router/go_router.dart";
 import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
+import "../../features/gestao/presentation/quadra_form_page.dart";
 import "../../features/gestao/presentation/quadras_gestao_page.dart";
 import "../../features/home/presentation/home_page.dart";
 import "../../features/notificacoes/presentation/notificacoes_page.dart";
@@ -109,6 +110,25 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             builder: (_, state) => QuadrasGestaoPage(
               estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
             ),
+            routes: [
+              // "nova" tem quatro segmentos e a edição tem cinco, então não
+              // há ambiguidade com `:quadraId`.
+              GoRoute(
+                path: "nova",
+                parentNavigatorKey: _raiz,
+                builder: (_, state) => QuadraFormPage(
+                  estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+                ),
+              ),
+              GoRoute(
+                path: ":quadraId/editar",
+                parentNavigatorKey: _raiz,
+                builder: (_, state) => QuadraFormPage(
+                  estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+                  quadraId: state.pathParameters["quadraId"],
+                ),
+              ),
+            ],
           ),
         ],
       ),

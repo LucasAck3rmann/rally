@@ -79,6 +79,63 @@ class FakeGestaoRepository implements GestaoRepository {
   Future<List<QuadraGestao>> quadras(String estabelecimentoId) async =>
       _quadras;
 
+  /// Payloads recebidos por `criarQuadra`/`atualizarQuadra`, na ordem — é
+  /// assim que o teste confere o que o formulário mandou, e não só o que
+  /// ele desenhou na tela.
+  final List<DadosQuadra> salvos = [];
+
+  @override
+  Future<QuadraGestao> detalheQuadra(
+    String estabelecimentoId,
+    String quadraId,
+  ) async {
+    return _quadras.firstWhere((q) => q.id == quadraId);
+  }
+
+  @override
+  Future<QuadraGestao> criarQuadra(
+    String estabelecimentoId,
+    DadosQuadra dados,
+  ) async {
+    salvos.add(dados);
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    final nova = _daDados("q${_quadras.length + 1}", dados, ativo: true);
+    _quadras = [..._quadras, nova];
+    return nova;
+  }
+
+  @override
+  Future<QuadraGestao> atualizarQuadra(
+    String estabelecimentoId,
+    String quadraId,
+    DadosQuadra dados,
+  ) async {
+    salvos.add(dados);
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    final antiga = _quadras.firstWhere((q) => q.id == quadraId);
+    final nova = _daDados(quadraId, dados, ativo: antiga.ativo);
+    _quadras = [
+      for (final q in _quadras)
+        if (q.id == quadraId) nova else q,
+    ];
+    return nova;
+  }
+
+  QuadraGestao _daDados(String id, DadosQuadra d, {required bool ativo}) {
+    return QuadraGestao(
+      id: id,
+      nome: d.nome,
+      precoHora: d.precoHora,
+      ativo: ativo,
+      modalidades: d.modalidades,
+      fotos: const [],
+      comodidades: d.comodidades,
+      faixasPreco: d.faixasPreco,
+      descricao: d.descricao,
+      capacidade: d.capacidade,
+    );
+  }
+
   @override
   Future<QuadraGestao> definirAtivo(
     String estabelecimentoId,

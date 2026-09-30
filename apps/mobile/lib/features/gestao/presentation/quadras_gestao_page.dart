@@ -8,6 +8,7 @@ import "package:go_router/go_router.dart";
 import "../../../core/formato.dart";
 import "../../../core/theme/app_colors.dart";
 import "../../../core/theme/app_text.dart";
+import "../../../core/widgets/barra_inferior.dart";
 import "../../../core/widgets/brand_bar.dart";
 import "../../../core/widgets/rally_icon.dart";
 import "../../../core/widgets/secao.dart";
@@ -91,7 +92,7 @@ class QuadrasGestaoPage extends ConsumerWidget {
                   onTentarDeNovo: () =>
                       ref.invalidate(quadrasGestaoProvider(estabelecimentoId)),
                 ),
-                data: (lista) => _lista(lista, estabelecimento),
+                data: (lista) => _lista(context, lista, estabelecimento),
               ),
             ),
           ],
@@ -119,16 +120,34 @@ class QuadrasGestaoPage extends ConsumerWidget {
     return "$base · $pausadas pausada${pausadas > 1 ? "s" : ""}";
   }
 
-  Widget _lista(List<QuadraGestao> lista, EstabelecimentoGerido? est) {
+  Widget _lista(
+    BuildContext context,
+    List<QuadraGestao> lista,
+    EstabelecimentoGerido? est,
+  ) {
+    final podeEditar = est?.meuPapel.podeEditarQuadras ?? false;
+
     if (lista.isEmpty) {
-      return const EstadoVazio(
-        titulo: "Nenhuma quadra cadastrada",
-        descricao:
-            "Cadastre a primeira quadra para ela aparecer na busca dos jogadores.",
+      return Column(
+        children: [
+          const EstadoVazio(
+            titulo: "Nenhuma quadra cadastrada",
+            descricao:
+                "Cadastre a primeira quadra para ela aparecer na busca dos jogadores.",
+          ),
+          if (podeEditar) ...[
+            const SizedBox(height: 14),
+            BotaoPrimario(
+              rotulo: "Cadastrar quadra",
+              onPressed: () => context.push(
+                "/gestao/$estabelecimentoId/quadras/nova",
+              ),
+            ),
+          ],
+        ],
       );
     }
 
-    final podeEditar = est?.meuPapel.podeEditarQuadras ?? false;
     return Column(
       children: [
         for (final quadra in lista) ...[
@@ -138,6 +157,14 @@ class QuadrasGestaoPage extends ConsumerWidget {
             podeEditar: podeEditar,
           ),
           const SizedBox(height: 12),
+        ],
+        if (podeEditar) ...[
+          const SizedBox(height: 2),
+          BotaoPrimario(
+            rotulo: "Nova quadra",
+            onPressed: () =>
+                context.push("/gestao/$estabelecimentoId/quadras/nova"),
+          ),
         ],
       ],
     );
@@ -214,36 +241,57 @@ class _CardQuadraState extends ConsumerState<_CardQuadra> {
         ),
         child: Column(
           children: [
-            Padding(
-              padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
-              child: Row(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  Expanded(
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          quadra.nome,
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.titulo(16),
-                        ),
-                        const SizedBox(height: 4),
-                        Text(
-                          quadra.modalidades.isEmpty
-                              ? "Sem modalidade"
-                              : quadra.modalidades.join(" · "),
-                          maxLines: 1,
-                          overflow: TextOverflow.ellipsis,
-                          style: AppText.corpo(13, cor: AppColors.gray),
-                        ),
-                      ],
+            // Só administrador abre a edição: para atendente e financeiro o
+            // card é leitura, e um toque sem efeito seria pior que nenhum.
+            InkWell(
+              onTap: widget.podeEditar
+                  ? () => context.push(
+                        "/gestao/${widget.estabelecimentoId}"
+                        "/quadras/${quadra.id}/editar",
+                      )
+                  : null,
+              borderRadius: const BorderRadius.vertical(
+                top: Radius.circular(16),
+              ),
+              child: Padding(
+                padding: const EdgeInsets.fromLTRB(14, 14, 14, 12),
+                child: Row(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            quadra.nome,
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.titulo(16),
+                          ),
+                          const SizedBox(height: 4),
+                          Text(
+                            quadra.modalidades.isEmpty
+                                ? "Sem modalidade"
+                                : quadra.modalidades.join(" · "),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.corpo(13, cor: AppColors.gray),
+                          ),
+                        ],
+                      ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  _selo(),
-                ],
+                    const SizedBox(width: 10),
+                    _selo(),
+                    if (widget.podeEditar) ...[
+                      const SizedBox(width: 6),
+                      const RallyIcon(
+                        "chevron",
+                        tamanho: 16,
+                        cor: AppColors.gray,
+                      ),
+                    ],
+                  ],
+                ),
               ),
             ),
             const Divider(height: 1, thickness: 1, color: AppColors.line),
