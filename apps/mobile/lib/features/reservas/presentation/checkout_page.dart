@@ -333,7 +333,17 @@ class _CheckoutPageState extends ConsumerState<CheckoutPage> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
-              Text("Total", style: AppText.titulo(16)),
+              // O rótulo cede, o valor não: é o número que o cliente veio
+              // conferir. Mesmo critério das linhas de cima.
+              Flexible(
+                child: Text(
+                  "Total",
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titulo(16),
+                ),
+              ),
+              const SizedBox(width: 10),
               Text(Formato.moeda(_total), style: AppText.titulo(22)),
             ],
           ),

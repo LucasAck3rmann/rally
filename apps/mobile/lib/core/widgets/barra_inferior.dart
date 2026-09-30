@@ -180,6 +180,7 @@ class BotaoSecundario extends StatelessWidget {
         child: Container(
           height: 48,
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.line, width: 1.5),
@@ -188,7 +189,16 @@ class BotaoSecundario extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icone != null) ...[icone!, const SizedBox(width: 8)],
-              Text(rotulo, style: AppText.corpo(14, peso: FontWeight.w700)),
+              // Estes botões costumam vir dois lado a lado, cada um com
+              // metade da linha: o rótulo trunca em vez de furar a borda.
+              Flexible(
+                child: Text(
+                  rotulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.corpo(14, peso: FontWeight.w700),
+                ),
+              ),
             ],
           ),
         ),

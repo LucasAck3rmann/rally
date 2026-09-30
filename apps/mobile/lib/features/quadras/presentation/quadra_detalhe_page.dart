@@ -260,8 +260,16 @@ class _QuadraDetalhePageState extends ConsumerState<QuadraDetalhePage> {
 
   Widget _seletorDeDias() {
     final hoje = _hoje;
+    // Uma lista horizontal precisa de altura fixa, mas 62px eram do desenho
+    // em fonte padrão: com o texto do sistema ampliado o cartão do dia
+    // estoura por baixo. A altura passa a ser medida a partir das duas
+    // linhas reais do cartão — rótulo (11) e número (15) — mais o respiro.
+    final escala = MediaQuery.textScalerOf(context);
+    const linhas = AppText.entrelinha;
+    final alturaDoDia =
+        escala.scale(11) * linhas + escala.scale(15) * linhas + 2 + 20 + 2;
     return SizedBox(
-      height: 62,
+      height: alturaDoDia < 62 ? 62 : alturaDoDia,
       child: ListView.separated(
         scrollDirection: Axis.horizontal,
         itemCount: _diasVisiveis,

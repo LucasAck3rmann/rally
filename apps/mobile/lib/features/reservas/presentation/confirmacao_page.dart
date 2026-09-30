@@ -48,8 +48,11 @@ class ConfirmacaoPage extends ConsumerWidget {
     return ListView(
       padding: EdgeInsets.zero,
       children: [
-        SizedBox(
-          height: 210,
+        // 210px era a altura do desenho; com o texto do sistema ampliado o
+        // "Reserva confirmada!" passa disso. Vira **mínimo**: a pilha se
+        // ajusta ao conteúdo e o confete acompanha, porque é `Positioned.fill`.
+        ConstrainedBox(
+          constraints: const BoxConstraints(minHeight: 210),
           child: Stack(
             children: [
               const Positioned.fill(child: ConfeteConfirmacao()),
