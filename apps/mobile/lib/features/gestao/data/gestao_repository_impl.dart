@@ -43,6 +43,57 @@ class GestaoRepositoryImpl implements GestaoRepository {
   }
 
   @override
+  Future<QuadraGestao> detalheQuadra(
+    String estabelecimentoId,
+    String quadraId,
+  ) {
+    return chamarApi(
+      () async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/quadras/$quadraId",
+        );
+        return QuadraGestao.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível carregar a quadra.",
+    );
+  }
+
+  @override
+  Future<QuadraGestao> criarQuadra(
+    String estabelecimentoId,
+    DadosQuadra dados,
+  ) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/quadras",
+          data: dados.paraJson(),
+        );
+        return QuadraGestao.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível cadastrar a quadra.",
+    );
+  }
+
+  @override
+  Future<QuadraGestao> atualizarQuadra(
+    String estabelecimentoId,
+    String quadraId,
+    DadosQuadra dados,
+  ) {
+    return chamarApi(
+      () async {
+        final res = await _dio.patch<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/quadras/$quadraId",
+          data: dados.paraJson(),
+        );
+        return QuadraGestao.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível salvar a quadra.",
+    );
+  }
+
+  @override
   Future<QuadraGestao> definirAtivo(
     String estabelecimentoId,
     String quadraId, {

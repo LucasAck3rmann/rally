@@ -27,3 +27,14 @@ final quadrasGestaoProvider = FutureProvider.autoDispose
     .family<List<QuadraGestao>, String>((ref, estabelecimentoId) {
   return ref.watch(gestaoRepositoryProvider).quadras(estabelecimentoId);
 });
+
+/// Uma quadra para o formulário de edição.
+final quadraGestaoProvider = FutureProvider.autoDispose
+    .family<QuadraGestao, ({String estabelecimentoId, String quadraId})>((
+  ref,
+  chave,
+) {
+  return ref
+      .watch(gestaoRepositoryProvider)
+      .detalheQuadra(chave.estabelecimentoId, chave.quadraId);
+});
