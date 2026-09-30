@@ -21,15 +21,15 @@ module.exports = {
   // piso junto — é o que impede o número de escorrer para baixo sem ninguém ver.
   //
   // Medido em 30/09/2026, sem banco (integração pulada), logo um piso do
-  // piso: 83,47% de instruções, 82,67% de linhas, 65,34% de ramos e 57,44%
-  // de funções, depois da agenda entrar. O piso sobe junto com a medida —
+  // piso: 84,96% de instruções, 84,19% de linhas, 67,67% de ramos e 62,73%
+  // de funções, depois da agenda e do painel entrarem. O piso sobe junto com a medida —
   // piso muito abaixo do real para de acusar regressão, que é o que ele faz.
   coverageThreshold: {
     global: {
-      statements: 82,
-      lines: 81,
-      branches: 62,
-      functions: 55,
+      statements: 84,
+      lines: 83,
+      branches: 66,
+      functions: 60,
     },
   },
 };
