@@ -6,6 +6,7 @@ import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
 import "../../features/gestao/presentation/agenda_page.dart";
+import "../../features/gestao/presentation/painel_page.dart";
 import "../../features/gestao/presentation/quadra_form_page.dart";
 import "../../features/gestao/presentation/quadras_gestao_page.dart";
 import "../../features/home/presentation/home_page.dart";
@@ -105,6 +106,13 @@ final appRouterProvider = Provider<GoRouter>((ref) {
         parentNavigatorKey: _raiz,
         builder: (_, __) => const GestaoPage(),
         routes: [
+          GoRoute(
+            path: ":estabelecimentoId/painel",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => PainelPage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
+          ),
           GoRoute(
             path: ":estabelecimentoId/agenda",
             parentNavigatorKey: _raiz,

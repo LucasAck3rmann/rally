@@ -3,6 +3,7 @@
 
 import "package:rally_mobile/features/gestao/domain/agenda.dart";
 import "package:rally_mobile/features/gestao/domain/gestao.dart";
+import "package:rally_mobile/features/gestao/domain/painel.dart";
 import "package:rally_mobile/features/gestao/domain/gestao_repository.dart";
 
 /// Vínculo de mentira.
@@ -93,6 +94,20 @@ class FakeGestaoRepository implements GestaoRepository {
 
   /// Ids passados para `removerBloqueio`.
   final List<String> liberados = [];
+
+  /// Painel devolvido por `painel()`. Cada teste monta o seu.
+  Painel? painelDoPeriodo;
+
+  /// Períodos pedidos, na ordem — é assim que o teste confere que o chip
+  /// escolhido chegou até a consulta, e não só mudou de cor.
+  final List<int> periodos = [];
+
+  @override
+  Future<Painel> painel(String estabelecimentoId, {required int dias}) async {
+    periodos.add(dias);
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    return painelDoPeriodo ?? painelFalso(dias: dias);
+  }
 
   @override
   Future<AgendaDoDia> agenda(String estabelecimentoId, String data) async {
@@ -280,5 +295,86 @@ AgendaDoDia agendaFalsa({
     timezone: "America/Sao_Paulo",
     quadras: quadras,
     itens: itens,
+  );
+}
+
+/// Painel de mentira. Os padrões descrevem uma semana com movimento.
+Painel painelFalso({
+  int dias = 7,
+  double paga = 800,
+  double aReceber = 240,
+  double? ticketMedio = 130,
+  double? ocupacao = 42.5,
+  double horasVendidas = 8,
+  double horasDisponiveis = 98,
+  int vendidas = 8,
+  int canceladas = 1,
+  int bloqueios = 2,
+  double? taxaCancelamento = 11.1,
+  List<QuadraNoPainel>? quadras,
+  List<ProximoJogo>? proximosJogos,
+}) {
+  return Painel(
+    dias: dias,
+    de: "2026-09-24",
+    ate: "2026-09-30",
+    receita: ReceitaPainel(
+      paga: paga,
+      aReceber: aReceber,
+      total: paga + aReceber,
+      ticketMedio: ticketMedio,
+    ),
+    ocupacao: OcupacaoPainel(
+      horasVendidas: horasVendidas,
+      horasDisponiveis: horasDisponiveis,
+      percentual: ocupacao,
+    ),
+    contagem: ContagemPainel(
+      vendidas: vendidas,
+      canceladas: canceladas,
+      bloqueios: bloqueios,
+      taxaCancelamento: taxaCancelamento,
+    ),
+    quadras: quadras ??
+        const [
+          QuadraNoPainel(
+            quadraId: "q1",
+            nome: "Quadra 1",
+            reservas: 6,
+            horasVendidas: 6,
+            receita: 640,
+            ocupacao: 40,
+          ),
+          QuadraNoPainel(
+            quadraId: "q2",
+            nome: "Quadra 2",
+            reservas: 2,
+            horasVendidas: 2,
+            receita: 400,
+            ocupacao: 13.3,
+          ),
+        ],
+    proximosJogos: proximosJogos ??
+        [
+          ProximoJogo(
+            id: "j1",
+            quadraNome: "Quadra 1",
+            inicio: DateTime(2026, 10, 1, 19),
+            horaInicio: "19:00",
+            horaFim: "20:00",
+            preco: 80,
+            pago: true,
+            clienteNome: "Augusto Boff",
+          ),
+          ProximoJogo(
+            id: "j2",
+            quadraNome: "Quadra 2",
+            inicio: DateTime(2026, 10, 1, 20),
+            horaInicio: "20:00",
+            horaFim: "21:00",
+            preco: 120,
+            pago: false,
+          ),
+        ],
   );
 }

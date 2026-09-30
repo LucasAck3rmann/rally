@@ -6,6 +6,7 @@ import "package:dio/dio.dart";
 import "../../../core/network/erro_api.dart";
 import "../domain/agenda.dart";
 import "../domain/gestao.dart";
+import "../domain/painel.dart";
 import "../domain/gestao_repository.dart";
 
 /// Conversa com `/gestao` na API. Todas as rotas passam pelo `PapelGuard`,
@@ -105,6 +106,20 @@ class GestaoRepositoryImpl implements GestaoRepository {
         return AgendaDoDia.doJson(res.data!);
       },
       erroPadrao: "Não foi possível carregar a agenda.",
+    );
+  }
+
+  @override
+  Future<Painel> painel(String estabelecimentoId, {required int dias}) {
+    return chamarApi(
+      () async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/painel",
+          queryParameters: {"dias": dias},
+        );
+        return Painel.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível carregar o painel.",
     );
   }
 

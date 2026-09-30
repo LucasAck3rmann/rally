@@ -7,6 +7,7 @@ import "../../../core/network/dio_provider.dart";
 import "../data/gestao_repository_impl.dart";
 import "../domain/agenda.dart";
 import "../domain/gestao.dart";
+import "../domain/painel.dart";
 import "../domain/gestao_repository.dart";
 
 final gestaoRepositoryProvider = Provider<GestaoRepository>(
@@ -50,4 +51,13 @@ final agendaProvider = FutureProvider.autoDispose
   return ref
       .watch(gestaoRepositoryProvider)
       .agenda(chave.estabelecimentoId, chave.data);
+});
+
+/// O painel de um período. Trocar de janela (7, 30 dias) refaz a consulta,
+/// porque o recorte é a pergunta que o dono está fazendo.
+final painelProvider = FutureProvider.autoDispose
+    .family<Painel, ({String estabelecimentoId, int dias})>((ref, chave) {
+  return ref
+      .watch(gestaoRepositoryProvider)
+      .painel(chave.estabelecimentoId, dias: chave.dias);
 });
