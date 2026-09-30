@@ -3,6 +3,7 @@
 
 import "agenda.dart";
 import "gestao.dart";
+import "painel.dart";
 
 /// Contrato da área de gestão (RF-02, RF-20).
 abstract interface class GestaoRepository {
@@ -28,6 +29,9 @@ abstract interface class GestaoRepository {
 
   /// O dia inteiro do estabelecimento, quadra a quadra (RF-21).
   Future<AgendaDoDia> agenda(String estabelecimentoId, String data);
+
+  /// Ocupação, receita e próximos jogos dos últimos [dias] (RF-22).
+  Future<Painel> painel(String estabelecimentoId, {required int dias});
 
   /// Tira um horário da venda. Só admin — a API recusa o resto com 403.
   Future<ItemAgenda> criarBloqueio(
