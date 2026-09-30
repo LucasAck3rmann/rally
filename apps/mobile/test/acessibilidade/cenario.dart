@@ -17,6 +17,7 @@ import "package:rally_mobile/features/auth/domain/auth_user.dart";
 import "package:rally_mobile/features/auth/presentation/auth_providers.dart";
 import "package:rally_mobile/features/auth/presentation/cadastro_page.dart";
 import "package:rally_mobile/features/auth/presentation/login_page.dart";
+import "package:rally_mobile/features/gestao/presentation/agenda_page.dart";
 import "package:rally_mobile/features/gestao/presentation/gestao_providers.dart";
 import "package:rally_mobile/features/gestao/presentation/quadra_form_page.dart";
 import "package:rally_mobile/features/gestao/presentation/quadras_gestao_page.dart";
@@ -110,6 +111,11 @@ final telasDoApp = <TelaDoApp>[
     nome: "gestão — quadras",
     constroi: () => const QuadrasGestaoPage(estabelecimentoId: "e1"),
     ancora: "Quadra 2",
+  ),
+  (
+    nome: "gestão — agenda do dia",
+    constroi: () => const AgendaPage(estabelecimentoId: "e1"),
+    ancora: "Agenda",
   ),
   (
     nome: "gestão — nova quadra",
@@ -214,7 +220,23 @@ Future<void> montarTela(
               gestao.quadraFalsa(faixas: 2),
               gestao.quadraFalsa(id: "q2", nome: "Quadra 2", ativo: false),
             ],
-          ),
+          )..agendaDoDia = gestao.agendaFalsa(
+              itens: [
+                gestao.itemDeAgendaFalso(hora: 19, clienteNome: "Augusto Boff"),
+                gestao.itemDeAgendaFalso(
+                  id: "a2",
+                  hora: 20,
+                  duracaoHoras: 2,
+                  quadraId: "q2",
+                ),
+                gestao.itemDeAgendaFalso(
+                  id: "b1",
+                  hora: 9,
+                  ehBloqueio: true,
+                  motivo: "Manutenção da rede",
+                ),
+              ],
+            ),
         ),
       ],
       child: MaterialApp.router(routerConfig: router),

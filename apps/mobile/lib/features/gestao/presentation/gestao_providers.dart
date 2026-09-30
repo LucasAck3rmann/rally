@@ -5,6 +5,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../../../core/network/dio_provider.dart";
 import "../data/gestao_repository_impl.dart";
+import "../domain/agenda.dart";
 import "../domain/gestao.dart";
 import "../domain/gestao_repository.dart";
 
@@ -37,4 +38,16 @@ final quadraGestaoProvider = FutureProvider.autoDispose
   return ref
       .watch(gestaoRepositoryProvider)
       .detalheQuadra(chave.estabelecimentoId, chave.quadraId);
+});
+
+/// A agenda de um dia. A chave carrega a data porque trocar de dia é o gesto
+/// principal da tela — sem ela, voltar para ontem refaria a chamada.
+final agendaProvider = FutureProvider.autoDispose
+    .family<AgendaDoDia, ({String estabelecimentoId, String data})>((
+  ref,
+  chave,
+) {
+  return ref
+      .watch(gestaoRepositoryProvider)
+      .agenda(chave.estabelecimentoId, chave.data);
 });

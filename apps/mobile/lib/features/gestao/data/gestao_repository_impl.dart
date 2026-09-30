@@ -4,6 +4,7 @@
 import "package:dio/dio.dart";
 
 import "../../../core/network/erro_api.dart";
+import "../domain/agenda.dart";
 import "../domain/gestao.dart";
 import "../domain/gestao_repository.dart";
 
@@ -90,6 +91,57 @@ class GestaoRepositoryImpl implements GestaoRepository {
         return QuadraGestao.doJson(res.data!);
       },
       erroPadrao: "Não foi possível salvar a quadra.",
+    );
+  }
+
+  @override
+  Future<AgendaDoDia> agenda(String estabelecimentoId, String data) {
+    return chamarApi(
+      () async {
+        final res = await _dio.get<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/agenda",
+          queryParameters: {"data": data},
+        );
+        return AgendaDoDia.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível carregar a agenda.",
+    );
+  }
+
+  @override
+  Future<ItemAgenda> criarBloqueio(
+    String estabelecimentoId, {
+    required String quadraId,
+    required DateTime inicio,
+    required DateTime fim,
+    String? motivo,
+  }) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/gestao/estabelecimentos/$estabelecimentoId/bloqueios",
+          data: {
+            "quadraId": quadraId,
+            "inicio": inicio.toUtc().toIso8601String(),
+            "fim": fim.toUtc().toIso8601String(),
+            if (motivo != null && motivo.isNotEmpty) "motivo": motivo,
+          },
+        );
+        return ItemAgenda.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível bloquear o horário.",
+    );
+  }
+
+  @override
+  Future<void> removerBloqueio(String estabelecimentoId, String bloqueioId) {
+    return chamarApi(
+      () async {
+        await _dio.delete<void>(
+          "/gestao/estabelecimentos/$estabelecimentoId/bloqueios/$bloqueioId",
+        );
+      },
+      erroPadrao: "Não foi possível liberar o horário.",
     );
   }
 
