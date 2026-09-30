@@ -321,11 +321,15 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
       children: [
         const RallyIcon("relogio", tamanho: 16, cor: AppColors.coralDeep),
         const SizedBox(width: 7),
-        Text(
-          expirou
-              ? "COBRANÇA EXPIRADA"
-              : "EXPIRA EM ${Formato.contagem(_restante)}",
-          style: AppText.rotulo(11, cor: AppColors.coralDeep),
+        Flexible(
+          child: Text(
+            expirou
+                ? "COBRANÇA EXPIRADA"
+                : "EXPIRA EM ${Formato.contagem(_restante)}",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.rotulo(11, cor: AppColors.coralDeep),
+          ),
         ),
       ],
     );
