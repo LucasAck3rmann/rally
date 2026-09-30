@@ -2,6 +2,7 @@
 // Copyright (C) 2026 Rally
 
 import "package:rally_mobile/features/gestao/domain/agenda.dart";
+import "package:rally_mobile/features/gestao/domain/equipe.dart";
 import "package:rally_mobile/features/gestao/domain/gestao.dart";
 import "package:rally_mobile/features/gestao/domain/painel.dart";
 import "package:rally_mobile/features/gestao/domain/gestao_repository.dart";
@@ -101,6 +102,63 @@ class FakeGestaoRepository implements GestaoRepository {
   /// Períodos pedidos, na ordem — é assim que o teste confere que o chip
   /// escolhido chegou até a consulta, e não só mudou de cor.
   final List<int> periodos = [];
+
+  /// Equipe devolvida por `equipe()`.
+  List<MembroEquipe>? equipeDoLugar;
+
+  /// Convites pedidos, na ordem: (email, papel).
+  final List<(String, PapelGestao)> convites = [];
+
+  /// Trocas de papel pedidas: (usuário, papel).
+  final List<(String, PapelGestao)> trocas = [];
+
+  /// Ids tirados da equipe.
+  final List<String> retirados = [];
+
+  @override
+  Future<List<MembroEquipe>> equipe(String estabelecimentoId) async {
+    return equipeDoLugar ?? [membroFalso()];
+  }
+
+  @override
+  Future<MembroEquipe> adicionarMembro(
+    String estabelecimentoId, {
+    required String email,
+    required PapelGestao papel,
+  }) async {
+    convites.add((email, papel));
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    final novo = membroFalso(
+      usuarioId: "u${convites.length + 1}",
+      nome: "Novo Membro",
+      email: email,
+      papel: papel,
+    );
+    equipeDoLugar = [...?equipeDoLugar, novo];
+    return novo;
+  }
+
+  @override
+  Future<MembroEquipe> trocarPapel(
+    String estabelecimentoId,
+    String usuarioId,
+    PapelGestao papel,
+  ) async {
+    trocas.add((usuarioId, papel));
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    return membroFalso(usuarioId: usuarioId, papel: papel);
+  }
+
+  @override
+  Future<void> removerMembro(
+    String estabelecimentoId,
+    String usuarioId,
+  ) async {
+    retirados.add(usuarioId);
+    if (erroAoSalvar != null) throw erroAoSalvar!;
+    equipeDoLugar =
+        equipeDoLugar?.where((m) => m.usuarioId != usuarioId).toList();
+  }
 
   @override
   Future<Painel> painel(String estabelecimentoId, {required int dias}) async {
@@ -376,5 +434,21 @@ Painel painelFalso({
             pago: false,
           ),
         ],
+  );
+}
+
+/// Membro de equipe de mentira.
+MembroEquipe membroFalso({
+  String usuarioId = "u2",
+  String nome = "Augusto Boff",
+  String email = "augusto@rally.com.br",
+  PapelGestao papel = PapelGestao.atendente,
+}) {
+  return MembroEquipe(
+    usuarioId: usuarioId,
+    nome: nome,
+    email: email,
+    papel: papel,
+    desde: DateTime(2026, 9, 1),
   );
 }

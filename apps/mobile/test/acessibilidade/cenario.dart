@@ -18,6 +18,7 @@ import "package:rally_mobile/features/auth/presentation/auth_providers.dart";
 import "package:rally_mobile/features/auth/presentation/cadastro_page.dart";
 import "package:rally_mobile/features/auth/presentation/login_page.dart";
 import "package:rally_mobile/features/gestao/presentation/agenda_page.dart";
+import "package:rally_mobile/features/gestao/presentation/equipe_page.dart";
 import "package:rally_mobile/features/gestao/presentation/gestao_providers.dart";
 import "package:rally_mobile/features/gestao/presentation/painel_page.dart";
 import "package:rally_mobile/features/gestao/presentation/quadra_form_page.dart";
@@ -117,6 +118,11 @@ final telasDoApp = <TelaDoApp>[
     nome: "gestão — agenda do dia",
     constroi: () => const AgendaPage(estabelecimentoId: "e1"),
     ancora: "Agenda",
+  ),
+  (
+    nome: "gestão — equipe",
+    constroi: () => const EquipePage(estabelecimentoId: "e1"),
+    ancora: "Equipe",
   ),
   (
     nome: "gestão — painel",

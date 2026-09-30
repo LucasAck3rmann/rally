@@ -99,6 +99,16 @@ class QuadrasGestaoPage extends ConsumerWidget {
                           ),
                         ),
                       ),
+                      const SizedBox(width: 10),
+                      Expanded(
+                        child: BotaoSecundario(
+                          rotulo: "Equipe",
+                          icone: const RallyIcon("nav-perfil", tamanho: 18),
+                          onPressed: () => context.push(
+                            "/gestao/$estabelecimentoId/equipe",
+                          ),
+                        ),
+                      ),
                     ],
                   ),
                 ],

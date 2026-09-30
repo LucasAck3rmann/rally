@@ -6,6 +6,7 @@ import "package:flutter_riverpod/flutter_riverpod.dart";
 import "../../../core/network/dio_provider.dart";
 import "../data/gestao_repository_impl.dart";
 import "../domain/agenda.dart";
+import "../domain/equipe.dart";
 import "../domain/gestao.dart";
 import "../domain/painel.dart";
 import "../domain/gestao_repository.dart";
@@ -60,4 +61,10 @@ final painelProvider = FutureProvider.autoDispose
   return ref
       .watch(gestaoRepositoryProvider)
       .painel(chave.estabelecimentoId, dias: chave.dias);
+});
+
+/// A equipe do estabelecimento.
+final equipeProvider = FutureProvider.autoDispose
+    .family<List<MembroEquipe>, String>((ref, estabelecimentoId) {
+  return ref.watch(gestaoRepositoryProvider).equipe(estabelecimentoId);
 });
