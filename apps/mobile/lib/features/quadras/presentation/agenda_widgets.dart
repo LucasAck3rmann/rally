@@ -37,7 +37,10 @@ class CartaoDia extends StatelessWidget {
           onTap: onTap,
           borderRadius: BorderRadius.circular(14),
           child: Container(
-            width: 62,
+            // 62px é a medida do desenho em fonte padrão. Com o texto do
+            // sistema ampliado, "Hoje" não cabe e quebra em duas linhas —
+            // então a largura acompanha a mesma escala do texto.
+            width: MediaQuery.textScalerOf(context).scale(62),
             padding: const EdgeInsets.symmetric(vertical: 10),
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(14),
@@ -48,6 +51,8 @@ class CartaoDia extends StatelessWidget {
               children: [
                 Text(
                   rotulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
                   style: AppText.corpo(
                     11,
                     cor: ativo ? AppColors.ink : AppColors.gray,

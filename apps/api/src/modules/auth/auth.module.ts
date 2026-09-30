@@ -5,6 +5,7 @@ import { JwtModule } from "@nestjs/jwt";
 import { AuthController } from "./auth.controller";
 import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
+import { PapelGuard } from "./guards/papel.guard";
 
 @Module({
   imports: [
@@ -19,8 +20,8 @@ import { JwtAuthGuard } from "./guards/jwt-auth.guard";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, JwtAuthGuard],
+  providers: [AuthService, JwtAuthGuard, PapelGuard],
   // O guard protege rotas de outros módulos (reservas, replays).
-  exports: [JwtAuthGuard, JwtModule],
+  exports: [JwtAuthGuard, PapelGuard, JwtModule],
 })
 export class AuthModule {}

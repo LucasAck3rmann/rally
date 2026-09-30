@@ -42,11 +42,12 @@
 **Consequências:** (+) escala, HA, padrão de mercado, currículo. (−) mais complexo e caro no início que um PaaS — mitigado por **dev local em Docker Compose** e IaC versionada.
 
 ## ADR-0006 — Replays em S3 + MediaConvert + CloudFront
-**Status:** Aceito · **Data:** 2026-06-16
+**Status:** **Substituído** pelo [ADR-0012](0012-replays-por-parceria.md) · **Data:** 2026-06-16
 **Contexto:** Replays exigem armazenar, **transcodificar** e entregar vídeo com escala — diferencial do produto.
 **Decisão:** Upload → **S3**; transcode VOD → **MediaConvert**; entrega → **CloudFront** (URLs assinadas). **IVS** para ao vivo no futuro.
 **Alternativas:** **Mux** (DX excelente — vira alternativa gerenciada se o pipeline AWS pesar); Cloudinary (foco imagem). 
 **Consequências:** (+) tudo AWS-native, controle e custo a escala. (−) mais peças para orquestrar que um SaaS de vídeo pronto — isolar atrás de serviço de mídia.
+> **Por que caiu:** a pesquisa de mercado de 02/09/2026 mostrou que replay automático já é vertical madura no Brasil (FilmaEu e outros). Construir a captação viraria concorrência direta em hardware e visão computacional. Ver [ADR-0012](0012-replays-por-parceria.md).
 
 ## ADR-0007 — Monorepo com Turborepo
 **Status:** Aceito · **Data:** 2026-06-16
@@ -82,6 +83,13 @@
 **Decisão (resumo):** banco/schema **compartilhados** com isolamento por `estabelecimentoId` aplicado de forma **centralizada** (app-level via Prisma), com **RLS do Postgres** como defesa em profundidade futura; schema/banco-por-tenant só no **enterprise**.
 **Consequências:** (+) simples, nativo no Prisma, barato, entrega o MVP; caminho de endurecimento mapeado. (−) depende de escopo centralizado e testes de isolamento — risco de IDOR mitigado.
 **Versão por extenso:** [ADR-0011 — Estratégia Multi-tenant](0011-multi-tenant.md).
+
+## ADR-0012 — Captação de replays por parceria
+**Status:** Aceito · **Data:** 2026-09-02 · **Substitui o [ADR-0006](#adr-0006--replays-em-s3--mediaconvert--cloudfront)**
+**Contexto:** A premissa de que replay automático era inédito caiu: a pesquisa de mercado mapeou uma vertical madura (FilmaEu, com 4.000+ quadras, e outras seis), separada e **complementar** à vertical de agendamento — nenhum sistema de agenda produz vídeo, e nenhum sistema de vídeo agenda.
+**Decisão (resumo):** a captação **não é construída internamente** — vem por parceria, com o fornecedor entrando como **adaptador atrás de uma porta**, como já é feito com o Pix. O diferencial passa a ser arquitetural: `Replay` é entidade do domínio ligada a `Reserva` e `Usuario`, então só o Rally sabe qual clipe é de quem.
+**Consequências:** (+) sai da disputa em hardware e visão computacional; o vínculo reserva↔clipe fica no domínio e o fornecedor é substituível. (−) a FilmaEu não tem API pública documentada — **risco declarado**: a integração depende de interface que eles forneçam.
+**Versão por extenso:** [ADR-0012 — Captação de replays por parceria](0012-replays-por-parceria.md).
 
 ---
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.

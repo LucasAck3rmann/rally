@@ -56,6 +56,11 @@ class FakeAuthRepository implements AuthRepository {
     return Future.value(AuthUser(id: "u1", nome: nome, email: email));
   }
 
+  /// `true` depois que a tela pediu para sair.
+  bool saiu = false;
+
   @override
-  Future<void> logout() async {}
+  Future<void> logout() async {
+    saiu = true;
+  }
 }

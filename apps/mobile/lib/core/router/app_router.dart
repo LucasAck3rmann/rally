@@ -5,6 +5,7 @@ import "package:go_router/go_router.dart";
 import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/login_page.dart";
+import "../../features/gestao/presentation/quadras_gestao_page.dart";
 import "../../features/home/presentation/home_page.dart";
 import "../../features/notificacoes/presentation/notificacoes_page.dart";
 import "../../features/perfil/presentation/perfil_page.dart";
@@ -27,8 +28,9 @@ const rotasPublicas = {"/login", "/cadastro"};
 /// - sem sessão → `/login` (ou `/cadastro`)
 /// - com sessão → as abas (`/`, `/reservas`, `/replays`, `/perfil`)
 ///
-/// O fluxo de reserva (detalhe → checkout → Pix → confirmação) fica **fora**
-/// das abas, empilhado sobre elas, como manda o desenho das telas.
+/// O fluxo de reserva (detalhe → checkout → Pix → confirmação) e a área de
+/// gestão (`/gestao`) ficam **fora** das abas, empilhados sobre elas, como
+/// manda o desenho das telas.
 final appRouterProvider = Provider<GoRouter>((ref) {
   // Reavalia o redirect sempre que o estado de auth muda.
   final refresh = ValueNotifier<int>(0);
@@ -91,6 +93,22 @@ final appRouterProvider = Provider<GoRouter>((ref) {
             routes: [
               GoRoute(path: "/perfil", builder: (_, __) => const PerfilPage()),
             ],
+          ),
+        ],
+      ),
+      // Área do dono: entra pelo Perfil e fica empilhada sobre as abas,
+      // porque gerir não é uma quinta aba do app do cliente.
+      GoRoute(
+        path: "/gestao",
+        parentNavigatorKey: _raiz,
+        builder: (_, __) => const GestaoPage(),
+        routes: [
+          GoRoute(
+            path: ":estabelecimentoId/quadras",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => QuadrasGestaoPage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
           ),
         ],
       ),

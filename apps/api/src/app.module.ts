@@ -4,6 +4,7 @@ import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { ReservasModule } from "./modules/reservas/reservas.module";
 import { QuadrasModule } from "./modules/quadras/quadras.module";
+import { GestaoModule } from "./modules/gestao/gestao.module";
 import { ReplaysModule } from "./modules/replays/replays.module";
 import { PagamentosModule } from "./modules/pagamentos/pagamentos.module";
 import { PromocoesModule } from "./modules/promocoes/promocoes.module";
@@ -17,6 +18,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
     AuthModule,
     HealthModule,
     QuadrasModule,
+    GestaoModule,
     PromocoesModule,
     PagamentosModule,
     ReservasModule,
