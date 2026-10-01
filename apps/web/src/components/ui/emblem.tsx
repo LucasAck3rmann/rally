@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { cn } from "@/lib/cn";
+import { colors as tokens } from "@rally/tokens";
 
 /**
  * Emblema/carimbo do Rally (EST. 2026) — mesmo desenho do app, exportado do
@@ -18,7 +19,7 @@ export function Emblem({ className }: { className?: string }) {
       <circle cx="12" cy="12" r="9.84" stroke="#1C2B33" strokeWidth="1.4" strokeDasharray="2 6" />
       <path
         d="M8.16 13.44a3.84 3.84 0 1 1 7.68 0H8.16Z"
-        fill="#FF6B4A"
+        fill={tokens.coral}
         stroke="#1C2B33"
         strokeWidth="2"
       />
