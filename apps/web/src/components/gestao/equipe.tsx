@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
+import { TrocaDePapel } from "@/components/gestao/troca-de-papel";
+import { FormularioDeConvite } from "@/components/gestao/formulario-de-convite";
+import { tirarDaEquipe } from "@/lib/gestao/acoes";
 import type { MembroDaEquipe, Papel } from "@/lib/gestao/contratos";
 
 const PAPEIS: Record<Papel, string> = {
@@ -24,7 +28,16 @@ function desdeQuando(iso: string): string {
   }).format(d);
 }
 
-export function EquipeDaArena({ equipe }: { equipe: MembroDaEquipe[] }) {
+export function EquipeDaArena({
+  equipe,
+  estabelecimentoId,
+  podeEditar,
+}: {
+  equipe: MembroDaEquipe[];
+  estabelecimentoId: string;
+  /// Só admin mexe na equipe; ver é de toda a equipe.
+  podeEditar: boolean;
+}) {
   const admins = equipe.filter((m) => m.papel === "ADMIN").length;
 
   return (
@@ -64,13 +77,35 @@ export function EquipeDaArena({ equipe }: { equipe: MembroDaEquipe[] }) {
                 <p className="truncate text-[13px] text-gray">{membro.email}</p>
               </div>
               <div className="shrink-0 text-right">
-                <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
-                  {PAPEIS[membro.papel]}
-                </p>
+                {podeEditar ? (
+                  <TrocaDePapel
+                    estabelecimentoId={estabelecimentoId}
+                    usuarioId={membro.usuarioId}
+                    nome={membro.nome}
+                    papel={membro.papel}
+                    ultimoAdmin={admins === 1 && membro.papel === "ADMIN"}
+                  />
+                ) : (
+                  <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                    {PAPEIS[membro.papel]}
+                  </p>
+                )}
                 <p className="mt-0.5 text-[11px] text-gray">
                   desde {desdeQuando(membro.desde)}
                 </p>
               </div>
+              {podeEditar ? (
+                <BotaoDeAcao
+                  acao={() => tirarDaEquipe(estabelecimentoId, membro.usuarioId)}
+                  tom="destrutivo"
+                  // Dizer o que acontece de verdade: o vínculo vira cliente e
+                  // as reservas ficam. "Remover" sozinho soa como apagar.
+                  confirmar={`Tirar ${membro.nome} da equipe? Ela perde o acesso à gestão, mas continua cliente da arena e as reservas dela ficam.`}
+                  className="shrink-0"
+                >
+                  Tirar
+                </BotaoDeAcao>
+              ) : null}
             </li>
           ))}
         </ul>
@@ -87,10 +122,11 @@ export function EquipeDaArena({ equipe }: { equipe: MembroDaEquipe[] }) {
         </p>
       ) : null}
 
-      <p className="mt-8 text-[13px] text-gray">
-        Adicionar, trocar papel e tirar da equipe, por enquanto, é pelo
-        aplicativo.
-      </p>
+      {podeEditar ? (
+        <div className="mt-8">
+          <FormularioDeConvite estabelecimentoId={estabelecimentoId} />
+        </div>
+      ) : null}
     </div>
   );
 }

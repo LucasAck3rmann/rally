@@ -2,7 +2,7 @@
 import type { Metadata } from "next";
 
 import { QuadrasDaArena } from "@/components/gestao/quadras";
-import { quadrasDoEstabelecimento } from "@/lib/gestao/consultas";
+import { meuPapelEm, quadrasDoEstabelecimento } from "@/lib/gestao/consultas";
 
 export const metadata: Metadata = { title: "Quadras" };
 
@@ -12,6 +12,16 @@ export default async function Quadras({
   params: Promise<{ estabelecimentoId: string }>;
 }) {
   const { estabelecimentoId } = await params;
-  const quadras = await quadrasDoEstabelecimento(estabelecimentoId);
-  return <QuadrasDaArena quadras={quadras} />;
+  const [quadras, papel] = await Promise.all([
+    quadrasDoEstabelecimento(estabelecimentoId),
+    meuPapelEm(estabelecimentoId),
+  ]);
+
+  return (
+    <QuadrasDaArena
+      quadras={quadras}
+      estabelecimentoId={estabelecimentoId}
+      podeEditar={papel === "ADMIN" || papel === "MANTENEDOR"}
+    />
+  );
 }
