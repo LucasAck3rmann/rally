@@ -8,6 +8,7 @@ import {
   ListaDeEstabelecimentos,
   ListaDeQuadras,
   Painel,
+  Relatorio,
 } from "./contratos";
 
 /**
@@ -54,5 +55,17 @@ export function equipeDoEstabelecimento(estabelecimentoId: string) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/equipe`,
     ListaDaEquipe,
+  );
+}
+
+export function relatorioDoPeriodo(
+  estabelecimentoId: string,
+  de: string,
+  ate: string,
+) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/relatorios`,
+    Relatorio,
+    { parametros: { de, ate } },
   );
 }
