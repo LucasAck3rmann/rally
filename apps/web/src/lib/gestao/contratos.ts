@@ -77,3 +77,72 @@ export const Sessao = z.object({
   accessToken: z.string(),
   user: z.object({ id: z.string(), nome: z.string(), email: z.string() }),
 });
+
+export const ItemDaAgenda = z.object({
+  id: z.string(),
+  quadraId: z.string(),
+  quadraNome: z.string(),
+  inicio: z.string(),
+  fim: z.string(),
+  horaInicio: z.string(),
+  horaFim: z.string(),
+  status: z.string(),
+  origem: z.string(),
+  ehBloqueio: z.boolean(),
+  // `null` num bloqueio: não há cobrança nem pessoa, e zero com nome em
+  // branco seriam duas mentiras diferentes.
+  preco: z.number().nullable(),
+  motivo: z.string().nullable(),
+  cliente: z
+    .object({
+      id: z.string(),
+      nome: z.string(),
+      telefone: z.string().nullish(),
+    })
+    .nullish(),
+});
+export type ItemDaAgenda = z.infer<typeof ItemDaAgenda>;
+
+export const AgendaDoDia = z.object({
+  data: z.string(),
+  timezone: z.string(),
+  quadras: z.array(z.object({ id: z.string(), nome: z.string() })),
+  itens: z.array(ItemDaAgenda),
+});
+export type AgendaDoDia = z.infer<typeof AgendaDoDia>;
+
+export const FaixaDePreco = z.object({
+  id: z.string().nullish(),
+  diaSemana: z.number().nullable(),
+  horaInicio: z.string(),
+  horaFim: z.string(),
+  precoHora: z.number(),
+});
+
+export const QuadraDaGestao = z.object({
+  id: z.string(),
+  nome: z.string(),
+  descricao: z.string().nullish(),
+  precoHora: z.number(),
+  capacidade: z.number().nullish(),
+  fotos: z.array(z.string()),
+  comodidades: z.array(z.string()),
+  modalidades: z.array(z.string()),
+  faixasPreco: z.array(FaixaDePreco),
+  ativo: z.boolean(),
+});
+export type QuadraDaGestao = z.infer<typeof QuadraDaGestao>;
+
+export const ListaDeQuadras = z.array(QuadraDaGestao);
+
+export const MembroDaEquipe = z.object({
+  usuarioId: z.string(),
+  nome: z.string(),
+  email: z.string(),
+  avatarUrl: z.string().nullish(),
+  papel: Papel,
+  desde: z.string(),
+});
+export type MembroDaEquipe = z.infer<typeof MembroDaEquipe>;
+
+export const ListaDaEquipe = z.array(MembroDaEquipe);
