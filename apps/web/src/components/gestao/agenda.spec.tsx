@@ -27,7 +27,11 @@ function item(opcoes: Partial<ItemDaAgenda> & { hora?: number; horas?: number } 
   } satisfies ItemDaAgenda;
 }
 
-function montar(itens: ItemDaAgenda[] = [], quadras = [{ id: "q1", nome: "Quadra 1" }]) {
+function montar(
+  itens: ItemDaAgenda[] = [],
+  quadras = [{ id: "q1", nome: "Quadra 1" }],
+  podeBloquear = false,
+) {
   const agenda: AgendaDoDia = {
     data: "2026-10-05",
     timezone: "America/Sao_Paulo",
@@ -39,6 +43,7 @@ function montar(itens: ItemDaAgenda[] = [], quadras = [{ id: "q1", nome: "Quadra
       agenda={agenda}
       dias={["2026-10-05", "2026-10-06"]}
       estabelecimentoId="e1"
+      podeBloquear={podeBloquear}
     />,
   );
 }
@@ -118,6 +123,39 @@ describe("Agenda da arena", () => {
 
     expect(screen.getByText(/nenhuma quadra ativa/i)).toBeInTheDocument();
     expect(screen.queryByRole("table")).not.toBeInTheDocument();
+  });
+
+  it("quem não é administrador não vê como bloquear", () => {
+    // A API recusa com 403; oferecer o que vai dar erro é pior que não
+    // oferecer. A grade continua legível — o atendente vê o dia.
+    montar([], [{ id: "q1", nome: "Quadra 1" }], false);
+    expect(screen.queryByRole("button", { name: "Bloquear" })).not.toBeInTheDocument();
+    expect(screen.getByText("19h livre")).toBeInTheDocument();
+  });
+
+  it("o administrador bloqueia o horário livre", () => {
+    montar([], [{ id: "q1", nome: "Quadra 1" }], true);
+
+    // Uma por hora da faixa — 8h a 22h são quinze.
+    expect(screen.getAllByRole("button", { name: "Bloquear" })).toHaveLength(15);
+  });
+
+  it("o administrador libera o que está bloqueado, e não a reserva", () => {
+    montar(
+      [
+        item({ hora: 19, id: "b1", ehBloqueio: true, preco: null, cliente: null }),
+        item({ hora: 20, id: "r1" }),
+      ],
+      [{ id: "q1", nome: "Quadra 1" }],
+      true,
+    );
+
+    const bloqueada = screen.getByRole("rowheader", { name: "19h" }).closest("tr")!;
+    const reservada = screen.getByRole("rowheader", { name: "20h" }).closest("tr")!;
+    expect(within(bloqueada).getByRole("button", { name: "Liberar" })).toBeInTheDocument();
+    // Reserva de cliente não tem botão: quem pagou perde o horário pelo
+    // cancelamento, que cobra motivo e avisa.
+    expect(within(reservada).queryByRole("button")).not.toBeInTheDocument();
   });
 
   it("a célula ocupada fica na linha da hora certa", () => {

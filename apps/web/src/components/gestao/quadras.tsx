@@ -1,9 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
 import { cn } from "@/lib/cn";
 import { formatarPreco } from "@/lib/formato";
+import { pausarQuadra } from "@/lib/gestao/acoes";
 import type { QuadraDaGestao } from "@/lib/gestao/contratos";
 
-export function QuadrasDaArena({ quadras }: { quadras: QuadraDaGestao[] }) {
+export function QuadrasDaArena({
+  quadras,
+  estabelecimentoId,
+  podeEditar,
+}: {
+  quadras: QuadraDaGestao[];
+  estabelecimentoId: string;
+  /// Só admin pausa quadra; a API recusa o resto com 403.
+  podeEditar: boolean;
+}) {
   const pausadas = quadras.filter((q) => !q.ativo).length;
 
   return (
@@ -97,20 +108,41 @@ export function QuadrasDaArena({ quadras }: { quadras: QuadraDaGestao[] }) {
                 </ul>
               ) : null}
 
-              {quadra.capacidade ? (
-                <p className="mt-auto pt-4 font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
-                  Até {quadra.capacidade} pessoas
-                </p>
-              ) : null}
+              <div className="mt-auto flex items-end justify-between gap-3 pt-4">
+                {quadra.capacidade ? (
+                  <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
+                    Até {quadra.capacidade} pessoas
+                  </p>
+                ) : (
+                  <span />
+                )}
+                {podeEditar ? (
+                  <BotaoDeAcao
+                    acao={() =>
+                      pausarQuadra(estabelecimentoId, quadra.id, !quadra.ativo)
+                    }
+                    tom={quadra.ativo ? "destrutivo" : "neutro"}
+                    confirmar={
+                      quadra.ativo
+                        ? // Pausar tira a quadra da busca dos jogadores; dizer o
+                          // que acontece evita o clique por engano.
+                          `Pausar ${quadra.nome}? Ela sai da vitrine e o histórico fica.`
+                        : undefined
+                    }
+                  >
+                    {quadra.ativo ? "Pausar" : "Reativar"}
+                  </BotaoDeAcao>
+                ) : null}
+              </div>
             </li>
           ))}
         </ul>
       )}
 
-      {/* Editar ainda é só no aplicativo. Dizer isso é melhor que deixar o
-          dono procurar um botão que não existe. */}
+      {/* Pausar já funciona aqui; cadastrar e editar seguem no aplicativo.
+          Dizer onde se faz é melhor que deixar procurar um botão ausente. */}
       <p className="mt-8 text-[13px] text-gray">
-        Cadastrar e editar quadra, por enquanto, é pelo aplicativo.
+        Cadastrar quadra e mudar preço, por enquanto, é pelo aplicativo.
       </p>
     </div>
   );

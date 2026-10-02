@@ -1,8 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import Link from "next/link";
 
+import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
+
 import { cn } from "@/lib/cn";
 import { formatarPreco, rotuloDoDia } from "@/lib/formato";
+import { bloquearHorario, liberarHorario } from "@/lib/gestao/acoes";
 import type { AgendaDoDia, ItemDaAgenda } from "@/lib/gestao/contratos";
 
 /** Hora cheia em que o item começa — é como a grade indexa as linhas. */
@@ -55,10 +58,13 @@ export function AgendaDaArena({
   agenda,
   dias,
   estabelecimentoId,
+  podeBloquear = false,
 }: {
   agenda: AgendaDoDia;
   dias: string[];
   estabelecimentoId: string;
+  /// Só admin bloqueia horário; a API recusa o resto com 403.
+  podeBloquear?: boolean;
 }) {
   const horas = faixaDeHoras(agenda);
 
@@ -135,6 +141,11 @@ export function AgendaDaArena({
                       key={q.id}
                       item={em(agenda, q.id, hora)}
                       hora={hora}
+                      data={agenda.data}
+                      quadraId={q.id}
+                      quadraNome={q.nome}
+                      estabelecimentoId={estabelecimentoId}
+                      podeBloquear={podeBloquear}
                     />
                   ))}
                 </tr>
@@ -147,11 +158,47 @@ export function AgendaDaArena({
   );
 }
 
-function Celula({ item, hora }: { item?: ItemDaAgenda; hora: number }) {
+function Celula({
+  item,
+  hora,
+  data,
+  quadraId,
+  quadraNome,
+  estabelecimentoId,
+  podeBloquear,
+}: {
+  item?: ItemDaAgenda;
+  hora: number;
+  data: string;
+  quadraId: string;
+  quadraNome: string;
+  estabelecimentoId: string;
+  podeBloquear: boolean;
+}) {
   if (!item) {
     return (
-      <td className="h-14 rounded-button border border-line bg-white px-2 align-middle">
+      <td className="h-14 rounded-button border border-line bg-white px-1 align-middle">
         <span className="sr-only">{hora}h livre</span>
+        {podeBloquear ? (
+          <BotaoDeAcao
+            acao={(motivo) =>
+              bloquearHorario(estabelecimentoId, {
+                quadraId,
+                // A hora local vira instante com o fuso do navegador do
+                // dono, que é o mesmo da arena no caso comum. A API
+                // reconverte pelo `timezone` do estabelecimento.
+                inicio: new Date(`${data}T${String(hora).padStart(2, "0")}:00`).toISOString(),
+                fim: new Date(`${data}T${String(hora + 1).padStart(2, "0")}:00`).toISOString(),
+                motivo: motivo || undefined,
+              })
+            }
+            pedirTexto={`Motivo do bloqueio de ${quadraNome} às ${hora}h (opcional)`}
+            rotuloOcupado="…"
+            className="w-full !px-1 !py-1 !text-[11px] !font-normal !text-gray !border-0 hover:!bg-bg"
+          >
+            Bloquear
+          </BotaoDeAcao>
+        ) : null}
       </td>
     );
   }
@@ -191,6 +238,16 @@ function Celula({ item, hora }: { item?: ItemDaAgenda; hora: number }) {
             ? item.horaInicio
             : formatarPreco(item.preco)}
       </p>
+      {item.ehBloqueio && podeBloquear ? (
+        <BotaoDeAcao
+          acao={() => liberarHorario(estabelecimentoId, item.id)}
+          confirmar={`Liberar ${item.horaInicio}? O horário volta para a venda.`}
+          rotuloOcupado="…"
+          className="mt-0.5 !px-1 !py-0 !text-[11px] !font-normal !border-0 hover:!bg-coral/10"
+        >
+          Liberar
+        </BotaoDeAcao>
+      ) : null}
     </td>
   );
 }
