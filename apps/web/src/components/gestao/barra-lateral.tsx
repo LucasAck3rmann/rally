@@ -12,6 +12,7 @@ const SECOES = [
   { slug: "", rotulo: "Painel" },
   { slug: "agenda", rotulo: "Agenda" },
   { slug: "quadras", rotulo: "Quadras" },
+  { slug: "relatorios", rotulo: "Relatórios" },
   { slug: "equipe", rotulo: "Equipe" },
 ];
 

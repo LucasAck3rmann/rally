@@ -146,3 +146,46 @@ export const MembroDaEquipe = z.object({
 export type MembroDaEquipe = z.infer<typeof MembroDaEquipe>;
 
 export const ListaDaEquipe = z.array(MembroDaEquipe);
+
+export const Relatorio = z.object({
+  estabelecimento: z.object({ nome: z.string(), timezone: z.string() }),
+  periodo: z.object({ de: z.string(), ate: z.string(), dias: z.number() }),
+  resumo: z.object({
+    receitaPaga: z.number(),
+    receitaAReceber: z.number(),
+    receitaTotal: z.number(),
+    ticketMedio: z.number().nullable(),
+    ocupacao: z.number().nullable(),
+    horasVendidas: z.number(),
+    horasDisponiveis: z.number(),
+    vendidas: z.number(),
+    canceladas: z.number(),
+  }),
+  porMetodo: z.array(
+    z.object({
+      metodo: z.string(),
+      reservas: z.number(),
+      valor: z.number(),
+      participacao: z.number().nullable(),
+    }),
+  ),
+  porDia: z.array(
+    z.object({
+      data: z.string(),
+      reservas: z.number(),
+      receita: z.number(),
+      horas: z.number(),
+      ocupacao: z.number().nullable(),
+    }),
+  ),
+  porQuadra: z.array(
+    z.object({
+      quadraId: z.string(),
+      nome: z.string(),
+      reservas: z.number(),
+      horas: z.number(),
+      receita: z.number(),
+    }),
+  ),
+});
+export type Relatorio = z.infer<typeof Relatorio>;
