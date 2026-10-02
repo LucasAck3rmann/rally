@@ -51,4 +51,31 @@ export class RelatoriosController {
     );
     resposta.send(conteudo);
   }
+
+  @Get("xlsx")
+  @Header("Cache-Control", "no-store")
+  async xlsx(
+    @Param("estabelecimentoId") estabelecimentoId: string,
+    @Query("de") de: string,
+    @Query("ate") ate: string,
+    @Res() resposta: Response,
+  ) {
+    const { arquivo, conteudo } = await this.relatorios.xlsx(
+      estabelecimentoId,
+      de,
+      ate,
+    );
+
+    resposta.setHeader(
+      "Content-Type",
+      "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+    );
+    resposta.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${arquivo}"`,
+    );
+    // `send` com Buffer e não `end`: o Express põe o Content-Length, e sem
+    // ele o navegador não mostra progresso num arquivo que pode crescer.
+    resposta.send(conteudo);
+  }
 }

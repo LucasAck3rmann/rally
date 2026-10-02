@@ -7,6 +7,8 @@ import {
   ReservaStatus,
 } from "@prisma/client";
 
+import ExcelJS from "exceljs";
+
 import { montarCsv, numeroBr, percentualBr } from "../../common/csv";
 import { emMinutos, horaLocalParaUtc } from "../../common/timezone";
 import { PrismaService } from "../../prisma/prisma.service";
@@ -153,6 +155,109 @@ export class RelatoriosService {
       // downloads com o mesmo nome não se distinguem.
       arquivo: `rally-relatorio-${de}-a-${ate}.csv`,
       conteudo: montarCsv(["Rally", "", "", ""], linhas),
+    };
+  }
+
+  /**
+   * O mesmo relatório como planilha de verdade (RF-28).
+   *
+   * A diferença que justifica existir ao lado do CSV: aqui os números são
+   * **números**, não texto. No CSV eles dependem de o Excel adivinhar a
+   * localidade; no XLSX a célula já é numérica, soma e entra em gráfico sem
+   * ninguém converter nada. Datas também: `Date` e não string.
+   */
+  async xlsx(estabelecimentoId: string, de: string, ate: string) {
+    const r = await this.relatorio(estabelecimentoId, de, ate);
+    const livro = new ExcelJS.Workbook();
+    livro.creator = "Rally";
+    livro.created = new Date();
+
+    const resumo = livro.addWorksheet("Resumo");
+    resumo.columns = [
+      { header: "Indicador", key: "k", width: 26 },
+      { header: "Valor", key: "v", width: 16 },
+    ];
+    resumo.addRows([
+      { k: "Arena", v: r.estabelecimento.nome },
+      { k: "Período", v: `${r.periodo.de} a ${r.periodo.ate}` },
+      { k: "Receita recebida", v: r.resumo.receitaPaga },
+      { k: "Receita a receber", v: r.resumo.receitaAReceber },
+      { k: "Receita total", v: r.resumo.receitaTotal },
+      { k: "Ticket médio", v: r.resumo.ticketMedio },
+      { k: "Ocupação (%)", v: r.resumo.ocupacao },
+      { k: "Horas vendidas", v: r.resumo.horasVendidas },
+      { k: "Horas disponíveis", v: r.resumo.horasDisponiveis },
+      { k: "Reservas vendidas", v: r.resumo.vendidas },
+      { k: "Reservas canceladas", v: r.resumo.canceladas },
+    ]);
+    // Dinheiro com duas casas e separador de milhar: a formatação vive na
+    // célula, não no valor — é o que permite somar e exibir ao mesmo tempo.
+    for (const linha of [3, 4, 5, 6]) {
+      resumo.getCell(`B${linha + 1}`).numFmt = '#,##0.00';
+    }
+
+    const metodos = livro.addWorksheet("Por método");
+    metodos.columns = [
+      { header: "Método", key: "metodo", width: 16 },
+      { header: "Reservas", key: "reservas", width: 12 },
+      { header: "Valor", key: "valor", width: 14, style: { numFmt: "#,##0.00" } },
+      { header: "Participação (%)", key: "pct", width: 18 },
+    ];
+    for (const m of r.porMetodo) {
+      metodos.addRow({
+        metodo: m.metodo,
+        reservas: m.reservas,
+        valor: m.valor,
+        pct: m.participacao,
+      });
+    }
+
+    const dias = livro.addWorksheet("Dia por dia");
+    dias.columns = [
+      // `Date` e não string: só assim a planilha ordena e agrupa por data.
+      { header: "Data", key: "data", width: 14, style: { numFmt: "dd/mm/yyyy" } },
+      { header: "Reservas", key: "reservas", width: 12 },
+      { header: "Receita", key: "receita", width: 14, style: { numFmt: "#,##0.00" } },
+      { header: "Horas", key: "horas", width: 10 },
+      { header: "Ocupação (%)", key: "ocupacao", width: 16 },
+    ];
+    for (const d of r.porDia) {
+      const [ano, mes, dia] = d.data.split("-").map(Number);
+      dias.addRow({
+        data: new Date(Date.UTC(ano, mes - 1, dia)),
+        reservas: d.reservas,
+        receita: d.receita,
+        horas: d.horas,
+        ocupacao: d.ocupacao,
+      });
+    }
+
+    const quadras = livro.addWorksheet("Por quadra");
+    quadras.columns = [
+      { header: "Quadra", key: "nome", width: 24 },
+      { header: "Reservas", key: "reservas", width: 12 },
+      { header: "Horas", key: "horas", width: 10 },
+      { header: "Receita", key: "receita", width: 14, style: { numFmt: "#,##0.00" } },
+    ];
+    for (const q of r.porQuadra) {
+      quadras.addRow({
+        nome: q.nome,
+        reservas: q.reservas,
+        horas: q.horas,
+        receita: q.receita,
+      });
+    }
+
+    for (const aba of livro.worksheets) {
+      aba.getRow(1).font = { bold: true };
+      // Congela o cabeçalho: numa série de 90 dias, rolar perde o nome da
+      // coluna e a planilha deixa de se explicar.
+      aba.views = [{ state: "frozen", ySplit: 1 }];
+    }
+
+    return {
+      arquivo: `rally-relatorio-${de}-a-${ate}.xlsx`,
+      conteudo: Buffer.from(await livro.xlsx.writeBuffer()),
     };
   }
 

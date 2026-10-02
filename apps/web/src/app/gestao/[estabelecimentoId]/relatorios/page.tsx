@@ -33,13 +33,14 @@ export default async function Relatorios({
     pedido.de && FORMATO.test(pedido.de) ? pedido.de : trintaDiasAtras(ate);
 
   const relatorio = await relatorioDoPeriodo(estabelecimentoId, de, ate);
-  const csv = new URLSearchParams({ de, ate }).toString();
+  const periodo = new URLSearchParams({ de, ate }).toString();
 
   return (
     <RelatorioDaArena
       relatorio={relatorio}
       estabelecimentoId={estabelecimentoId}
-      urlDoCsv={`/gestao/${estabelecimentoId}/relatorios/csv?${csv}`}
+      urlDoCsv={`/gestao/${estabelecimentoId}/relatorios/csv?${periodo}`}
+      urlDoXlsx={`/gestao/${estabelecimentoId}/relatorios/xlsx?${periodo}`}
     />
   );
 }
