@@ -362,15 +362,23 @@ model Replay {
   reservaId         String?
   cliente           Usuario?     @relation("ReplayCliente", fields: [clienteId], references: [id])
   clienteId         String?
-  s3Key             String
+  /// Chave do arquivo no provedor. **Única**: é a chave de idempotência da
+  /// ingestão — o provedor reentrega o mesmo clipe quando não recebe 2xx, e
+  /// a trava fica no banco porque a checagem na aplicação tem janela de
+  /// corrida entre o SELECT e o INSERT (mesma razão da RN-01).
+  s3Key             String       @unique
   url               String?
   duracaoSeg        Int?
   status            ReplayStatus @default(PROCESSANDO)
+  /// Instante em que o lance aconteceu. É por ele que o clipe acha a reserva
+  /// — e, por ela, o cliente (RF-30).
+  gravadoEm         DateTime?
   expiraEm          DateTime?
   criadoEm          DateTime     @default(now())
 
   @@index([estabelecimentoId])
   @@index([clienteId])
+  @@index([quadraId, criadoEm])
 }
 
 model WaitlistEntry {
