@@ -189,3 +189,45 @@ export const Relatorio = z.object({
   ),
 });
 export type Relatorio = z.infer<typeof Relatorio>;
+
+export const TipoDeDivergencia = z.enum([
+  "PENDENTE_EXPIRADA",
+  "CONFIRMADA_SEM_PAGAMENTO",
+  "PAGA_NAO_CONFIRMADA",
+  "CANCELADA_PAGA",
+  "VALOR_DIVERGENTE",
+  "SEM_COBRANCA",
+]);
+export type TipoDeDivergencia = z.infer<typeof TipoDeDivergencia>;
+
+export const Gravidade = z.enum(["grave", "atencao"]);
+
+export const Conciliacao = z.object({
+  conferidas: z.number(),
+  graves: z.number(),
+  divergencias: z.array(
+    z.object({
+      tipo: TipoDeDivergencia,
+      descricao: z.string(),
+      gravidade: Gravidade,
+      reservaId: z.string(),
+      codigo: z.string(),
+      quadra: z.string(),
+      cliente: z.string().nullable(),
+      inicio: z.string(),
+      statusReserva: z.string(),
+      statusPagamento: z.string().nullable(),
+      valorReserva: z.number(),
+      valorPagamento: z.number().nullable(),
+    }),
+  ),
+  porTipo: z.array(
+    z.object({
+      tipo: TipoDeDivergencia,
+      quantidade: z.number(),
+      descricao: z.string(),
+      gravidade: Gravidade,
+    }),
+  ),
+});
+export type Conciliacao = z.infer<typeof Conciliacao>;
