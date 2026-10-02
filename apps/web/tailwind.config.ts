@@ -1,20 +1,26 @@
+import { colors as tokens } from "@rally/tokens";
 import type { Config } from "tailwindcss";
 
-// Tokens espelhados de packages/tokens (mantidos em sincronia — ver DESIGN.md).
+// As cores vêm **importadas** de packages/tokens, não copiadas.
+//
+// Até 30/09 este arquivo repetia os hexes à mão com um comentário dizendo
+// "mantidos em sincronia". Não estavam: o PR #62 escureceu `coralDeep` e
+// `gray` por contraste (RNF-08) e a web continuou renderizando os valores
+// reprovados, porque ninguém edita dois arquivos para mudar uma cor.
 export default {
   content: ["./src/**/*.{ts,tsx}"],
   theme: {
     extend: {
       colors: {
-        coral: "#FF6B4A",
-        "coral-deep": "#C2410C",
-        teal: "#0FB5AE",
-        sun: "#FFC24B",
-        sand: "#F4E4CD",
-        bg: "#FFF7EE",
-        ink: "#1C2B33",
-        gray: "#6B7785",
-        line: "#ECE3D5",
+        coral: tokens.coral,
+        "coral-deep": tokens.coralDeep,
+        teal: tokens.teal,
+        sun: tokens.sun,
+        sand: tokens.sand,
+        bg: tokens.bg,
+        ink: tokens.ink,
+        gray: tokens.gray,
+        line: tokens.line,
       },
       borderRadius: {
         chip: "20px",
