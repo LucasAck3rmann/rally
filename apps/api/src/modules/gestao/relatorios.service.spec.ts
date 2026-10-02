@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { PagamentoMetodo, PagamentoStatus, Prisma, ReservaStatus } from "@prisma/client";
+import ExcelJS from "exceljs";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { diasEntre, RelatoriosService } from "./relatorios.service";
@@ -68,6 +69,19 @@ function servico(
   } as unknown as PrismaService & Record<string, never>;
 
   return { servico: new RelatoriosService(prisma), prisma };
+}
+
+/**
+ * Lê a planilha de volta.
+ *
+ * O `as never` existe por desencontro de tipos entre o `Buffer` do
+ * `@types/node` 22 e o que o `exceljs` declara — em tempo de execução é o
+ * mesmo objeto. Isolado aqui para o `as` não se espalhar pelos testes.
+ */
+async function abrirPlanilha(conteudo: Buffer): Promise<ExcelJS.Workbook> {
+  const livro = new ExcelJS.Workbook();
+  await livro.xlsx.load(conteudo as never);
+  return livro;
 }
 
 describe("RelatoriosService", () => {
@@ -260,6 +274,83 @@ describe("RelatoriosService", () => {
       });
       const { conteudo } = await s.csv("e1", "2026-09-10", "2026-09-10");
       expect(conteudo).toContain("Ocupação (%);\r\n");
+    });
+  });
+
+  describe("xlsx (RF-28)", () => {
+    it("nomeia o arquivo com o período e a extensão certa", async () => {
+      const { servico: s } = servico();
+      const { arquivo } = await s.xlsx("e1", "2026-09-10", "2026-09-16");
+      expect(arquivo).toBe("rally-relatorio-2026-09-10-a-2026-09-16.xlsx");
+    });
+
+    it("gera um arquivo que o Excel reconhece", async () => {
+      // `.xlsx` é um zip: os dois primeiros bytes são "PK". Sem essa
+      // conferência, um buffer vazio passaria como planilha válida.
+      const { servico: s } = servico();
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      expect(conteudo.length).toBeGreaterThan(1000);
+      expect(conteudo.subarray(0, 2).toString("latin1")).toBe("PK");
+    });
+
+    it("grava número como número, não como texto", async () => {
+      // É a razão de o XLSX existir ao lado do CSV: aqui a célula já é
+      // numérica, soma e entra em gráfico sem ninguém converter nada.
+      const { servico: s } = servico({
+        reservas: [reserva({ preco: 1234.5, metodo: PagamentoMetodo.PIX })],
+      });
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      const lido = await abrirPlanilha(conteudo);
+      const metodos = lido.getWorksheet("Por método")!;
+      const valor = metodos.getCell("C2").value;
+
+      expect(typeof valor).toBe("number");
+      expect(valor).toBe(1234.5);
+    });
+
+    it("grava data como data, não como string", async () => {
+      // Só assim a planilha ordena e agrupa por data.
+      const { servico: s } = servico();
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      const lido = await abrirPlanilha(conteudo);
+      const dias = lido.getWorksheet("Dia por dia")!;
+
+      expect(dias.getCell("A2").value).toBeInstanceOf(Date);
+    });
+
+    it("tem uma aba por seção do relatório", async () => {
+      const { servico: s } = servico();
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      const lido = await abrirPlanilha(conteudo);
+      expect(lido.worksheets.map((a) => a.name)).toEqual([
+        "Resumo",
+        "Por método",
+        "Dia por dia",
+        "Por quadra",
+      ]);
+    });
+
+    it("congela o cabeçalho de cada aba", async () => {
+      // Numa série de 90 dias, rolar perde o nome da coluna e a planilha
+      // deixa de se explicar.
+      const { servico: s } = servico();
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      const lido = await abrirPlanilha(conteudo);
+      for (const aba of lido.worksheets) {
+        expect(aba.views[0]).toMatchObject({ state: "frozen", ySplit: 1 });
+      }
+    });
+
+    it("recusa período inválido antes de montar a planilha", async () => {
+      const { servico: s } = servico();
+      await expect(s.xlsx("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 

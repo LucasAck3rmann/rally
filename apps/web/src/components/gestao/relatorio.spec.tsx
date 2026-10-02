@@ -39,6 +39,7 @@ function montar(parcial: Partial<Relatorio> = {}) {
       relatorio={{ ...BASE, ...parcial }}
       estabelecimentoId="e1"
       urlDoCsv="/gestao/e1/relatorios/csv?de=2026-09-10&ate=2026-09-12"
+      urlDoXlsx="/gestao/e1/relatorios/xlsx?de=2026-09-10&ate=2026-09-12"
     />,
   );
 }
@@ -49,16 +50,23 @@ describe("Relatório da arena", () => {
     expect(screen.getByText(/10\/09\/2026 a 12\/09\/2026 · 3 dias/)).toBeInTheDocument();
   });
 
-  it("o download leva o período na URL e pede para salvar", () => {
-    // Sem `download`, o navegador tenta exibir o CSV em vez de salvar.
+  it("os dois downloads levam o período na URL e pedem para salvar", () => {
+    // Sem `download`, o navegador tenta exibir o arquivo em vez de salvar.
     montar();
 
-    const link = screen.getByRole("link", { name: /baixar csv/i });
-    expect(link).toHaveAttribute(
+    const excel = screen.getByRole("link", { name: /baixar excel/i });
+    expect(excel).toHaveAttribute(
+      "href",
+      "/gestao/e1/relatorios/xlsx?de=2026-09-10&ate=2026-09-12",
+    );
+    expect(excel).toHaveAttribute("download");
+
+    const csv = screen.getByRole("link", { name: "CSV" });
+    expect(csv).toHaveAttribute(
       "href",
       "/gestao/e1/relatorios/csv?de=2026-09-10&ate=2026-09-12",
     );
-    expect(link).toHaveAttribute("download");
+    expect(csv).toHaveAttribute("download");
   });
 
   it("separa recebido de a receber", () => {
@@ -109,11 +117,11 @@ describe("Relatório da arena", () => {
     expect(barra).not.toBeNull();
   });
 
-  it("declara que XLSX e PDF ainda não existem", () => {
-    // O RF-28 pede CSV/XLSX e PDF; dizer o que falta é o que evita o
-    // desconto de fidelidade.
+  it("declara que o PDF ainda não existe", () => {
+    // O RF-28 pede CSV, XLSX e PDF; os dois primeiros existem. Dizer o que
+    // falta é o que evita o desconto de fidelidade.
     montar();
-    expect(screen.getByText(/XLSX e\s+PDF ainda não estão prontos/i)).toBeInTheDocument();
+    expect(screen.getByText(/PDF ainda não está pronto/i)).toBeInTheDocument();
   });
 
   it("sem venda, a tabela de métodos explica o vazio", () => {

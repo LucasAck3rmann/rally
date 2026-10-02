@@ -20,11 +20,13 @@ export function RelatorioDaArena({
   relatorio,
   estabelecimentoId,
   urlDoCsv,
+  urlDoXlsx,
 }: {
   relatorio: Relatorio;
   estabelecimentoId: string;
-  /** Rota própria da web que repassa o CSV da API com a sessão do cookie. */
+  /** Rotas próprias da web que repassam o arquivo com a sessão do cookie. */
   urlDoCsv: string;
+  urlDoXlsx: string;
 }) {
   const { resumo, porMetodo, porDia, porQuadra, periodo } = relatorio;
   // Escala do gráfico: o maior dia define 100%. Fixar um máximo arbitrário
@@ -44,16 +46,26 @@ export function RelatorioDaArena({
             {periodo.dias > 1 ? "s" : ""}
           </p>
         </div>
-        <a
-          href={urlDoCsv}
-          // `download` para o navegador salvar em vez de tentar exibir, e o
-          // nome do arquivo vem do `Content-Disposition` da API.
-          download
-          className="rounded-button bg-ink px-5 py-2.5 text-[14px] font-bold text-white
-            transition hover:brightness-110"
-        >
-          Baixar CSV
-        </a>
+        <div className="flex gap-2">
+          {/* `download` para o navegador salvar em vez de tentar exibir; o
+              nome do arquivo vem do `Content-Disposition` da API. */}
+          <a
+            href={urlDoXlsx}
+            download
+            className="rounded-button bg-ink px-5 py-2.5 text-[14px] font-bold text-white
+              transition hover:brightness-110"
+          >
+            Baixar Excel
+          </a>
+          <a
+            href={urlDoCsv}
+            download
+            className="rounded-button border border-line px-5 py-2.5 text-[14px]
+              font-semibold text-ink transition hover:bg-white"
+          >
+            CSV
+          </a>
+        </div>
       </header>
 
       <form
@@ -227,11 +239,12 @@ export function RelatorioDaArena({
         </section>
       </div>
 
-      {/* Declarado em vez de escondido: o RF-28 pede CSV/XLSX e PDF, e por
-          ora só o CSV existe. */}
+      {/* Declarado em vez de escondido: o RF-28 pede CSV, XLSX e PDF. Os
+          dois primeiros existem; o PDF não. */}
       <p className="mt-10 text-[13px] text-gray">
-        A exportação sai em CSV, que abre no Excel e no Google Sheets. XLSX e
-        PDF ainda não estão prontos.
+        O Excel traz números e datas como valores — soma e gera gráfico sem
+        converter nada. O CSV é o formato simples, para importar em outro
+        sistema. <strong>PDF ainda não está pronto.</strong>
       </p>
     </div>
   );
