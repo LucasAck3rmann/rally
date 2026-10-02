@@ -4,6 +4,7 @@ import { cache } from "react";
 import { chamarApiAutenticada } from "../api/autenticado";
 import {
   AgendaDoDia,
+  Conciliacao,
   ListaDaEquipe,
   ListaDeEstabelecimentos,
   ListaDeQuadras,
@@ -67,5 +68,12 @@ export function relatorioDoPeriodo(
     `/gestao/estabelecimentos/${estabelecimentoId}/relatorios`,
     Relatorio,
     { parametros: { de, ate } },
+  );
+}
+
+export function conciliacaoDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao`,
+    Conciliacao,
   );
 }

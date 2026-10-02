@@ -146,3 +146,26 @@ export async function tirarDaEquipe(
     return comoResultado(erro);
   }
 }
+
+/**
+ * Libera os horários cujo Pix expirou (RN-13).
+ *
+ * A grade já faz isso de forma preguiçosa a cada leitura; esta ação existe
+ * para o dono resolver a lista inteira de uma vez, sem depender de alguém
+ * abrir a agenda de cada quadra.
+ */
+export async function expirarPendentes(
+  estabelecimentoId: string,
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao/expirar-pendentes`,
+      z.object({ liberadas: z.number() }),
+      { metodo: "POST" },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
