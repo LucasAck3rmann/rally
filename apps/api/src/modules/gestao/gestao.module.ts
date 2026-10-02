@@ -3,6 +3,8 @@ import { Module } from "@nestjs/common";
 
 import { AuthModule } from "../auth/auth.module";
 import { AgendaController } from "./agenda.controller";
+import { ConciliacaoModule } from "../conciliacao/conciliacao.module";
+import { ConciliacaoController } from "./conciliacao.controller";
 import { AgendaService } from "./agenda.service";
 import { EquipeController } from "./equipe.controller";
 import { EquipeService } from "./equipe.service";
@@ -17,8 +19,8 @@ import { QuadrasGestaoService } from "./quadras-gestao.service";
 
 /** Lado do dono: o que o painel do estabelecimento consome. */
 @Module({
-  imports: [AuthModule],
-  controllers: [GestaoController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController],
+  imports: [AuthModule, ConciliacaoModule],
+  controllers: [GestaoController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController, ConciliacaoController],
   providers: [GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService],
 })
 export class GestaoModule {}
