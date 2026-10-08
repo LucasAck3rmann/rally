@@ -12,9 +12,9 @@ import { lerToken } from "../auth/sessao";
  * para montar o download desfaria a razão de o cookie ser httpOnly. Então o
  * servidor baixa e devolve.
  *
- * Uma função para CSV e XLSX porque a diferença entre os dois é o caminho e
- * o `Content-Type` — duplicar o repasse duplicaria também a decisão de
- * segurança, que é a parte que não pode divergir.
+ * Uma função para os três formatos porque a diferença entre eles é o
+ * caminho e o `Content-Type` — duplicar o repasse duplicaria também a
+ * decisão de segurança, que é a parte que não pode divergir.
  */
 export async function repassarArquivo({
   requisicao,
@@ -60,7 +60,8 @@ export async function repassarArquivo({
     resposta.headers.get("content-disposition") ??
     `attachment; filename="${nomePadrao}"`;
 
-  // `arrayBuffer` e não `text`: XLSX é binário, e ler como texto o corrompe.
+  // `arrayBuffer` e não `text`: XLSX e PDF são binários, e ler como texto
+  // os corrompe.
   return new NextResponse(await resposta.arrayBuffer(), {
     headers: {
       "Content-Type": tipo,

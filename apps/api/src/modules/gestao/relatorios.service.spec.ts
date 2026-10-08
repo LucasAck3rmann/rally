@@ -4,6 +4,7 @@ import { PagamentoMetodo, PagamentoStatus, Prisma, ReservaStatus } from "@prisma
 import ExcelJS from "exceljs";
 
 import { PrismaService } from "../../prisma/prisma.service";
+import { textoDoPdf } from "./ler-pdf.spec-helper";
 import { diasEntre, RelatoriosService } from "./relatorios.service";
 
 /** Todos os dias, 8h–22h: 14 horas por dia. */
@@ -349,6 +350,67 @@ describe("RelatoriosService", () => {
     it("recusa período inválido antes de montar a planilha", async () => {
       const { servico: s } = servico();
       await expect(s.xlsx("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(
+        BadRequestException,
+      );
+    });
+  });
+
+  describe("pdf (RF-28)", () => {
+    it("nomeia o arquivo com o período e a extensão certa", async () => {
+      const { servico: s } = servico();
+      const { arquivo } = await s.pdf("e1", "2026-09-10", "2026-09-16");
+      expect(arquivo).toBe("rally-relatorio-2026-09-10-a-2026-09-16.pdf");
+    });
+
+    it("gera um PDF que um leitor reconhece", async () => {
+      const { servico: s } = servico();
+      const { conteudo } = await s.pdf("e1", "2026-09-10", "2026-09-10");
+
+      expect(conteudo.subarray(0, 5).toString()).toBe("%PDF-");
+      expect(conteudo.subarray(-6).toString().trim()).toBe("%%EOF");
+    });
+
+    it("leva o mesmo número que o CSV leva, sobre o mesmo dado", async () => {
+      // O ponto da conferência: os três formatos saem da mesma chamada a
+      // `relatorio()`. Um relatório que muda conforme o botão apertado é
+      // pior do que relatório nenhum. A forma difere de propósito — o CSV
+      // vai cru porque quem lê é o Excel; o PDF vai formatado para o olho.
+      const { servico: s } = servico({
+        reservas: [reserva({ preco: 1234.5, metodo: PagamentoMetodo.PIX })],
+      });
+
+      const { conteudo: csv } = await s.csv("e1", "2026-09-10", "2026-09-10");
+      const { conteudo: pdf } = await s.pdf("e1", "2026-09-10", "2026-09-10");
+      const texto = textoDoPdf(pdf);
+
+      expect(csv).toContain("Receita recebida;1234,50");
+      expect(texto).toContain("R$ 1.234,50");
+
+      expect(csv).toContain("Pix;1;1234,50;100,0");
+      expect(texto).toContain("Pix");
+      expect(texto).toContain("100,0%");
+    });
+
+    it("ocupação sem denominador vira travessão, como na tela", async () => {
+      // No CSV a mesma ausência vira célula vazia: lá o destinatário é o
+      // Excel, aqui é uma pessoa, e para ela o travessão diz o que o branco
+      // não diz.
+      const { servico: s } = servico({
+        estabelecimento: {
+          nome: "Arena",
+          timezone: "America/Sao_Paulo",
+          horarios: [],
+        },
+        reservas: [reserva()],
+      });
+      const { conteudo } = await s.pdf("e1", "2026-09-10", "2026-09-10");
+
+      expect(textoDoPdf(conteudo)).toContain("sem horário cadastrado");
+    });
+
+    it("recusa período inválido antes de montar o documento", async () => {
+      const { servico: s } = servico();
+      await expect(s.pdf("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(
         BadRequestException,
       );
     });
