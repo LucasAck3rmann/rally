@@ -1,5 +1,6 @@
 import { Module } from "@nestjs/common";
 import { ConfigModule } from "@nestjs/config";
+import { ScheduleModule } from "@nestjs/schedule";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
 import { ReservasModule } from "./modules/reservas/reservas.module";
@@ -14,6 +15,9 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 @Module({
   imports: [
     ConfigModule.forRoot({ isGlobal: true }),
+    // Sem isto o `@Cron` do job de expiração nunca dispara, e a RN-13
+    // volta a depender só da varredura preguiçosa da grade.
+    ScheduleModule.forRoot(),
     PrismaModule,
     AuthModule,
     HealthModule,

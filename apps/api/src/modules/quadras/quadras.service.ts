@@ -145,13 +145,12 @@ export class QuadrasService {
    * `PENDENTE_PAGAMENTO` ocupa o slot, e a `reserva_sem_sobreposicao` impede
    * outra reserva no mesmo intervalo enquanto a linha não estiver
    * `CANCELADA` — então marcar o slot como livre sem cancelar daria 409 na
-   * cara do próximo cliente. Até 02/10 nada expirava nada, e um checkout
-   * abandonado prendia o horário **para sempre**.
+   * cara do próximo cliente.
    *
-   * Sim, é escrita no caminho de leitura. É expiração preguiçosa: sem
-   * agendador no projeto, a alternativa era deixar o defeito de pé. Quando
-   * houver `@nestjs/schedule`, isto passa a ser rede de segurança em vez de
-   * mecanismo principal.
+   * Quem faz o trabalho é o `ExpiracaoDePendentesJob`, de minuto a minuto.
+   * Esta chamada é **rede de segurança**: se o processo cair, o próximo
+   * cliente que abrir esta quadra ainda vê o horário livre. É barata — uma
+   * consulta que não acha nada no caso comum.
    */
   async disponibilidade(quadraId: string, data: string) {
     await this.conciliacao.expirarPendentes({ quadraId });
