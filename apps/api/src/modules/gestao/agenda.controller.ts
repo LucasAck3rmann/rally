@@ -5,6 +5,7 @@ import {
   Delete,
   Get,
   Param,
+  Patch,
   Post,
   Query,
   UseGuards,
@@ -16,6 +17,7 @@ import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PapelGuard } from "../auth/guards/papel.guard";
 import { AgendaService } from "./agenda.service";
 import { CriarBloqueioDto } from "./dto/criar-bloqueio.dto";
+import { MoverReservaDto } from "./dto/mover-reserva.dto";
 
 /**
  * Agenda do dia e bloqueios de horário (RF-21).
@@ -44,6 +46,20 @@ export class AgendaController {
     @Body() dto: CriarBloqueioDto,
   ) {
     return this.agenda.criarBloqueio(estabelecimentoId, dto);
+  }
+
+  /**
+   * Mover é do admin, como bloquear: muda o horário combinado com um
+   * cliente, e um arrasto errado na grade desmarca alguém que já pagou.
+   */
+  @Patch("reservas/:reservaId/mover")
+  @Papeis(Role.ADMIN)
+  moverReserva(
+    @Param("estabelecimentoId") estabelecimentoId: string,
+    @Param("reservaId") reservaId: string,
+    @Body() dto: MoverReservaDto,
+  ) {
+    return this.agenda.moverReserva(estabelecimentoId, reservaId, dto);
   }
 
   @Delete("bloqueios/:bloqueioId")
