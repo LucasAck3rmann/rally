@@ -41,6 +41,7 @@ export default async function Relatorios({
       estabelecimentoId={estabelecimentoId}
       urlDoCsv={`/gestao/${estabelecimentoId}/relatorios/csv?${periodo}`}
       urlDoXlsx={`/gestao/${estabelecimentoId}/relatorios/xlsx?${periodo}`}
+      urlDoPdf={`/gestao/${estabelecimentoId}/relatorios/pdf?${periodo}`}
     />
   );
 }
