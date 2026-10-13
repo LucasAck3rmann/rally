@@ -3,7 +3,7 @@ import { Inject, Injectable, Logger, NotFoundException } from "@nestjs/common";
 import { NotificacaoTipo } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
-import { EMAIL_PROVIDER, EmailProvider } from "./email-provider";
+import { EMAIL_PROVIDER, EmailProvider } from "../email/email-provider";
 
 /**
  * Avisos do cliente (RF-16), em dois canais.
