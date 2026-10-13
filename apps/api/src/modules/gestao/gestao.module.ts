@@ -6,6 +6,8 @@ import { AgendaController } from "./agenda.controller";
 import { ConciliacaoModule } from "../conciliacao/conciliacao.module";
 import { ConciliacaoController } from "./conciliacao.controller";
 import { AgendaService } from "./agenda.service";
+import { CuponsController } from "./cupons.controller";
+import { CuponsService } from "./cupons.service";
 import { EquipeController } from "./equipe.controller";
 import { EquipeService } from "./equipe.service";
 import { GestaoController } from "./gestao.controller";
@@ -20,7 +22,7 @@ import { QuadrasGestaoService } from "./quadras-gestao.service";
 /** Lado do dono: o que o painel do estabelecimento consome. */
 @Module({
   imports: [AuthModule, ConciliacaoModule],
-  controllers: [GestaoController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController, ConciliacaoController],
-  providers: [GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService],
+  controllers: [GestaoController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController, ConciliacaoController, CuponsController],
+  providers: [GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService, CuponsService],
 })
 export class GestaoModule {}

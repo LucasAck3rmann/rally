@@ -6,6 +6,7 @@ import {
   AgendaDoDia,
   Conciliacao,
   ListaDaEquipe,
+  ListaDeCupons,
   ListaDeEstabelecimentos,
   ListaDeQuadras,
   Painel,
@@ -49,6 +50,13 @@ export function quadrasDoEstabelecimento(estabelecimentoId: string) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/quadras`,
     ListaDeQuadras,
+  );
+}
+
+export function cuponsDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/cupons`,
+    ListaDeCupons,
   );
 }
 
