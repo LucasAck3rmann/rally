@@ -95,6 +95,32 @@ export async function liberarHorario(
   }
 }
 
+/**
+ * Move uma reserva de horário e, se preciso, de quadra (RF-21).
+ *
+ * Não é a remarcação do cliente: aqui quem move é a arena, e a API aceita
+ * trocar de quadra e mover fora do prazo da política — os dois casos que
+ * motivam a ação, quadra alagada e manutenção de urgência, acontecem em
+ * cima da hora. O preço combinado não muda.
+ */
+export async function moverReserva(
+  estabelecimentoId: string,
+  reservaId: string,
+  dados: { quadraId?: string; inicio: string; fim: string },
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/reservas/${reservaId}/mover`,
+      ItemDaAgenda,
+      { metodo: "PATCH", corpo: dados },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
 export async function adicionarMembro(
   estabelecimentoId: string,
   dados: { email: string; papel: Papel },

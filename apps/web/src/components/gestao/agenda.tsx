@@ -2,9 +2,10 @@
 import Link from "next/link";
 
 import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
+import { MoverReserva } from "@/components/gestao/mover-reserva";
 
 import { cn } from "@/lib/cn";
-import { formatarPreco, rotuloDoDia } from "@/lib/formato";
+import { formatarPreco, intervaloLocal, rotuloDoDia } from "@/lib/formato";
 import { bloquearHorario, liberarHorario } from "@/lib/gestao/acoes";
 import type { AgendaDoDia, ItemDaAgenda } from "@/lib/gestao/contratos";
 
@@ -146,6 +147,8 @@ export function AgendaDaArena({
                       quadraNome={q.nome}
                       estabelecimentoId={estabelecimentoId}
                       podeBloquear={podeBloquear}
+                      quadras={agenda.quadras}
+                      horas={horas}
                     />
                   ))}
                 </tr>
@@ -166,6 +169,8 @@ function Celula({
   quadraNome,
   estabelecimentoId,
   podeBloquear,
+  quadras,
+  horas,
 }: {
   item?: ItemDaAgenda;
   hora: number;
@@ -174,6 +179,8 @@ function Celula({
   quadraNome: string;
   estabelecimentoId: string;
   podeBloquear: boolean;
+  quadras: { id: string; nome: string }[];
+  horas: number[];
 }) {
   if (!item) {
     return (
@@ -184,11 +191,7 @@ function Celula({
             acao={(motivo) =>
               bloquearHorario(estabelecimentoId, {
                 quadraId,
-                // A hora local vira instante com o fuso do navegador do
-                // dono, que é o mesmo da arena no caso comum. A API
-                // reconverte pelo `timezone` do estabelecimento.
-                inicio: new Date(`${data}T${String(hora).padStart(2, "0")}:00`).toISOString(),
-                fim: new Date(`${data}T${String(hora + 1).padStart(2, "0")}:00`).toISOString(),
+                ...intervaloLocal(data, hora, 1),
                 motivo: motivo || undefined,
               })
             }
@@ -217,7 +220,9 @@ function Celula({
   return (
     <td
       className={cn(
-        "h-14 rounded-button border px-2 align-middle",
+        // `relative` porque o formulário de mover se posiciona sobre a
+        // célula: a grade é apertada e empurrar a linha reorganizaria o dia.
+        "relative h-14 rounded-button border px-2 align-middle",
         item.ehBloqueio
           ? "border-coral/20 bg-coral/10"
           : "border-line bg-sand",
@@ -247,6 +252,20 @@ function Celula({
         >
           Liberar
         </BotaoDeAcao>
+      ) : null}
+      {/* Bloqueio não se move por aqui: a API tem par próprio de criar e
+          remover, e o remover apaga em vez de cancelar. */}
+      {!item.ehBloqueio && podeBloquear ? (
+        <MoverReserva
+          estabelecimentoId={estabelecimentoId}
+          reservaId={item.id}
+          data={data}
+          quadraAtual={item.quadraId}
+          horaAtual={horaDeInicio(item)}
+          duracaoEmHoras={duracaoEmHoras(item)}
+          quadras={quadras}
+          horas={horas}
+        />
       ) : null}
     </td>
   );
