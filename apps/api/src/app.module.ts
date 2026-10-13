@@ -1,8 +1,11 @@
 import { Module } from "@nestjs/common";
+import { APP_INTERCEPTOR } from "@nestjs/core";
 import { ConfigModule } from "@nestjs/config";
 import { ScheduleModule } from "@nestjs/schedule";
 import { ThrottlerModule } from "@nestjs/throttler";
 
+import { LatenciaModule } from "./common/latencia.module";
+import { TempoDeRespostaInterceptor } from "./common/tempo-de-resposta.interceptor";
 import { LIMITES } from "./modules/auth/limites";
 import { PrismaModule } from "./prisma/prisma.module";
 import { HealthModule } from "./health/health.module";
@@ -26,6 +29,9 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
     // resto da API segue sem limite, que e o certo: a grade de
     // disponibilidade e consultada em rajada pela propria tela.
     ThrottlerModule.forRoot(LIMITES),
+    // Mede o tempo de resposta de toda rota (RNF-01). Global para o
+    // interceptor e a rota de saude lerem a mesma janela.
+    LatenciaModule,
     PrismaModule,
     AuthModule,
     HealthModule,
@@ -36,6 +42,9 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
     ReservasModule,
     ReplaysModule,
     NotificacoesModule,
+  ],
+  providers: [
+    { provide: APP_INTERCEPTOR, useClass: TempoDeRespostaInterceptor },
   ],
 })
 export class AppModule {}
