@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { NotFoundException } from "@nestjs/common";
+import { Logger, NotFoundException } from "@nestjs/common";
 import { NotificacaoTipo } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -26,6 +26,8 @@ function servico(opcoes: {
   atualizadas?: number;
   existe?: number;
   erroAoCriar?: unknown;
+  erroAoEnviar?: unknown;
+  usuario?: unknown;
 } = {}) {
   const updateMany = jest
     .fn()
@@ -47,10 +49,27 @@ function servico(opcoes: {
       updateMany,
       create,
     },
+    usuario: {
+      findUnique: jest
+        .fn()
+        .mockResolvedValue(
+          opcoes.usuario === undefined
+            ? { email: "lucas@exemplo.com" }
+            : opcoes.usuario,
+        ),
+    },
     $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
   } as unknown as PrismaService;
 
-  return { servico: new NotificacoesService(prisma), updateMany, create };
+  const enviar = opcoes.erroAoEnviar
+    ? jest.fn().mockRejectedValue(opcoes.erroAoEnviar)
+    : jest.fn().mockResolvedValue(undefined);
+  return {
+    servico: new NotificacoesService(prisma, { enviar }),
+    updateMany,
+    create,
+    enviar,
+  };
 }
 
 describe("NotificacoesService", () => {
@@ -121,5 +140,80 @@ describe("NotificacoesService", () => {
         corpo: "qualquer",
       }),
     ).resolves.toBeUndefined();
+  });
+
+  describe("canal de e-mail (RF-16)", () => {
+    const AVISO = {
+      usuarioId: "u1",
+      tipo: NotificacaoTipo.PAGAMENTO,
+      titulo: "Pagamento confirmado",
+      corpo: "Arena · Quadra 1",
+    };
+
+    it("sem bloco de e-mail, só grava o aviso in-app", async () => {
+      // Nem todo aviso merece sair do aplicativo; quem decide é quem chama.
+      const { servico: s, create, enviar } = servico();
+      await s.registrar(AVISO);
+
+      expect(create).toHaveBeenCalled();
+      expect(enviar).not.toHaveBeenCalled();
+    });
+
+    it("com bloco de e-mail, manda para o endereço do usuário", async () => {
+      const { servico: s, enviar } = servico();
+      await s.registrar({
+        ...AVISO,
+        email: { assunto: "Pagamento confirmado", texto: "Bom jogo!" },
+      });
+
+      expect(enviar).toHaveBeenCalledWith({
+        para: "lucas@exemplo.com",
+        assunto: "Pagamento confirmado",
+        texto: "Bom jogo!",
+      });
+    });
+
+    it("usuário sem endereço não vira erro — o aviso in-app já chegou", async () => {
+      const { servico: s, create, enviar } = servico({ usuario: null });
+      await s.registrar({
+        ...AVISO,
+        email: { assunto: "a", texto: "b" },
+      });
+
+      expect(create).toHaveBeenCalled();
+      expect(enviar).not.toHaveBeenCalled();
+    });
+
+    it("falha no e-mail não derruba o que o cliente pediu", async () => {
+      const aviso = jest
+        .spyOn(Logger.prototype, "warn")
+        .mockImplementation(() => {});
+      const { servico: s } = servico({ erroAoEnviar: new Error("smtp fora") });
+
+      await expect(
+        s.registrar({ ...AVISO, email: { assunto: "a", texto: "b" } }),
+      ).resolves.toBeUndefined();
+      expect(aviso).toHaveBeenCalledWith(
+        expect.stringContaining("Não foi possível enviar o e-mail"),
+      );
+      aviso.mockRestore();
+    });
+
+    it("falha ao gravar o aviso não engole o e-mail", async () => {
+      // É a razão de os dois canais terem `try` separados. Com um só, uma
+      // falha de banco levaria junto o e-mail, e o cliente ficaria sem os
+      // dois — quando o certo é ficar sem o que falhou.
+      const aviso = jest
+        .spyOn(Logger.prototype, "warn")
+        .mockImplementation(() => {});
+      const { servico: s, enviar } = servico({
+        erroAoCriar: new Error("banco fora"),
+      });
+
+      await s.registrar({ ...AVISO, email: { assunto: "a", texto: "b" } });
+
+      expect(enviar).toHaveBeenCalled();
+      aviso.mockRestore();
+    });
   });
 });

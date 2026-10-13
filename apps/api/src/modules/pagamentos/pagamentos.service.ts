@@ -101,6 +101,17 @@ export class PagamentosService {
       titulo: "Pagamento confirmado",
       corpo: `${est.nome} · ${reserva.quadra.nome} — ${quando}`,
       destino: `/reservas/${reserva.id}/confirmacao`,
+      // Comprovante de pagamento é o aviso que mais justifica sair do
+      // aplicativo: é o que a pessoa procura depois, e procura no e-mail.
+      email: {
+        assunto: `Pagamento confirmado — ${est.nome}`,
+        texto:
+          `Seu pagamento foi confirmado.\n\n` +
+          `Local: ${est.nome}\n` +
+          `Quadra: ${reserva.quadra.nome}\n` +
+          `Horário: ${quando}\n\n` +
+          `Bom jogo!`,
+      },
     });
   }
 }
