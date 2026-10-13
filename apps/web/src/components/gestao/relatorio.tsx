@@ -21,12 +21,14 @@ export function RelatorioDaArena({
   estabelecimentoId,
   urlDoCsv,
   urlDoXlsx,
+  urlDoPdf,
 }: {
   relatorio: Relatorio;
   estabelecimentoId: string;
   /** Rotas próprias da web que repassam o arquivo com a sessão do cookie. */
   urlDoCsv: string;
   urlDoXlsx: string;
+  urlDoPdf: string;
 }) {
   const { resumo, porMetodo, porDia, porQuadra, periodo } = relatorio;
   // Escala do gráfico: o maior dia define 100%. Fixar um máximo arbitrário
@@ -56,6 +58,14 @@ export function RelatorioDaArena({
               transition hover:brightness-110"
           >
             Baixar Excel
+          </a>
+          <a
+            href={urlDoPdf}
+            download
+            className="rounded-button border border-line px-5 py-2.5 text-[14px]
+              font-semibold text-ink transition hover:bg-white"
+          >
+            PDF
           </a>
           <a
             href={urlDoCsv}
@@ -239,12 +249,13 @@ export function RelatorioDaArena({
         </section>
       </div>
 
-      {/* Declarado em vez de escondido: o RF-28 pede CSV, XLSX e PDF. Os
-          dois primeiros existem; o PDF não. */}
+      {/* Os três formatos do RF-28 não são o mesmo arquivo em embalagens
+          diferentes, e dizer para que serve cada um evita o download errado. */}
       <p className="mt-10 text-[13px] text-gray">
         O Excel traz números e datas como valores — soma e gera gráfico sem
-        converter nada. O CSV é o formato simples, para importar em outro
-        sistema. <strong>PDF ainda não está pronto.</strong>
+        converter nada. O PDF é para ler e enviar: imprime e anexa num e-mail
+        sem passar por planilha. O CSV é o formato simples, para importar em
+        outro sistema.
       </p>
     </div>
   );

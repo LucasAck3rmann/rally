@@ -78,4 +78,29 @@ export class RelatoriosController {
     // ele o navegador não mostra progresso num arquivo que pode crescer.
     resposta.send(conteudo);
   }
+
+  @Get("pdf")
+  @Header("Cache-Control", "no-store")
+  async pdf(
+    @Param("estabelecimentoId") estabelecimentoId: string,
+    @Query("de") de: string,
+    @Query("ate") ate: string,
+    @Res() resposta: Response,
+  ) {
+    const { arquivo, conteudo } = await this.relatorios.pdf(
+      estabelecimentoId,
+      de,
+      ate,
+    );
+
+    resposta.setHeader("Content-Type", "application/pdf");
+    // `attachment` e não `inline`: o relatório é para guardar e enviar. Quem
+    // quiser só olhar abre o arquivo baixado — o contrário, abrir no
+    // navegador e ter de descobrir como salvar, é o caminho mais longo.
+    resposta.setHeader(
+      "Content-Disposition",
+      `attachment; filename="${arquivo}"`,
+    );
+    resposta.send(conteudo);
+  }
 }

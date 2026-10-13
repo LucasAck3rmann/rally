@@ -40,6 +40,7 @@ function montar(parcial: Partial<Relatorio> = {}) {
       estabelecimentoId="e1"
       urlDoCsv="/gestao/e1/relatorios/csv?de=2026-09-10&ate=2026-09-12"
       urlDoXlsx="/gestao/e1/relatorios/xlsx?de=2026-09-10&ate=2026-09-12"
+      urlDoPdf="/gestao/e1/relatorios/pdf?de=2026-09-10&ate=2026-09-12"
     />,
   );
 }
@@ -50,8 +51,10 @@ describe("Relatório da arena", () => {
     expect(screen.getByText(/10\/09\/2026 a 12\/09\/2026 · 3 dias/)).toBeInTheDocument();
   });
 
-  it("os dois downloads levam o período na URL e pedem para salvar", () => {
-    // Sem `download`, o navegador tenta exibir o arquivo em vez de salvar.
+  it("os três downloads levam o período na URL e pedem para salvar", () => {
+    // Sem `download`, o navegador tenta exibir o arquivo em vez de salvar —
+    // e com o PDF ele exibiria mesmo, que é o caminho mais longo até o
+    // arquivo salvo.
     montar();
 
     const excel = screen.getByRole("link", { name: /baixar excel/i });
@@ -60,6 +63,13 @@ describe("Relatório da arena", () => {
       "/gestao/e1/relatorios/xlsx?de=2026-09-10&ate=2026-09-12",
     );
     expect(excel).toHaveAttribute("download");
+
+    const pdf = screen.getByRole("link", { name: "PDF" });
+    expect(pdf).toHaveAttribute(
+      "href",
+      "/gestao/e1/relatorios/pdf?de=2026-09-10&ate=2026-09-12",
+    );
+    expect(pdf).toHaveAttribute("download");
 
     const csv = screen.getByRole("link", { name: "CSV" });
     expect(csv).toHaveAttribute(
@@ -117,11 +127,15 @@ describe("Relatório da arena", () => {
     expect(barra).not.toBeNull();
   });
 
-  it("declara que o PDF ainda não existe", () => {
-    // O RF-28 pede CSV, XLSX e PDF; os dois primeiros existem. Dizer o que
-    // falta é o que evita o desconto de fidelidade.
+  it("diz para que serve cada um dos três formatos", () => {
+    // O RF-28 pede CSV, XLSX e PDF, e os três existem. Eles não são o mesmo
+    // arquivo em embalagens diferentes: sem dizer para que serve cada um, a
+    // escolha vira sorteio e o dono baixa o errado.
     montar();
-    expect(screen.getByText(/PDF ainda não está pronto/i)).toBeInTheDocument();
+
+    expect(screen.getByText(/soma e gera gráfico sem converter nada/i)).toBeInTheDocument();
+    expect(screen.getByText(/para ler e enviar/i)).toBeInTheDocument();
+    expect(screen.getByText(/importar em outro sistema/i)).toBeInTheDocument();
   });
 
   it("sem venda, a tabela de métodos explica o vazio", () => {

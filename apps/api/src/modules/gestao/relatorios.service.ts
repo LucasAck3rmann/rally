@@ -13,6 +13,7 @@ import { montarCsv, numeroBr, percentualBr } from "../../common/csv";
 import { emMinutos, horaLocalParaUtc } from "../../common/timezone";
 import { PrismaService } from "../../prisma/prisma.service";
 import { somaDias } from "./painel.service";
+import { montarPdf } from "./relatorio-pdf";
 
 /** Reservas que representam venda — bloqueio e cancelada ficam de fora. */
 const VENDIDAS: ReservaStatus[] = [
@@ -258,6 +259,23 @@ export class RelatoriosService {
     return {
       arquivo: `rally-relatorio-${de}-a-${ate}.xlsx`,
       conteudo: Buffer.from(await livro.xlsx.writeBuffer()),
+    };
+  }
+
+  /**
+   * O mesmo relatório como documento de leitura (RF-28).
+   *
+   * O que justifica existir ao lado dos outros dois: este é o formato que
+   * se imprime e se anexa num e-mail. O desenho da página vive em
+   * `relatorio-pdf.ts`, que não conhece banco nem Prisma — é o que permite
+   * testar o documento sem subir nada.
+   */
+  async pdf(estabelecimentoId: string, de: string, ate: string) {
+    const r = await this.relatorio(estabelecimentoId, de, ate);
+
+    return {
+      arquivo: `rally-relatorio-${de}-a-${ate}.pdf`,
+      conteudo: await montarPdf(r),
     };
   }
 
