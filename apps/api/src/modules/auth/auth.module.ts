@@ -8,6 +8,7 @@ import { AuthService } from "./auth.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { PapelGuard } from "./guards/papel.guard";
 import { SenhaService } from "./senha.service";
+import { VerificacaoDeEmailService } from "./verificacao-de-email.service";
 
 @Module({
   imports: [
@@ -26,7 +27,13 @@ import { SenhaService } from "./senha.service";
     }),
   ],
   controllers: [AuthController],
-  providers: [AuthService, SenhaService, JwtAuthGuard, PapelGuard],
+  providers: [
+    AuthService,
+    SenhaService,
+    VerificacaoDeEmailService,
+    JwtAuthGuard,
+    PapelGuard,
+  ],
   // O guard protege rotas de outros módulos (reservas, replays).
   exports: [JwtAuthGuard, PapelGuard, JwtModule],
 })

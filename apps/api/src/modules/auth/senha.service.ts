@@ -2,26 +2,13 @@
 import { BadRequestException, Inject, Injectable, Logger } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
 import { hash } from "@node-rs/argon2";
-import { createHash, randomBytes } from "node:crypto";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { EMAIL_PROVIDER, EmailProvider } from "../email/email-provider";
+import { hashDoToken, novoToken } from "./token-de-conta";
 
 /** Quanto tempo o link vale. Curto porque chega por e-mail, que fica guardado. */
 const VALIDADE_MINUTOS = 30;
-
-/**
- * Hash do token para guardar e para buscar.
- *
- * `sha256` e não argon2 porque aqui o segredo tem **entropia completa** — ele
- * é sorteado por `randomBytes`, não escolhido por uma pessoa. Argon2 existe
- * para encarecer a força bruta contra segredo fraco; contra 32 bytes
- * aleatórios não há força bruta a encarecer, e o custo só atrasaria a
- * resposta.
- */
-function hashDoToken(token: string): string {
-  return createHash("sha256").update(token).digest("hex");
-}
 
 /**
  * Recuperação de senha (RF-03).
@@ -73,9 +60,7 @@ export class SenhaService {
 
   private async emitirToken(usuarioId: string, nome: string, email: string) {
     try {
-      // 32 bytes em base64url: entropia suficiente para o hash rápido bastar,
-      // e sem caractere que o cliente de e-mail quebre ao montar o link.
-      const token = randomBytes(32).toString("base64url");
+      const token = novoToken();
 
       // Invalida os pedidos anteriores: dois links válidos ao mesmo tempo
       // dobram a janela de quem interceptou o primeiro e nada ganham.
