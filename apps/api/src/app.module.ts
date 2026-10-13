@@ -17,6 +17,7 @@ import { PagamentosModule } from "./modules/pagamentos/pagamentos.module";
 import { PromocoesModule } from "./modules/promocoes/promocoes.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
+import { PrivacidadeModule } from "./modules/privacidade/privacidade.module";
 
 @Module({
   imports: [
@@ -42,6 +43,7 @@ import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
     ReservasModule,
     ReplaysModule,
     NotificacoesModule,
+    PrivacidadeModule,
   ],
   providers: [
     { provide: APP_INTERCEPTOR, useClass: TempoDeRespostaInterceptor },
