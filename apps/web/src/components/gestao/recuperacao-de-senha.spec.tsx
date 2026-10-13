@@ -40,11 +40,13 @@ describe("Formulário de recuperação", () => {
     expect(screen.queryByText(/conta encontrada/i)).not.toBeInTheDocument();
   });
 
-  it("diz que pedir outro link invalida o anterior", () => {
-    // Sem isso a pessoa pede três links, clica no primeiro que achar na
-    // caixa de entrada e recebe "esse link já foi usado" sem entender.
+  it("diz que o link já enviado continua valendo se pedir de novo", () => {
+    // A API tem um intervalo mínimo entre dois envios para o mesmo
+    // endereço, e dentro dele não emite token novo nem invalida o anterior.
+    // Dizer "invalida o anterior" mandaria a pessoa ignorar o link que
+    // funciona.
     render(<AvisoDeEnvio />);
-    expect(screen.getByText(/invalida o link anterior/i)).toBeInTheDocument();
+    expect(screen.getByText(/continua valendo/i)).toBeInTheDocument();
   });
 
   it("oferece a volta para o login", () => {

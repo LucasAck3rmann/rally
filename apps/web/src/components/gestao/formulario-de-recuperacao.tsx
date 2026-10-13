@@ -50,8 +50,8 @@ export function AvisoDeEnvio() {
         enviado. Ele vale por 30 minutos.
       </p>
       <p className="text-[14px] text-gray">
-        Não chegou? Confira a caixa de spam antes de pedir outro — pedir de
-        novo invalida o link anterior.
+        Não chegou? Confira a caixa de spam. Se pedir de novo logo em seguida,
+        o link que já enviamos continua valendo.
       </p>
       <Link
         href="/entrar"

@@ -11,6 +11,25 @@ import { hashDoToken, novoToken } from "./token-de-conta";
 const VALIDADE_MINUTOS = 30;
 
 /**
+ * Intervalo mínimo entre dois e-mails para o **mesmo endereço**.
+ *
+ * O limite por origem, no controlador, não cobre este caso: a web fala com a
+ * API pelo servidor do Next, então todo o tráfego dela divide um balde só, e
+ * um atacante com endereços diferentes contorna qualquer balde por origem.
+ *
+ * Esta trava é por destinatário e vale qualquer que seja a origem. Ela é o
+ * que impede usar a rota como amplificador — um laço enchendo a caixa de
+ * entrada de alguém com o Rally como remetente.
+ *
+ * Dentro da janela, o pedido **não** emite token novo e **não** invalida o
+ * anterior: o link já enviado continua valendo, que é o que a pessoa quer.
+ * A resposta é a mesma de sempre, então nem o atacante nem o usuário
+ * percebem a diferença — e é justamente por a resposta já ser constante que
+ * dá para silenciar o envio sem vazar nada.
+ */
+const INTERVALO_MINIMO_MINUTOS = 2;
+
+/**
  * Recuperação de senha (RF-03).
  *
  * Duas regras atravessam o módulo inteiro:
@@ -60,6 +79,23 @@ export class SenhaService {
 
   private async emitirToken(usuarioId: string, nome: string, email: string) {
     try {
+      const agora = new Date();
+
+      // Já mandamos um há pouco? Então o link anterior ainda serve, e mandar
+      // outro só encheria a caixa de entrada. Silencioso de propósito: a
+      // resposta ao cliente é a mesma de sempre.
+      const recente = await this.prisma.tokenDeSenha.findFirst({
+        where: {
+          usuarioId,
+          usadoEm: null,
+          criadoEm: {
+            gt: new Date(agora.getTime() - INTERVALO_MINIMO_MINUTOS * 60 * 1000),
+          },
+        },
+        select: { id: true },
+      });
+      if (recente) return;
+
       const token = novoToken();
 
       // Invalida os pedidos anteriores: dois links válidos ao mesmo tempo

@@ -113,14 +113,16 @@ void main() {
     expect(find.textContaining("abre no navegador"), findsOneWidget);
   });
 
-  testWidgets("diz que pedir outro link invalida o anterior", (tester) async {
+  testWidgets("diz que o link já enviado continua valendo", (tester) async {
+    // A API tem intervalo mínimo entre dois envios para o mesmo endereço, e
+    // dentro dele não emite token novo nem invalida o anterior.
     await abrir(tester);
 
     await tester.enterText(campoEmail, "lucas@rally.com.br");
     await tester.tap(botaoEnviar);
     await tester.pumpAndSettle();
 
-    expect(find.textContaining("invalida o link anterior"), findsOneWidget);
+    expect(find.textContaining("continua valendo"), findsOneWidget);
   });
 
   testWidgets("trava o botão enquanto a chamada não termina", (tester) async {

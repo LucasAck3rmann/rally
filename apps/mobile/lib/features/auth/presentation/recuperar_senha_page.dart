@@ -165,8 +165,8 @@ class _RecuperarSenhaPageState extends ConsumerState<RecuperarSenhaPage> {
         ),
         const SizedBox(height: 12),
         const Text(
-          "Não chegou? Confira a caixa de spam antes de pedir outro — pedir "
-          "de novo invalida o link anterior.",
+          "Não chegou? Confira a caixa de spam. Se pedir de novo logo em "
+          "seguida, o link que já enviamos continua valendo.",
           style: TextStyle(fontSize: 14, color: AppColors.gray),
         ),
         const SizedBox(height: 24),
