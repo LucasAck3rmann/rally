@@ -6,7 +6,13 @@ import { z } from "zod";
 
 import { chamarApiAutenticada, SemSessao } from "../api/autenticado";
 import { ErroDeApi } from "../api/client";
-import { ItemDaAgenda, MembroDaEquipe, Papel, QuadraDaGestao } from "./contratos";
+import {
+  CupomDaGestao,
+  ItemDaAgenda,
+  MembroDaEquipe,
+  Papel,
+  QuadraDaGestao,
+} from "./contratos";
 
 /**
  * Escritas do painel da web.
@@ -113,6 +119,55 @@ export async function moverReserva(
       `/gestao/estabelecimentos/${estabelecimentoId}/reservas/${reservaId}/mover`,
       ItemDaAgenda,
       { metodo: "PATCH", corpo: dados },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
+/** Cria um cupom do estabelecimento (RF-25). */
+export async function criarCupom(
+  estabelecimentoId: string,
+  dados: {
+    codigo: string;
+    tipo: "PERCENTUAL" | "VALOR_FIXO";
+    valor: number;
+    validadeInicio: string;
+    validadeFim: string;
+    usosMax?: number;
+  },
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/cupons`,
+      CupomDaGestao,
+      { metodo: "POST", corpo: dados },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
+/**
+ * Liga ou desliga um cupom (RF-25).
+ *
+ * Não existe apagar: cupom usado está apontado pela reserva, e apagá-lo
+ * faria sumir de onde veio o desconto de algo que já foi pago.
+ */
+export async function alternarCupom(
+  estabelecimentoId: string,
+  cupomId: string,
+  ativo: boolean,
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/cupons/${cupomId}`,
+      CupomDaGestao,
+      { metodo: "PATCH", corpo: { ativo } },
     );
     recarregar(estabelecimentoId);
     return { ok: true };

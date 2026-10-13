@@ -135,6 +135,28 @@ export type QuadraDaGestao = z.infer<typeof QuadraDaGestao>;
 
 export const ListaDeQuadras = z.array(QuadraDaGestao);
 
+export const CupomDaGestao = z.object({
+  id: z.string(),
+  codigo: z.string(),
+  tipo: z.enum(["PERCENTUAL", "VALOR_FIXO"]),
+  valor: z.number(),
+  validadeInicio: z.string(),
+  validadeFim: z.string(),
+  usosMax: z.number().nullable(),
+  usosFeitos: z.number(),
+  ativo: z.boolean(),
+  /* Estado derivado vem pronto da API: se a tela recalculasse "está
+     valendo?", a lista do painel e a recusa na reserva poderiam discordar
+     sobre o mesmo cupom. */
+  vigente: z.boolean(),
+  esgotado: z.boolean(),
+  vencido: z.boolean(),
+  createdAt: z.string(),
+});
+export type CupomDaGestao = z.infer<typeof CupomDaGestao>;
+
+export const ListaDeCupons = z.array(CupomDaGestao);
+
 export const MembroDaEquipe = z.object({
   usuarioId: z.string(),
   nome: z.string(),
