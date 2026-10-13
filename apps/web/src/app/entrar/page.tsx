@@ -14,8 +14,13 @@ export const metadata: Metadata = {
   robots: { index: false, follow: false },
 };
 
-export default async function Entrar() {
+export default async function Entrar({
+  searchParams,
+}: {
+  searchParams: Promise<{ senha?: string }>;
+}) {
   if (await lerToken()) redirect("/gestao");
+  const { senha } = await searchParams;
 
   return (
     <main className="flex min-h-dvh items-center justify-center bg-bg px-5 py-16">
@@ -33,6 +38,16 @@ export default async function Entrar() {
         <p className="mt-2 text-[15px] text-gray">
           Use a mesma conta do aplicativo.
         </p>
+        {senha === "redefinida" ? (
+          // Quem acabou de redefinir chega aqui sem saber se deu certo; o
+          // aviso fecha o ciclo em vez de deixar a dúvida.
+          <p
+            role="status"
+            className="mt-5 rounded-button bg-sand px-4 py-3 text-[14px] text-ink"
+          >
+            Senha redefinida. Entre com a nova.
+          </p>
+        ) : null}
         <FormularioDeEntrada />
       </div>
     </main>
