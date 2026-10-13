@@ -144,14 +144,29 @@ describe("PagamentosService", () => {
 
       await s.simularPagamento("r1", "u1");
 
-      expect(registrar).toHaveBeenCalledWith({
-        usuarioId: "u1",
-        tipo: NotificacaoTipo.PAGAMENTO,
-        titulo: "Pagamento confirmado",
-        // Hora no fuso do estabelecimento, não no do servidor.
-        corpo: "Arena Beach Sapiranga · Quadra 1 — 02/10, 08:00",
-        destino: "/reservas/r1/confirmacao",
-      });
+      expect(registrar).toHaveBeenCalledWith(
+        expect.objectContaining({
+          usuarioId: "u1",
+          tipo: NotificacaoTipo.PAGAMENTO,
+          titulo: "Pagamento confirmado",
+          // Hora no fuso do estabelecimento, não no do servidor.
+          corpo: "Arena Beach Sapiranga · Quadra 1 — 02/10, 08:00",
+          destino: "/reservas/r1/confirmacao",
+        }),
+      );
+    });
+
+    it("o comprovante também sai por e-mail, com a mesma hora local", async () => {
+      // É o aviso que mais justifica sair do aplicativo: comprovante é o
+      // que a pessoa procura depois, e procura na caixa de entrada.
+      const { servico: s, registrar } = servico(reservaBase());
+
+      await s.simularPagamento("r1", "u1");
+
+      const { email } = registrar.mock.calls[0][0];
+      expect(email.assunto).toBe("Pagamento confirmado — Arena Beach Sapiranga");
+      expect(email.texto).toContain("Quadra 1");
+      expect(email.texto).toContain("02/10, 08:00");
     });
 
     it("não tenta avisar quando a reserva não tem cliente", async () => {

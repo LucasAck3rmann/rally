@@ -89,6 +89,13 @@ export class IngestaoDeReplaysService {
           titulo: "Seu replay está pronto",
           corpo: "O vídeo do seu último jogo já está disponível.",
           destino: "/replays",
+          email: {
+            assunto: "Seu replay está pronto",
+            texto:
+              "O vídeo do seu último jogo já está disponível no Rally.\n\n" +
+              "Abra o aplicativo em Replays para assistir, baixar ou " +
+              "compartilhar.",
+          },
         });
       }
 
