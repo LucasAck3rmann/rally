@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { EquipeDaArena } from "@/components/gestao/equipe";
 import { equipeDoEstabelecimento, meuPapelEm } from "@/lib/gestao/consultas";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
 export const metadata: Metadata = { title: "Equipe" };
 
@@ -21,7 +22,7 @@ export default async function Equipe({
     <EquipeDaArena
       equipe={equipe}
       estabelecimentoId={estabelecimentoId}
-      podeEditar={papel === "ADMIN" || papel === "MANTENEDOR"}
+      podeEditar={podeAdministrar(papel)}
     />
   );
 }

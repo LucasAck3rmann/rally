@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { QuadrasDaArena } from "@/components/gestao/quadras";
 import { meuPapelEm, quadrasDoEstabelecimento } from "@/lib/gestao/consultas";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
 export const metadata: Metadata = { title: "Quadras" };
 
@@ -21,7 +22,7 @@ export default async function Quadras({
     <QuadrasDaArena
       quadras={quadras}
       estabelecimentoId={estabelecimentoId}
-      podeEditar={papel === "ADMIN" || papel === "MANTENEDOR"}
+      podeEditar={podeAdministrar(papel)}
     />
   );
 }

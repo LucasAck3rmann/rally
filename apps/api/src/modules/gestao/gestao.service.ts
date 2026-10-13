@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { Injectable } from "@nestjs/common";
-import { Role } from "@prisma/client";
 
+import { PAPEIS_DE_GESTAO } from "../auth/decorators/papeis.decorator";
 import { PrismaService } from "../../prisma/prisma.service";
 
 @Injectable()
@@ -12,12 +12,20 @@ export class GestaoService {
    * Estabelecimentos que o usuário administra — é o que alimenta o seletor de
    * estabelecimento da barra lateral do painel.
    *
-   * O vínculo de cliente fica de fora: quem só joga numa arena não gerencia
-   * coisa nenhuma nela.
+   * Filtra pelos **mesmos papéis que o `PapelGuard` deixa entrar**, e não por
+   * "tudo que não é cliente". A diferença aparecia no `MANTENEDOR`: ele é
+   * papel da plataforma (nível SaaS), o `PAPEIS_DE_GESTAO` não o inclui e o
+   * guard o recusa em toda rota de arena — mas ele passava neste filtro, e a
+   * arena aparecia na barra lateral para alguém que levaria 403 em cada
+   * seção que abrisse. Listar o que não dá para abrir é pior do que não
+   * listar: vira um painel que parece quebrado.
+   *
+   * Uma lista só, derivada da mesma constante, é o que impede os dois lados
+   * de voltarem a discordar.
    */
   async meusEstabelecimentos(usuarioId: string) {
     const vinculos = await this.prisma.membership.findMany({
-      where: { usuarioId, role: { not: Role.CLIENTE } },
+      where: { usuarioId, role: { in: PAPEIS_DE_GESTAO } },
       select: {
         role: true,
         estabelecimento: {

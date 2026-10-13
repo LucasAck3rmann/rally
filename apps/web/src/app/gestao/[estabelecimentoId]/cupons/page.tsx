@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { CuponsDaArena } from "@/components/gestao/cupons";
 import { cuponsDoEstabelecimento, meuPapelEm } from "@/lib/gestao/consultas";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
 export const metadata: Metadata = { title: "Cupons" };
 
@@ -21,10 +22,7 @@ export default async function Cupons({
     <CuponsDaArena
       cupons={cupons}
       estabelecimentoId={estabelecimentoId}
-      // Só ADMIN: é o que o `@Papeis(Role.ADMIN)` do controlador aceita, e o
-      // guard não tem hierarquia de papéis. Mostrar o botão para quem o
-      // servidor recusaria entregaria um 403 no lugar de uma tela honesta.
-      podeEditar={papel === "ADMIN"}
+      podeEditar={podeAdministrar(papel)}
     />
   );
 }
