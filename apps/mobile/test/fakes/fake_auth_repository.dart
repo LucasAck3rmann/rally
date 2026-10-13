@@ -27,6 +27,7 @@ class FakeAuthRepository implements AuthRepository {
   String? nomeRecebido;
   String? emailRecebido;
   String? senhaRecebida;
+  bool? aceiteRecebido;
   int chamadasDeCadastro = 0;
 
   @override
@@ -45,11 +46,13 @@ class FakeAuthRepository implements AuthRepository {
     required String nome,
     required String email,
     required String senha,
+    required bool aceitouTermos,
   }) {
     chamadasDeCadastro++;
     nomeRecebido = nome;
     emailRecebido = email;
     senhaRecebida = senha;
+    aceiteRecebido = aceitouTermos;
 
     if (cadastroPendente) return Completer<AuthUser>().future;
     if (erroDeCadastro != null) return Future.error(erroDeCadastro!);

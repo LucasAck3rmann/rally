@@ -32,13 +32,19 @@ class AuthRepositoryImpl implements AuthRepository {
     required String nome,
     required String email,
     required String senha,
+    required bool aceitouTermos,
   }) async {
     try {
       // A API devolve o mesmo envelope do login, então o cadastro já
       // entra com a sessão aberta — o cliente não digita a senha duas vezes.
       final res = await _dio.post<Map<String, dynamic>>(
         "/auth/register",
-        data: {"nome": nome, "email": email, "senha": senha},
+        data: {
+          "nome": nome,
+          "email": email,
+          "senha": senha,
+          "aceitouTermos": aceitouTermos,
+        },
       );
       return await _saveAndParse(res.data);
     } on DioException catch (e) {

@@ -9,6 +9,7 @@ abstract interface class AuthRepository {
     required String nome,
     required String email,
     required String senha,
+    required bool aceitouTermos,
   });
 
   /// Pede o link de redefinicao de senha (RF-03).
