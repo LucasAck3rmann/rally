@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 "use client";
 
+import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
@@ -68,6 +69,13 @@ export function FormularioDeEntrada() {
       ) : null}
 
       <Botao />
+
+      <Link
+        href="/recuperar-senha"
+        className="block text-center text-[14px] text-gray hover:text-ink"
+      >
+        Esqueci minha senha
+      </Link>
     </form>
   );
 }
