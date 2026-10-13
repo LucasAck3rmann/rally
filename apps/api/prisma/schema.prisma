@@ -136,6 +136,7 @@ model Usuario {
   replays       Replay[]                @relation("ReplayCliente")
   accounts      Account[]
   refreshTokens RefreshToken[]
+  tokensDeSenha TokenDeSenha[]
   notifPref     NotificationPreference?
   notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
@@ -150,6 +151,22 @@ model Account {
   providerAccountId String
 
   @@unique([provider, providerAccountId])
+  @@index([usuarioId])
+}
+
+/// Token de redefinicao de senha (RF-03).
+///
+/// Guarda o **hash** e nunca o token: quem lesse o banco poderia redefinir a
+/// senha de qualquer pessoa, que e o mesmo motivo de `senhaHash` existir.
+model TokenDeSenha {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
   @@index([usuarioId])
 }
 

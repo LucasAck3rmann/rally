@@ -2,23 +2,15 @@
 import { Module } from "@nestjs/common";
 
 import { AuthModule } from "../auth/auth.module";
-import { EmailDevProvider } from "./email-dev.provider";
-import { EMAIL_PROVIDER } from "./email-provider";
+import { EmailModule } from "../email/email.module";
 import { NotificacoesController } from "./notificacoes.controller";
 import { NotificacoesService } from "./notificacoes.service";
 
-/**
- * Avisos do cliente. O e-mail fica atrás de {@link EMAIL_PROVIDER}: trocar o
- * provedor de desenvolvimento pela mensageria da nuvem é substituir este
- * `useClass`, como já acontece no Pix.
- */
+/** Avisos do cliente, in-app e por e-mail (RF-16). */
 @Module({
-  imports: [AuthModule],
+  imports: [AuthModule, EmailModule],
   controllers: [NotificacoesController],
-  providers: [
-    NotificacoesService,
-    { provide: EMAIL_PROVIDER, useClass: EmailDevProvider },
-  ],
+  providers: [NotificacoesService],
   exports: [NotificacoesService],
 })
 export class NotificacoesModule {}
