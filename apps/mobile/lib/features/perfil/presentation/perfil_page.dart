@@ -97,6 +97,12 @@ class PerfilPage extends ConsumerWidget {
               const _ItemMenu(icone: "ajuda", rotulo: "Ajuda"),
               const SizedBox(height: 10),
               _ItemMenu(
+                icone: "ajustes",
+                rotulo: "Privacidade e meus dados",
+                onTap: () => context.push("/privacidade"),
+              ),
+              const SizedBox(height: 10),
+              _ItemMenu(
                 icone: "sair",
                 rotulo: "Sair",
                 destrutivo: true,
