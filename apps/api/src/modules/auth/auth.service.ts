@@ -43,6 +43,11 @@ export class AuthService {
         nome: dto.nome,
         email: dto.email,
         senhaHash: await hash(dto.senha),
+        // O RNF-07 pede consentimento **registrado**, e registrar é guardar
+        // quando. A coluna existia desde junho e nunca era escrita: a
+        // política era aceita na tela e o sistema não guardava prova
+        // nenhuma disso, que é o mesmo que não ter aceite.
+        consentLgpdEm: new Date(),
       },
     });
     // Depois de criar e sem esperar: a conta já está ativa, e segurar a

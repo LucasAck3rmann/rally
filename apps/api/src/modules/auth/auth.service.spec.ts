@@ -29,7 +29,7 @@ describe("AuthService", () => {
   it("register rejeita e-mail já cadastrado", async () => {
     findUnique.mockResolvedValueOnce({ id: "1" });
     await expect(
-      service.register({ nome: "Ana", email: "x@y.com", senha: "123456" }),
+      service.register({ nome: "Ana", email: "x@y.com", senha: "123456", aceitouTermos: true }),
     ).rejects.toBeInstanceOf(ConflictException);
   });
 
@@ -37,7 +37,7 @@ describe("AuthService", () => {
     findUnique.mockResolvedValueOnce(null);
     create.mockResolvedValueOnce({ id: "u1", nome: "Ana", email: "x@y.com" });
 
-    await service.register({ nome: "Ana", email: "x@y.com", senha: "123456" });
+    await service.register({ nome: "Ana", email: "x@y.com", senha: "123456", aceitouTermos: true });
 
     expect(enviarVerificacao).toHaveBeenCalledWith("u1", "Ana", "x@y.com");
   });
@@ -46,8 +46,42 @@ describe("AuthService", () => {
     findUnique.mockResolvedValueOnce({ id: "1" });
 
     await expect(
-      service.register({ nome: "Ana", email: "x@y.com", senha: "123456" }),
+      service.register({ nome: "Ana", email: "x@y.com", senha: "123456", aceitouTermos: true }),
     ).rejects.toBeInstanceOf(ConflictException);
     expect(enviarVerificacao).not.toHaveBeenCalled();
+  });
+
+  it("registra quando o consentimento foi dado (RNF-07)", async () => {
+    // A coluna existia desde junho e nunca era escrita: a política era
+    // aceita na tela e o sistema não guardava prova nenhuma disso — o que é
+    // o mesmo que não ter aceite.
+    const antes = Date.now();
+    findUnique.mockResolvedValueOnce(null);
+    create.mockResolvedValueOnce({ id: "u1", nome: "Ana", email: "x@y.com" });
+
+    await service.register({
+      nome: "Ana",
+      email: "x@y.com",
+      senha: "123456",
+      aceitouTermos: true,
+    });
+
+    const { consentLgpdEm } = create.mock.calls[0][0].data;
+    expect(consentLgpdEm).toBeInstanceOf(Date);
+    expect(consentLgpdEm.getTime()).toBeGreaterThanOrEqual(antes);
+  });
+
+  it("a senha vai como resumo, nunca em texto", async () => {
+    findUnique.mockResolvedValueOnce(null);
+    create.mockResolvedValueOnce({ id: "u1", nome: "Ana", email: "x@y.com" });
+
+    await service.register({
+      nome: "Ana",
+      email: "x@y.com",
+      senha: "123456",
+      aceitouTermos: true,
+    });
+
+    expect(create.mock.calls[0][0].data.senhaHash).not.toBe("123456");
   });
 });
