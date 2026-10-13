@@ -26,6 +26,8 @@ function servico(
     token?: unknown;
     jaUsadoNaCorrida?: boolean;
     erroAoEnviar?: unknown;
+    /** Token emitido ha pouco para o mesmo usuario, quando houver. */
+    recente?: unknown;
   } = {},
 ) {
   const criarToken = jest.fn().mockResolvedValue({ id: "t1" });
@@ -47,6 +49,7 @@ function servico(
       update: trocarSenha,
     },
     tokenDeSenha: {
+      findFirst: jest.fn().mockResolvedValue(opcoes.recente ?? null),
       findUnique: jest.fn().mockResolvedValue(opcoes.token ?? null),
       updateMany: invalidarAnteriores,
       create: criarToken,
@@ -60,6 +63,7 @@ function servico(
   return {
     servico: new SenhaService(prisma, config, { enviar }),
     prisma,
+    procurarRecente: prisma.tokenDeSenha.findFirst as jest.Mock,
     criarToken,
     invalidarAnteriores,
     trocarSenha,
@@ -167,6 +171,43 @@ describe("SenhaService.recuperar (RF-03)", () => {
     expect(texto).toContain("https://rally.exemplo/redefinir-senha?token=");
     expect(texto).toMatch(/se não foi você/i);
     expect(texto).toMatch(/uma vez/i);
+  });
+
+  it("não manda um segundo e-mail logo em seguida", async () => {
+    // Sem esta trava a rota é um amplificador: um laço enche a caixa de
+    // entrada de qualquer pessoa, com o Rally como remetente. O limite por
+    // origem não cobre isso — a web inteira chega com um endereço só, e um
+    // atacante troca de endereço à vontade.
+    const { servico: s, criarToken, enviar } = servico({ recente: { id: "t0" } });
+
+    const saida = await s.recuperar("lucas@exemplo.com");
+
+    expect(criarToken).not.toHaveBeenCalled();
+    expect(enviar).not.toHaveBeenCalled();
+    // E a resposta é a mesma de sempre: nem o atacante nem o usuário
+    // percebem a diferença.
+    expect(saida.mensagem).toMatch(/se houver conta/i);
+  });
+
+  it("dentro do intervalo, o link anterior continua valendo", async () => {
+    // Invalidar o anterior sem mandar outro deixaria a pessoa sem nenhum
+    // link funcionando, que é o pior dos desfechos.
+    const { servico: s, invalidarAnteriores } = servico({
+      recente: { id: "t0" },
+    });
+    await s.recuperar("lucas@exemplo.com");
+
+    expect(invalidarAnteriores).not.toHaveBeenCalled();
+  });
+
+  it("procura o recente só entre os não usados e dentro da janela", async () => {
+    const { servico: s, procurarRecente } = servico();
+    await s.recuperar("lucas@exemplo.com");
+
+    const onde = procurarRecente.mock.calls[0][0].where;
+    expect(onde.usuarioId).toBe("u1");
+    expect(onde.usadoEm).toBeNull();
+    expect(onde.criadoEm.gt).toEqual(new Date(AGORA.getTime() - 2 * MINUTO));
   });
 
   it("falha no envio não vira erro para quem pediu", async () => {

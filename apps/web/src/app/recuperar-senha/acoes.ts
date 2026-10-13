@@ -43,6 +43,11 @@ export async function pedirLink(
   if (!resposta.ok && resposta.status === 400) {
     return { erro: "Informe um e-mail válido." };
   }
+  // 429 é o limite de tentativas da API, e merece dizer o que fazer: "tente
+  // de novo" é justamente o que não resolve.
+  if (resposta.status === 429) {
+    return { erro: "Muitas tentativas. Aguarde alguns minutos." };
+  }
   if (!resposta.ok) {
     return { erro: "Não foi possível enviar agora. Tente de novo." };
   }
