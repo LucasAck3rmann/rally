@@ -1,4 +1,10 @@
-import { IsDateString, IsEnum, IsOptional, IsString } from "class-validator";
+import {
+  IsDateString,
+  IsEnum,
+  IsOptional,
+  IsString,
+  MaxLength,
+} from "class-validator";
 import { PagamentoMetodo } from "@prisma/client";
 
 export class CreateReservaDto {
@@ -15,4 +21,13 @@ export class CreateReservaDto {
   @IsOptional()
   @IsEnum(PagamentoMetodo)
   metodo?: PagamentoMetodo;
+
+  /**
+   * Código do cupom (RF-14, RN-14). Opcional, e conferido sem diferenciar
+   * maiúscula de minúscula — ninguém digita cupom com o cuidado de uma senha.
+   */
+  @IsOptional()
+  @IsString()
+  @MaxLength(40)
+  cupom?: string;
 }

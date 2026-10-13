@@ -22,17 +22,21 @@ module.exports = {
   // regressão sem quebrar por arredondamento. Quando a cobertura subir, suba o
   // piso junto — é o que impede o número de escorrer para baixo sem ninguém ver.
   //
-  // Medido em 08/10/2026, sem banco (integração pulada), logo um piso do
-  // piso: 87,99% de instruções, 87,52% de linhas, 76,78% de ramos e 71,53%
-  // de funções, com o bloco de gestão, a conciliação e a exportação em PDF
-  // dentro. O piso sobe junto com a medida — piso muito abaixo do real para
-  // de acusar regressão, que é o que ele faz.
+  // Medido em 13/10/2026, sem banco (integração pulada), logo um piso do
+  // piso: 90,09% de instruções, 89,84% de linhas, 81,16% de ramos e 72,86%
+  // de funções. O salto em relação a 08/10 não veio do código novo: veio de
+  // `criar()` passar a ter teste. Ele era o caminho mais importante da API
+  // — é onde a reserva nasce — e não era exercitado por nada, nem pelos
+  // testes de integração, que escrevem direto no Prisma.
+  //
+  // O piso sobe junto com a medida: piso muito abaixo do real para de
+  // acusar regressão, que é o que ele faz.
   coverageThreshold: {
     global: {
-      statements: 87,
-      lines: 87,
-      branches: 76,
-      functions: 71,
+      statements: 90,
+      lines: 89,
+      branches: 81,
+      functions: 72,
     },
   },
 };
