@@ -5,6 +5,7 @@ import "package:go_router/go_router.dart";
 import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
 import "../../features/auth/presentation/recuperar_senha_page.dart";
+import "../../features/privacidade/presentation/privacidade_page.dart";
 import "../../features/auth/presentation/login_page.dart";
 import "../../features/gestao/presentation/agenda_page.dart";
 import "../../features/gestao/presentation/equipe_page.dart";
@@ -77,6 +78,10 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(
         path: "/recuperar-senha",
         builder: (_, __) => const RecuperarSenhaPage(),
+      ),
+      GoRoute(
+        path: "/privacidade",
+        builder: (_, __) => const PrivacidadePage(),
       ),
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
