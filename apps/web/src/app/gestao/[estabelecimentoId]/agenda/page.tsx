@@ -4,6 +4,7 @@ import type { Metadata } from "next";
 import { AgendaDaArena } from "@/components/gestao/agenda";
 import { hojeNaQuadra, proximosDias } from "@/lib/formato";
 import { agendaDoDia, meuPapelEm } from "@/lib/gestao/consultas";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
 export const metadata: Metadata = { title: "Agenda" };
 
@@ -32,7 +33,7 @@ export default async function Agenda({
       agenda={agenda}
       dias={dias}
       estabelecimentoId={estabelecimentoId}
-      podeBloquear={papel === "ADMIN" || papel === "MANTENEDOR"}
+      podeBloquear={podeAdministrar(papel)}
     />
   );
 }

@@ -35,8 +35,12 @@ enum PapelGestao {
 
   /// Só o administrador cria, edita ou pausa quadra — é o que a API exige
   /// em `@Papeis(Role.ADMIN)`. A tela esconde o que o servidor recusaria.
-  bool get podeEditarQuadras =>
-      this == PapelGestao.admin || this == PapelGestao.mantenedor;
+  ///
+  /// `mantenedor` ficava aqui junto, contra o que esta própria frase dizia:
+  /// ele é papel da plataforma (nível SaaS), o `PAPEIS_DE_GESTAO` da API não
+  /// o inclui e o `PapelGuard` o recusa em toda rota de arena. Quem caísse
+  /// nesse papel veria os botões e levaria 403 ao tocar.
+  bool get podeEditarQuadras => this == PapelGestao.admin;
 }
 
 /// Estabelecimento que o usuário administra.

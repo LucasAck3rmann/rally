@@ -3,6 +3,7 @@ import type { Metadata } from "next";
 
 import { ConciliacaoDaArena } from "@/components/gestao/conciliacao";
 import { conciliacaoDoEstabelecimento, meuPapelEm } from "@/lib/gestao/consultas";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
 export const metadata: Metadata = { title: "Conciliação" };
 
@@ -21,7 +22,7 @@ export default async function Conciliacao({
     <ConciliacaoDaArena
       conciliacao={conciliacao}
       estabelecimentoId={estabelecimentoId}
-      podeExpirar={papel === "ADMIN" || papel === "MANTENEDOR"}
+      podeExpirar={podeAdministrar(papel)}
     />
   );
 }
