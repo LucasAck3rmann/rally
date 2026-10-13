@@ -11,6 +11,7 @@ import { horaLocalParaUtc, rotuloHoraLocal } from "../../common/timezone";
 import { PrismaService } from "../../prisma/prisma.service";
 import { ehConflitoDeHorario } from "../reservas/reservas.service";
 import { CriarBloqueioDto } from "./dto/criar-bloqueio.dto";
+import { MoverReservaDto } from "./dto/mover-reserva.dto";
 
 /** Status que ocupam a quadra — os mesmos que a grade do cliente respeita. */
 const OCUPAM = [
@@ -19,6 +20,12 @@ const OCUPAM = [
   ReservaStatus.CONCLUIDA,
   ReservaStatus.NO_SHOW,
   ReservaStatus.BLOQUEIO,
+];
+
+/** Estados em que a reserva ainda pode mudar de lugar. */
+const MOVIVEIS: ReservaStatus[] = [
+  ReservaStatus.PENDENTE_PAGAMENTO,
+  ReservaStatus.CONFIRMADA,
 ];
 
 const ITEM_DA_AGENDA = {
@@ -167,6 +174,98 @@ export class AgendaService {
 
     await this.prisma.reserva.delete({ where: { id: bloqueioId } });
     return { id: bloqueioId, removido: true };
+  }
+
+  /**
+   * Move uma reserva de horário e, se preciso, de quadra (RF-21).
+   *
+   * **Não reusa a remarcação do cliente, de propósito.** Lá a política
+   * (RN-02) recusa remarcar dentro das últimas N horas, e isso existe para
+   * proteger a arena de quem empurraria a reserva para longe só para
+   * cancelar de graça depois. Aplicar a mesma trava ao dono inverteria o
+   * sentido da regra: os dois casos que fazem a arena precisar mover —
+   * quadra alagada, manutenção de urgência — acontecem justamente em cima
+   * da hora, e é quando a função tem de funcionar.
+   *
+   * **O preço não muda.** Mover é iniciativa da casa; cobrar a mais por uma
+   * quadra que o cliente não escolheu seria repassar a ele o custo de um
+   * problema que não é dele. O `Pagamento` fica intacto pelo mesmo motivo —
+   * e o Pix já emitido continua válido, porque o valor dentro do BR Code
+   * continua certo.
+   *
+   * A sobreposição continua sendo barrada pelo banco (`reserva_sem_sobreposicao`,
+   * RN-01), e não por consulta prévia: entre conferir e gravar cabe outra
+   * reserva.
+   */
+  async moverReserva(
+    estabelecimentoId: string,
+    reservaId: string,
+    dto: MoverReservaDto,
+  ) {
+    const inicio = new Date(dto.inicio);
+    const fim = new Date(dto.fim);
+    if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
+      throw new BadRequestException("Datas inválidas.");
+    }
+    if (fim <= inicio) {
+      throw new BadRequestException("O fim precisa ser depois do início.");
+    }
+
+    const reserva = await this.prisma.reserva.findFirst({
+      // Escopado pelo estabelecimento da rota (ADR-0011): sem isso, um admin
+      // moveria a reserva de outra arena sabendo o id.
+      where: { id: reservaId, estabelecimentoId },
+      select: { id: true, inicio: true, status: true, quadraId: true },
+    });
+    if (!reserva) throw new NotFoundException("Reserva não encontrada.");
+
+    if (reserva.status === ReservaStatus.BLOQUEIO) {
+      // Bloqueio tem par próprio de criar e remover, e o remover **apaga**
+      // em vez de cancelar. Mover por aqui faria o mesmo efeito por um
+      // caminho que não é o dele.
+      throw new BadRequestException(
+        "Para mudar um bloqueio, remova e crie de novo.",
+      );
+    }
+    if (reserva.status === ReservaStatus.CANCELADA) {
+      throw new ConflictException("Esta reserva já foi cancelada.");
+    }
+    if (!MOVIVEIS.includes(reserva.status)) {
+      throw new ConflictException("Esta reserva já aconteceu.");
+    }
+    if (reserva.inicio <= new Date()) {
+      throw new ConflictException("O horário da reserva já começou.");
+    }
+
+    const quadraId = dto.quadraId ?? reserva.quadraId;
+    if (quadraId !== reserva.quadraId) {
+      const destino = await this.prisma.quadra.findFirst({
+        where: { id: quadraId, estabelecimentoId },
+        select: { id: true },
+      });
+      if (!destino) throw new NotFoundException("Quadra não encontrada.");
+    }
+
+    const estabelecimento = await this.prisma.estabelecimento.findUnique({
+      where: { id: estabelecimentoId },
+      select: { timezone: true },
+    });
+
+    try {
+      const movida = await this.prisma.reserva.update({
+        where: { id: reserva.id },
+        data: { quadraId, inicio, fim },
+        select: ITEM_DA_AGENDA,
+      });
+      return this.paraDto(movida, estabelecimento?.timezone ?? "UTC");
+    } catch (erro) {
+      if (ehConflitoDeHorario(erro)) {
+        throw new ConflictException(
+          "Esse horário já tem reserva ou bloqueio nessa quadra.",
+        );
+      }
+      throw erro;
+    }
   }
 
   private paraDto(item: ItemDaAgenda, timezone: string) {

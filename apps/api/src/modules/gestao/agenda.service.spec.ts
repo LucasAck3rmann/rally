@@ -40,8 +40,11 @@ function servico(
     estabelecimento?: unknown;
     quadra?: unknown;
     bloqueio?: unknown;
+    reserva?: unknown;
     itens?: unknown[];
     erroAoCriar?: unknown;
+    erroAoMover?: unknown;
+    movida?: unknown;
   } = {},
 ) {
   const prisma = {
@@ -65,13 +68,21 @@ function servico(
       findFirst: jest
         .fn()
         .mockResolvedValue(
-          opcoes.bloqueio === undefined ? { id: "b1" } : opcoes.bloqueio,
+          opcoes.reserva !== undefined
+            ? opcoes.reserva
+            : opcoes.bloqueio === undefined
+              ? { id: "b1" }
+              : opcoes.bloqueio,
         ),
+      update: opcoes.erroAoMover
+        ? jest.fn().mockRejectedValue(opcoes.erroAoMover)
+        : jest.fn().mockResolvedValue(opcoes.movida ?? RESERVA_NA_AGENDA),
       create: opcoes.erroAoCriar
         ? jest.fn().mockRejectedValue(opcoes.erroAoCriar)
         : jest.fn().mockResolvedValue(BLOQUEIO_CRIADO),
       delete: jest.fn().mockResolvedValue({ id: "b1" }),
     },
+    pagamento: { update: jest.fn() },
   } as unknown as PrismaService & Record<string, never>;
 
   return { servico: new AgendaService(prisma), prisma };
@@ -266,6 +277,169 @@ describe("AgendaService", () => {
         NotFoundException,
       );
       expect(prisma.reserva.delete).not.toHaveBeenCalled();
+    });
+  });
+
+  describe("mover reserva (RF-21)", () => {
+    const HORA = 60 * 60 * 1000;
+    /** Daqui a `h` horas, em ISO — o serviço recusa mover o que já começou. */
+    const daqui = (h: number) => new Date(Date.now() + h * HORA).toISOString();
+
+    function reservaFutura(parcial: Record<string, unknown> = {}) {
+      return {
+        id: "r1",
+        inicio: new Date(Date.now() + 3 * HORA),
+        status: ReservaStatus.CONFIRMADA,
+        quadraId: "q1",
+        ...parcial,
+      };
+    }
+
+    it("muda horário e quadra sem tocar no preço nem no pagamento", async () => {
+      // A decisão que este teste protege: mover é iniciativa da casa. Cobrar
+      // a mais por uma quadra que o cliente não escolheu repassaria a ele o
+      // custo de um problema que não é dele.
+      const { servico: s, prisma } = servico({ reserva: reservaFutura() });
+
+      await s.moverReserva("e1", "r1", {
+        quadraId: "q2",
+        inicio: daqui(5),
+        fim: daqui(6),
+      });
+
+      const dados = (prisma.reserva.update as jest.Mock).mock.calls[0][0].data;
+      expect(dados.quadraId).toBe("q2");
+      expect(dados).not.toHaveProperty("preco");
+      expect(prisma.pagamento.update).not.toHaveBeenCalled();
+    });
+
+    it("sem quadra no pedido, mantém a quadra atual", async () => {
+      const { servico: s, prisma } = servico({ reserva: reservaFutura() });
+
+      await s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) });
+
+      const dados = (prisma.reserva.update as jest.Mock).mock.calls[0][0].data;
+      expect(dados.quadraId).toBe("q1");
+      // E não vai conferir quadra nenhuma: não mudou de quadra.
+      expect(prisma.quadra.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("move mesmo dentro do prazo em que o cliente já não remarcaria", async () => {
+      // É a diferença que justifica o endpoint existir. A janela da RN-02
+      // protege a arena de quem empurraria a reserva para longe e cancelaria
+      // de graça depois; aplicá-la ao dono inverteria o sentido da regra, e
+      // quadra alagada é problema que aparece em cima da hora.
+      const { servico: s, prisma } = servico({
+        reserva: reservaFutura({ inicio: new Date(Date.now() + 0.5 * HORA) }),
+      });
+
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(2), fim: daqui(3) }),
+      ).resolves.toBeDefined();
+      expect(prisma.reserva.update).toHaveBeenCalled();
+    });
+
+    it("confere a quadra de destino dentro do estabelecimento da rota", async () => {
+      // ADR-0011: sem o escopo, um admin moveria a reserva para a quadra de
+      // outra arena sabendo o id.
+      const { servico: s, prisma } = servico({ reserva: reservaFutura() });
+
+      await s.moverReserva("e1", "r1", {
+        quadraId: "q2",
+        inicio: daqui(5),
+        fim: daqui(6),
+      });
+
+      expect((prisma.quadra.findFirst as jest.Mock).mock.calls[0][0].where).toEqual({
+        id: "q2",
+        estabelecimentoId: "e1",
+      });
+      expect((prisma.reserva.findFirst as jest.Mock).mock.calls[0][0].where).toEqual({
+        id: "r1",
+        estabelecimentoId: "e1",
+      });
+    });
+
+    it("quadra de destino de outra arena é 404", async () => {
+      const { servico: s } = servico({ reserva: reservaFutura(), quadra: null });
+
+      await expect(
+        s.moverReserva("e1", "r1", {
+          quadraId: "q9",
+          inicio: daqui(5),
+          fim: daqui(6),
+        }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("reserva de outra arena é 404", async () => {
+      const { servico: s } = servico({ reserva: null });
+
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
+      ).rejects.toThrow(NotFoundException);
+    });
+
+    it("bloqueio não se move por aqui, e a recusa diz o caminho", async () => {
+      // Bloqueio tem par próprio de criar e remover, e o remover apaga em
+      // vez de cancelar.
+      const { servico: s } = servico({
+        reserva: reservaFutura({ status: ReservaStatus.BLOQUEIO }),
+      });
+
+      await expect(
+        s.moverReserva("e1", "b1", { inicio: daqui(5), fim: daqui(6) }),
+      ).rejects.toThrow(/remova e crie de novo/i);
+    });
+
+    it("recusa reserva cancelada, concluída e já começada", async () => {
+      for (const [parcial, motivo] of [
+        [{ status: ReservaStatus.CANCELADA }, /já foi cancelada/i],
+        [{ status: ReservaStatus.CONCLUIDA }, /já aconteceu/i],
+        [{ inicio: new Date(Date.now() - HORA) }, /já começou/i],
+      ] as const) {
+        const { servico: s } = servico({ reserva: reservaFutura(parcial) });
+        await expect(
+          s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
+        ).rejects.toThrow(motivo);
+      }
+    });
+
+    it("recusa fim antes do início e data inválida", async () => {
+      const { servico: s } = servico({ reserva: reservaFutura() });
+
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(6), fim: daqui(5) }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: "nao-e-data", fim: daqui(5) }),
+      ).rejects.toThrow(BadRequestException);
+    });
+
+    it("sobreposição é barrada pelo banco, não por consulta prévia", async () => {
+      // Entre conferir e gravar cabe outra reserva: a trava é a
+      // `reserva_sem_sobreposicao` (RN-01).
+      const { servico: s } = servico({
+        reserva: reservaFutura(),
+        erroAoMover: new Error(
+          'conflicting key value violates exclusion constraint "reserva_sem_sobreposicao"',
+        ),
+      });
+
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
+      ).rejects.toThrow(ConflictException);
+    });
+
+    it("erro que não é de sobreposição sobe sem virar 409", async () => {
+      const { servico: s } = servico({
+        reserva: reservaFutura(),
+        erroAoMover: new Error("conexão caiu"),
+      });
+
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
+      ).rejects.toThrow("conexão caiu");
     });
   });
 });

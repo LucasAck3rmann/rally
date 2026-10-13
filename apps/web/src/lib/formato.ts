@@ -49,6 +49,29 @@ export function rotuloDoDia(data: string, agora: Date = new Date()): string {
 }
 
 /** Data por extenso para o cabeçalho da grade: "quarta-feira, 1 de outubro". */
+/**
+ * Intervalo local de `duracaoEmHoras` a partir da hora cheia, em ISO.
+ *
+ * O fim sai somando na linha do tempo, e **não** formatando `hora + duração`:
+ * às 23h com duas horas isso daria "25:00", que não é hora nenhuma — o
+ * `Date` fica inválido e `toISOString` estoura na cara de quem clicou. A
+ * grade da agenda chega a desenhar a linha das 24h quando existe reserva
+ * longa no fim da noite, então o caso não é teórico.
+ *
+ * A hora local vira instante com o fuso do navegador do dono, que é o mesmo
+ * da arena no caso comum. A API reconverte pelo `timezone` do
+ * estabelecimento — é lá que a conta vale.
+ */
+export function intervaloLocal(
+  data: string,
+  hora: number,
+  duracaoEmHoras: number,
+): { inicio: string; fim: string } {
+  const inicio = new Date(`${data}T${String(hora).padStart(2, "0")}:00`);
+  const fim = new Date(inicio.getTime() + duracaoEmHoras * 3_600_000);
+  return { inicio: inicio.toISOString(), fim: fim.toISOString() };
+}
+
 export function dataPorExtenso(data: string): string {
   const [ano, mes, dia] = data.split("-").map(Number);
   return new Intl.DateTimeFormat("pt-BR", {

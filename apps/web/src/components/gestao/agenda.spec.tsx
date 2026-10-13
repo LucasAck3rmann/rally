@@ -153,9 +153,20 @@ describe("Agenda da arena", () => {
     const bloqueada = screen.getByRole("rowheader", { name: "19h" }).closest("tr")!;
     const reservada = screen.getByRole("rowheader", { name: "20h" }).closest("tr")!;
     expect(within(bloqueada).getByRole("button", { name: "Liberar" })).toBeInTheDocument();
-    // Reserva de cliente não tem botão: quem pagou perde o horário pelo
-    // cancelamento, que cobra motivo e avisa.
-    expect(within(reservada).queryByRole("button")).not.toBeInTheDocument();
+    // Reserva de cliente não se **libera** pela agenda: quem pagou perde o
+    // horário pelo cancelamento, que cobra motivo e avisa. Mover é outra
+    // coisa, e mantém a reserva de pé (RF-21).
+    expect(
+      within(reservada).queryByRole("button", { name: "Liberar" }),
+    ).not.toBeInTheDocument();
+    expect(
+      within(reservada).getByRole("button", { name: "Mover" }),
+    ).toBeInTheDocument();
+    // E bloqueio não se move por aqui: a API tem par próprio para ele, e o
+    // remover apaga em vez de cancelar.
+    expect(
+      within(bloqueada).queryByRole("button", { name: "Mover" }),
+    ).not.toBeInTheDocument();
   });
 
   it("a célula ocupada fica na linha da hora certa", () => {
