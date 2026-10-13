@@ -135,6 +135,15 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                     _social("Continuar com Instagram"),
                     const SizedBox(height: 12),
                     TextButton(
+                      onPressed: loading
+                          ? null
+                          : () => context.push("/recuperar-senha"),
+                      child: const Text(
+                        "Esqueci minha senha",
+                        style: TextStyle(color: AppColors.gray),
+                      ),
+                    ),
+                    TextButton(
                       onPressed:
                           loading ? null : () => context.push("/cadastro"),
                       child: const Text(

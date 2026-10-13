@@ -11,6 +11,14 @@ abstract interface class AuthRepository {
     required String senha,
   });
 
+  /// Pede o link de redefinicao de senha (RF-03).
+  ///
+  /// Nao devolve nada e nao distingue e-mail cadastrado de nao cadastrado: a
+  /// API responde igual nos dois casos, de proposito, e repassar a diferenca
+  /// para a tela entregaria uma lista de clientes a quem fosse tentando
+  /// enderecos.
+  Future<void> pedirLinkDeSenha({required String email});
+
   Future<void> logout();
 
   /// Usuário da sessão atual, ou `null` se não autenticado.

@@ -56,6 +56,26 @@ class FakeAuthRepository implements AuthRepository {
     return Future.value(AuthUser(id: "u1", nome: nome, email: email));
   }
 
+  /// Erro lancado pelo proximo `pedirLinkDeSenha`, quando definido.
+  AuthException? erroDeRecuperacao;
+
+  /// Quando `true`, `pedirLinkDeSenha` fica pendente para sempre.
+  bool recuperacaoPendente = false;
+
+  /// Argumentos da ultima chamada a `pedirLinkDeSenha`.
+  String? emailDaRecuperacao;
+  int chamadasDeRecuperacao = 0;
+
+  @override
+  Future<void> pedirLinkDeSenha({required String email}) {
+    chamadasDeRecuperacao++;
+    emailDaRecuperacao = email;
+
+    if (recuperacaoPendente) return Completer<void>().future;
+    if (erroDeRecuperacao != null) return Future.error(erroDeRecuperacao!);
+    return Future.value();
+  }
+
   /// `true` depois que a tela pediu para sair.
   bool saiu = false;
 
