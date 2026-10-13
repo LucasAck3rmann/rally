@@ -14,6 +14,11 @@ import {
 } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
+import {
+  contaDaReserva,
+  motivoDaRecusa,
+  type CupomParaAplicar,
+} from "./cupom";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
 import { QuadrasService } from "../quadras/quadras.service";
 import { CreateReservaDto } from "./dto/create-reserva.dto";
@@ -74,6 +79,21 @@ const COM_CONTEXTO = {
  * O `P2002` fica no teste para cobrir bancos que ainda não receberam a
  * migração.
  */
+/**
+ * Se o erro é a restrição que segura o limite de usos do cupom (RN-14).
+ *
+ * Reconhecida pelo nome, como a de sobreposição: o Prisma devolve violação
+ * de CHECK como erro genérico de restrição, e tratar todo erro genérico como
+ * "cupom esgotado" esconderia falha de banco atrás de uma mensagem que culpa
+ * o cliente.
+ */
+export function ehCupomEsgotado(erro: unknown): boolean {
+  return (
+    erro instanceof Error &&
+    erro.message.includes("promocao_usos_dentro_do_limite")
+  );
+}
+
 export function ehConflitoDeHorario(erro: unknown): boolean {
   if (
     erro instanceof Prisma.PrismaClientKnownRequestError &&
@@ -147,6 +167,7 @@ export class ReservasService {
             nome: true,
             timezone: true,
             descontoPixPct: true,
+            cuponsAcumulam: true,
             pixExpiraMinutos: true,
           },
         },
@@ -178,34 +199,64 @@ export class ReservasService {
     }
 
     const metodo = dto.metodo ?? PagamentoMetodo.PIX;
-    const desconto = metodo === PagamentoMetodo.PIX ? Number(est.descontoPixPct) : 0;
-    const valor = Number((slot.preco * (1 - desconto / 100)).toFixed(2));
+    const descontoPixPct =
+      metodo === PagamentoMetodo.PIX ? Number(est.descontoPixPct) : 0;
+
+    const cupom = dto.cupom
+      ? await this.acharCupom(quadra.estabelecimentoId, dto.cupom)
+      : undefined;
+    const { valor } = contaDaReserva({
+      precoBruto: slot.preco,
+      descontoPixPct,
+      cupom: cupom?.regra,
+      acumulam: est.cuponsAcumulam,
+    });
 
     let reserva;
     try {
-      reserva = await this.prisma.reserva.create({
-        data: {
-          estabelecimentoId: quadra.estabelecimentoId,
-          quadraId: quadra.id,
-          clienteId: usuarioId,
-          inicio,
-          fim,
-          preco: new Prisma.Decimal(slot.preco),
-          status: ReservaStatus.PENDENTE_PAGAMENTO,
-          origem: ReservaOrigem.APP,
-          pagamento: {
-            create: {
-              valor: new Prisma.Decimal(valor),
-              metodo,
-              status: PagamentoStatus.PENDENTE,
+      // Transação porque o uso do cupom e a reserva têm de nascer juntos: um
+      // contador adiantado sem reserva tiraria do ar um uso que ninguém
+      // aproveitou, e uma reserva com cupom não contabilizado fura o limite.
+      reserva = await this.prisma.$transaction(async (tx) => {
+        if (cupom) {
+          // Quem garante o limite é a restrição `promocao_usos_dentro_do_limite`:
+          // entre a conferência acima e esta escrita cabe outra requisição
+          // usando o último uso.
+          await tx.promocao.update({
+            where: { id: cupom.id },
+            data: { usosFeitos: { increment: 1 } },
+          });
+        }
+        return tx.reserva.create({
+          data: {
+            estabelecimentoId: quadra.estabelecimentoId,
+            quadraId: quadra.id,
+            clienteId: usuarioId,
+            inicio,
+            fim,
+            preco: new Prisma.Decimal(slot.preco),
+            status: ReservaStatus.PENDENTE_PAGAMENTO,
+            origem: ReservaOrigem.APP,
+            promocaoId: cupom?.id,
+            pagamento: {
+              create: {
+                valor: new Prisma.Decimal(valor),
+                metodo,
+                status: PagamentoStatus.PENDENTE,
+              },
             },
           },
-        },
-        select: { id: true },
+          select: { id: true },
+        });
       });
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
+      }
+      if (ehCupomEsgotado(erro)) {
+        throw new ConflictException(
+          "Esse cupom acabou de atingir o limite de usos.",
+        );
       }
       throw erro;
     }
@@ -229,6 +280,45 @@ export class ReservasService {
     }
 
     return this.detalhe(reserva.id, usuarioId);
+  }
+
+  /**
+   * Acha o cupom do estabelecimento e recusa com o motivo (RF-14, RN-14).
+   *
+   * Busca sem diferenciar maiúscula de minúscula: ninguém digita cupom com o
+   * cuidado de uma senha, e recusar "primeira10" por causa da caixa seria
+   * inventar um obstáculo que a regra não pede.
+   *
+   * O cupom é procurado **dentro do estabelecimento da quadra** — um código
+   * de uma arena não vale em outra, mesmo que o texto coincida.
+   */
+  private async acharCupom(estabelecimentoId: string, codigo: string) {
+    const achado = await this.prisma.promocao.findFirst({
+      where: {
+        estabelecimentoId,
+        codigo: { equals: codigo.trim(), mode: "insensitive" },
+      },
+      select: {
+        id: true,
+        codigo: true,
+        tipo: true,
+        valor: true,
+        validadeInicio: true,
+        validadeFim: true,
+        usosMax: true,
+        usosFeitos: true,
+        ativo: true,
+      },
+    });
+    if (!achado) {
+      throw new NotFoundException("Cupom não encontrado para esta arena.");
+    }
+
+    const regra: CupomParaAplicar = { ...achado, valor: Number(achado.valor) };
+    const recusa = motivoDaRecusa(regra, new Date());
+    if (recusa) throw new ConflictException(recusa);
+
+    return { id: achado.id, regra };
   }
 
   /**

@@ -91,6 +91,8 @@ model Estabelecimento {
   antecedenciaMaxDias  Int       @default(30)
   cancelamentoHoras    Int       @default(12)
   descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2)
+  /// O "salvo configuração" da RN-14: por padrão cupom não soma com o desconto do Pix.
+  cuponsAcumulam       Boolean   @default(false)
   pixExpiraMinutos     Int       @default(30)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
