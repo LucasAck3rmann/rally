@@ -50,6 +50,24 @@ class AuthRepositoryImpl implements AuthRepository {
   }
 
   @override
+  Future<void> pedirLinkDeSenha({required String email}) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        "/auth/recuperar-senha",
+        data: {"email": email},
+      );
+    } on DioException catch (e) {
+      // 400 e formato invalido, que o campo ja barra. Qualquer outra falha
+      // vira mensagem generica: nenhuma delas pode virar "esse e-mail nao
+      // existe", porque a API nao diz isso e a tela nao pode inventar.
+      throw AuthException(
+        mensagemDeDio(e,
+            padrao: "Nao foi possivel enviar agora. Tente novamente."),
+      );
+    }
+  }
+
+  @override
   Future<void> logout() => _tokens.clear();
 
   @override
