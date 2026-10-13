@@ -6,6 +6,8 @@ import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { RecuperarSenhaDto, RedefinirSenhaDto } from "./dto/senha.dto";
 import { SenhaService } from "./senha.service";
+import { VerificarEmailDto } from "./dto/verificar-email.dto";
+import { VerificacaoDeEmailService } from "./verificacao-de-email.service";
 import { JwtAuthGuard } from "./guards/jwt-auth.guard";
 import { JwtPayload } from "./types/jwt-payload";
 
@@ -14,6 +16,7 @@ export class AuthController {
   constructor(
     private readonly auth: AuthService,
     private readonly senha: SenhaService,
+    private readonly verificacao: VerificacaoDeEmailService,
   ) {}
 
   @Post("login")
@@ -42,6 +45,17 @@ export class AuthController {
   @Post("redefinir-senha")
   redefinirSenha(@Body() dto: RedefinirSenhaDto) {
     return this.senha.redefinir(dto.token, dto.senha);
+  }
+
+  /**
+   * Confirma o endereco de e-mail (RF-03).
+   *
+   * Sem guarda: o link e aberto no navegador, que nao tem a sessao do
+   * aplicativo. O proprio token e a credencial.
+   */
+  @Post("verificar-email")
+  verificarEmail(@Body() dto: VerificarEmailDto) {
+    return this.verificacao.confirmar(dto.token);
   }
 
   @UseGuards(JwtAuthGuard)

@@ -127,6 +127,8 @@ model Usuario {
   telefone      String?
   avatarUrl     String?
   consentLgpdEm DateTime?
+  /// Quando o dono do endereco provou controlar a caixa de entrada (RF-03).
+  emailVerificadoEm DateTime?
   anonimizadoEm DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -137,6 +139,7 @@ model Usuario {
   accounts      Account[]
   refreshTokens RefreshToken[]
   tokensDeSenha TokenDeSenha[]
+  tokensDeEmail TokenDeEmail[]
   notifPref     NotificationPreference?
   notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
@@ -151,6 +154,25 @@ model Account {
   providerAccountId String
 
   @@unique([provider, providerAccountId])
+  @@index([usuarioId])
+}
+
+/// Token de verificacao de endereco de e-mail (RF-03).
+///
+/// Tabela separada da de senha, e nao uma coluna `tipo` na mesma: os dois
+/// tokens tem validade diferente (trinta minutos contra sete dias) e
+/// consequencias diferentes — um troca credencial, o outro confirma um fato.
+/// Juntar obrigaria toda consulta a filtrar por tipo, e um filtro esquecido
+/// deixaria um token de verificacao redefinir senha.
+model TokenDeEmail {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
   @@index([usuarioId])
 }
 

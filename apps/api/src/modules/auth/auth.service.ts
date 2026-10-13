@@ -10,12 +10,14 @@ import { PrismaService } from "../../prisma/prisma.service";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
 import { JwtPayload } from "./types/jwt-payload";
+import { VerificacaoDeEmailService } from "./verificacao-de-email.service";
 
 @Injectable()
 export class AuthService {
   constructor(
     private readonly prisma: PrismaService,
     private readonly jwt: JwtService,
+    private readonly verificacao: VerificacaoDeEmailService,
   ) {}
 
   async login(dto: LoginDto) {
@@ -43,6 +45,11 @@ export class AuthService {
         senhaHash: await hash(dto.senha),
       },
     });
+    // Depois de criar e sem esperar: a conta já está ativa, e segurar a
+    // sessão até alguém abrir a caixa de entrada trocaria uma garantia
+    // pequena por um abandono grande. O serviço nunca propaga erro.
+    await this.verificacao.enviar(user.id, user.nome, user.email);
+
     return this.tokenResponse(user.id, user.email, user.nome);
   }
 
