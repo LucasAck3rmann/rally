@@ -6,6 +6,7 @@ import { useParams, usePathname } from "next/navigation";
 
 import { Emblem } from "@/components/ui/emblem";
 import { cn } from "@/lib/cn";
+import { ALVO_MINIMO } from "@/lib/estilos";
 import type { EstabelecimentoGerido } from "@/lib/gestao/contratos";
 
 const SECOES = [
@@ -101,15 +102,43 @@ export function BarraLateral({
         </p>
       )}
 
-      <form action="/sair" method="post" className="mt-auto pt-6">
-        <button
-          type="submit"
-          className="w-full rounded-button border border-line px-3 py-2.5 text-[13px]
-            font-semibold text-coral-deep transition hover:bg-coral/5"
-        >
-          Sair
-        </button>
-      </form>
+      {/* Fora do condicional acima de propósito: o direito sobre os próprios
+          dados é da pessoa e não da arena, e quem ainda não gerencia nenhuma
+          também precisa alcançá-lo. */}
+      <div className="mt-auto pt-6">
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">
+          Conta
+        </p>
+        <nav className="mt-2">
+          <Link
+            href="/gestao/privacidade"
+            aria-current={caminho === "/gestao/privacidade" ? "page" : undefined}
+            className={cn(
+              "flex items-center rounded-button px-3 text-[14px] transition",
+              ALVO_MINIMO,
+              caminho === "/gestao/privacidade"
+                ? "bg-ink font-semibold text-white"
+                : "text-ink hover:bg-bg",
+            )}
+          >
+            Privacidade
+          </Link>
+        </nav>
+
+        <form action="/sair" method="post" className="mt-2">
+          <button
+            type="submit"
+            className={cn(
+              "flex w-full items-center justify-center rounded-button border",
+              "border-line px-3 text-[13px] font-semibold text-coral-deep",
+              "transition hover:bg-coral/5",
+              ALVO_MINIMO,
+            )}
+          >
+            Sair
+          </button>
+        </form>
+      </div>
     </aside>
   );
 }
