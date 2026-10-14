@@ -56,8 +56,9 @@ export function TrocaDePapel({
         value={papel}
         disabled={enviando}
         onChange={(evento) => mudar(evento.target.value as Papel)}
-        className="rounded-button border border-line bg-white px-2.5 py-1.5 text-[13px]
-          text-ink outline-none focus:border-coral disabled:opacity-60"
+        className="min-h-[44px] rounded-button border border-line bg-white px-2.5
+          py-1.5 text-[13px] text-ink outline-none focus:border-coral
+          disabled:opacity-60"
       >
         {OPCOES.map((opcao) => (
           <option

@@ -6,10 +6,7 @@ import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
 import { entrar, type EstadoDoLogin } from "@/app/entrar/acoes";
-
-const CAMPO =
-  "w-full rounded-button border border-line bg-white px-4 py-3 text-[15px] " +
-  "text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/30";
+import { CAMPO } from "@/lib/estilos";
 
 function Botao() {
   const { pending } = useFormStatus();

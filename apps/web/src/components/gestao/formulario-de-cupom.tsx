@@ -68,7 +68,7 @@ export function FormularioDeCupom({
       <button
         type="button"
         onClick={() => setAberto(true)}
-        className="mt-6 rounded-button bg-ink px-5 py-2.5 text-[14px] font-bold
+        className="mt-6 min-h-[44px] rounded-button bg-ink px-5 py-2.5 text-[14px] font-bold
           text-white transition hover:brightness-110"
       >
         Criar cupom
@@ -188,7 +188,7 @@ export function FormularioDeCupom({
         <button
           type="submit"
           disabled={enviando}
-          className="rounded-button bg-coral px-5 py-2.5 text-[14px] font-bold
+          className="min-h-[44px] rounded-button bg-coral px-5 py-2.5 text-[14px] font-bold
             text-ink transition hover:brightness-95 disabled:opacity-60"
         >
           {enviando ? "Criando…" : "Criar cupom"}
@@ -199,7 +199,7 @@ export function FormularioDeCupom({
             setAberto(false);
             setErro(null);
           }}
-          className="rounded-button border border-line px-5 py-2.5 text-[14px]
+          className="min-h-[44px] rounded-button border border-line px-5 py-2.5 text-[14px]
             font-semibold text-ink transition hover:bg-bg"
         >
           Cancelar

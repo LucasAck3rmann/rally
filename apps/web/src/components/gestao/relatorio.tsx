@@ -4,6 +4,7 @@ import Link from "next/link";
 import { cn } from "@/lib/cn";
 import { formatarPreco } from "@/lib/formato";
 import type { Relatorio } from "@/lib/gestao/contratos";
+import { CAMPO_COMPACTO } from "@/lib/estilos";
 
 function numero(valor: number, casas = 1): string {
   const texto = valor % 1 === 0 ? valor.toFixed(0) : valor.toFixed(casas);
@@ -91,8 +92,7 @@ export function RelatorioDaArena({
             type="date"
             name="de"
             defaultValue={periodo.de}
-            className="rounded-button border border-line px-3 py-2 text-[14px] text-ink
-              outline-none focus:border-coral"
+            className={CAMPO_COMPACTO}
           />
         </label>
         <label>
@@ -103,13 +103,12 @@ export function RelatorioDaArena({
             type="date"
             name="ate"
             defaultValue={periodo.ate}
-            className="rounded-button border border-line px-3 py-2 text-[14px] text-ink
-              outline-none focus:border-coral"
+            className={CAMPO_COMPACTO}
           />
         </label>
         <button
           type="submit"
-          className="h-[38px] rounded-button border border-line px-4 text-[14px]
+          className="h-11 rounded-button border border-line px-4 text-[14px]
             font-semibold text-ink transition hover:bg-bg"
         >
           Aplicar
