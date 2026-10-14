@@ -313,6 +313,8 @@ model Reserva {
   promocaoId         String?
   canceladaEm        DateTime?
   motivoCancelamento String?
+  /// Quando o lembrete de jogo foi enviado (RF-17). Nulo = ainda nao foi.
+  lembreteEnviadoEm  DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
