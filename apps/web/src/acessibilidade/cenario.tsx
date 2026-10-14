@@ -1,8 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { render } from "@testing-library/react";
 
+import { BarraLateral } from "@/components/gestao/barra-lateral";
 import { CuponsDaArena } from "@/components/gestao/cupons";
 import { EquipeDaArena } from "@/components/gestao/equipe";
+import { Privacidade } from "@/components/gestao/privacidade";
 import { FormularioDeConvite } from "@/components/gestao/formulario-de-convite";
 import { FormularioDeCupom } from "@/components/gestao/formulario-de-cupom";
 import { FormularioDeEntrada } from "@/components/gestao/formulario-de-entrada";
@@ -13,6 +15,7 @@ import { RelatorioDaArena } from "@/components/gestao/relatorio";
 import { Filtros } from "@/components/quadras/filtros";
 import type {
   CupomDaGestao,
+  EstabelecimentoGerido,
   MembroDaEquipe,
   QuadraDaGestao,
   Relatorio,
@@ -29,10 +32,20 @@ import type {
  *
  * **O que esta lista cobre, e o que não cobre.** Cobre as telas com
  * **controle de formulário** — onde rótulo, nome acessível e tamanho de alvo
- * decidem se a pessoa consegue operar o sistema. Não cobre a *landing*, que é
- * texto e imagem, nem o painel e a conciliação, que são tabelas de leitura
- * sem entrada de dados. Tela nova com campo ou botão **entra aqui**; é o
- * único jeito de a lista continuar dizendo a verdade.
+ * decidem se a pessoa consegue operar o sistema — e a **barra lateral**, que
+ * é o único controle presente em toda navegação do painel. Não cobre a
+ * *landing*, que é texto e imagem, nem o painel e a conciliação, que são
+ * tabelas de leitura sem entrada de dados. Tela nova com campo ou botão
+ * **entra aqui**; é o único jeito de a lista continuar dizendo a verdade.
+ *
+ * A barra lateral entrou depois, e vale registrar por quê: o botão "Sair"
+ * tinha **cerca de 33 px** e passou pelo portão de alvo de toque porque a
+ * barra não estava nesta lista. Quem escreve o portão também esquece de
+ * alimentá-lo — por isso o aviso acima está em negrito.
+ *
+ * Os painéis que **abrem ao clique** (o formulário de cupom, por exemplo) são
+ * percorridos no estado fechado: os campos que só existem depois do clique
+ * ficam fora. É um furo conhecido e declarado, não uma omissão.
  */
 export type Cenario = {
   /** Como a tela aparece na mensagem de falha. */
@@ -83,6 +96,23 @@ function cupom(opcoes: Partial<CupomDaGestao> = {}): CupomDaGestao {
     esgotado: false,
     vencido: false,
     createdAt: "2026-10-01T00:00:00.000Z",
+    ...opcoes,
+  };
+}
+
+function arena(
+  opcoes: Partial<EstabelecimentoGerido> = {},
+): EstabelecimentoGerido {
+  return {
+    id: "e1",
+    nome: "Arena Beira-Rio",
+    slug: "arena-beira-rio",
+    cidade: "Sapiranga",
+    uf: "RS",
+    plano: "PRO",
+    ativo: true,
+    quadras: 3,
+    meuPapel: "ADMIN",
     ...opcoes,
   };
 }
@@ -179,6 +209,23 @@ export const CENARIOS: Cenario[] = [
   {
     nome: "gestão · novo cupom",
     montar: () => render(<FormularioDeCupom estabelecimentoId="e1" />),
+  },
+  {
+    nome: "conta · privacidade",
+    montar: () => render(<Privacidade email="lucas@arena.com.br" />),
+  },
+  {
+    // Com duas arenas, para que o seletor de estabelecimento também apareça.
+    nome: "barra lateral do painel",
+    montar: () =>
+      render(
+        <BarraLateral
+          estabelecimentos={[
+            arena(),
+            arena({ id: "e2", nome: "Arena Sapiranga", meuPapel: "ATENDENTE" }),
+          ]}
+        />,
+      ),
   },
   {
     nome: "gestão · relatórios",
