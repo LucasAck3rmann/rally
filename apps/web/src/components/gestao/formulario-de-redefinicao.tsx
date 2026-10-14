@@ -9,10 +9,7 @@ import {
   redefinir,
   type EstadoDaRedefinicao,
 } from "@/app/recuperar-senha/acoes";
-
-const CAMPO =
-  "w-full rounded-button border border-line bg-white px-4 py-3 text-[15px] " +
-  "text-ink outline-none transition focus:border-coral focus:ring-2 focus:ring-coral/30";
+import { CAMPO } from "@/lib/estilos";
 
 function Botao() {
   const { pending } = useFormStatus();

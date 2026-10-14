@@ -66,7 +66,7 @@ export function FormularioDeConvite({
             type="email"
             required
             placeholder="augusto@rally.com.br"
-            className="w-full rounded-button border border-line px-3 py-2.5 text-[14px]
+            className="min-h-[44px] w-full rounded-button border border-line px-3 py-2.5 text-[14px]
               text-ink outline-none focus:border-coral"
           />
         </label>
@@ -78,7 +78,7 @@ export function FormularioDeConvite({
           <select
             name="papel"
             defaultValue="ATENDENTE"
-            className="rounded-button border border-line bg-white px-3 py-2.5 text-[14px]
+            className="min-h-[44px] rounded-button border border-line bg-white px-3 py-2.5 text-[14px]
               text-ink outline-none focus:border-coral"
           >
             {PAPEIS.map((p) => (
@@ -92,7 +92,7 @@ export function FormularioDeConvite({
         <button
           type="submit"
           disabled={enviando}
-          className="h-[42px] rounded-button bg-coral px-5 text-[14px] font-bold text-ink
+          className="h-11 rounded-button bg-coral px-5 text-[14px] font-bold text-ink
             transition hover:brightness-95 disabled:opacity-60"
         >
           {enviando ? "Adicionando…" : "Adicionar"}

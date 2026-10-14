@@ -4,6 +4,7 @@
 import { useState, useTransition, type ReactNode } from "react";
 
 import { cn } from "@/lib/cn";
+import { ALVO_MINIMO } from "@/lib/estilos";
 import type { Resultado } from "@/lib/gestao/acoes";
 
 /**
@@ -67,7 +68,9 @@ export function BotaoDeAcao({
         onClick={executar}
         disabled={enviando}
         className={cn(
-          "rounded-button px-3 py-2 text-[13px] font-semibold transition disabled:opacity-60",
+          "inline-flex items-center justify-center rounded-button px-3 py-2",
+          "text-[13px] font-semibold transition disabled:opacity-60",
+          ALVO_MINIMO,
           tom === "primario" && "bg-coral text-ink hover:brightness-95",
           tom === "destrutivo" && "border border-line text-coral-deep hover:bg-coral/5",
           tom === "neutro" && "border border-line text-ink hover:bg-bg",
