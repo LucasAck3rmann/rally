@@ -38,12 +38,19 @@ module.exports = {
   // a 0,09 ponto da medida não acusa regressão: ele quebra na primeira linha
   // nova que alguém não cobrir, que é ruído, e ensina a baixar o piso em vez
   // de escrever o teste.
+  //
+  // **Medido em 14/10, depois das suítes dos dois guardas e do controlador de
+  // relatórios: 93,63/83,72/78,01/93,56.** O salto veio de onde a assimetria
+  // apontava: o `JwtAuthGuard` tinha 0% de ramos e o controlador de
+  // exportação tinha os três manipuladores sem nenhuma execução. Os pisos
+  // sobem mantendo a mesma margem de um ponto — e a margem é a regra, não o
+  // número.
   coverageThreshold: {
     global: {
-      statements: 89,
-      lines: 89,
-      branches: 80,
-      functions: 72,
+      statements: 92,
+      lines: 92,
+      branches: 82,
+      functions: 76,
     },
   },
 };
