@@ -12,12 +12,14 @@ import { FormularioDeRecuperacao } from "@/components/gestao/formulario-de-recup
 import { FormularioDeRedefinicao } from "@/components/gestao/formulario-de-redefinicao";
 import { QuadrasDaArena } from "@/components/gestao/quadras";
 import { RelatorioDaArena } from "@/components/gestao/relatorio";
+import { TrilhaDaArena } from "@/components/gestao/trilha";
 import { Filtros } from "@/components/quadras/filtros";
 import type {
   CupomDaGestao,
   EstabelecimentoGerido,
   MembroDaEquipe,
   QuadraDaGestao,
+  RegistroDaTrilha,
   Relatorio,
 } from "@/lib/gestao/contratos";
 
@@ -37,6 +39,10 @@ import type {
  * *landing*, que é texto e imagem, nem o painel e a conciliação, que são
  * tabelas de leitura sem entrada de dados. Tela nova com campo ou botão
  * **entra aqui**; é o único jeito de a lista continuar dizendo a verdade.
+ *
+ * A trilha de auditoria entrou por essa regra, e vale dizer por quê: ela é
+ * tabela de leitura como o painel, mas tem **barra de filtro** — caixa de
+ * busca, seletor e botão. O critério é o controle, não o tipo de tela.
  *
  * A barra lateral entrou depois, e vale registrar por quê: o botão "Sair"
  * tinha **cerca de 33 px** e passou pelo portão de alvo de toque porque a
@@ -96,6 +102,21 @@ function cupom(opcoes: Partial<CupomDaGestao> = {}): CupomDaGestao {
     esgotado: false,
     vencido: false,
     createdAt: "2026-10-01T00:00:00.000Z",
+    ...opcoes,
+  };
+}
+
+function registroDaTrilha(
+  opcoes: Partial<RegistroDaTrilha> = {},
+): RegistroDaTrilha {
+  return {
+    id: "a1",
+    acao: "pausar quadra",
+    entidade: "Quadra",
+    entidadeId: "q1",
+    dados: { ativo: false },
+    criadoEm: "2026-10-15T13:00:00.000Z",
+    autor: { id: "u1", nome: "Lucas Ackermann" },
     ...opcoes,
   };
 }
@@ -224,6 +245,29 @@ export const CENARIOS: Cenario[] = [
             arena(),
             arena({ id: "e2", nome: "Arena Sapiranga", meuPapel: "ATENDENTE" }),
           ]}
+        />,
+      ),
+  },
+  {
+    // Com duas entidades, para o seletor ter mais de uma opção, e no teto do
+    // limite, para o link "ver 500" também ser percorrido.
+    nome: "gestão · auditoria",
+    montar: () =>
+      render(
+        <TrilhaDaArena
+          trilha={[
+            registroDaTrilha(),
+            registroDaTrilha({
+              id: "a2",
+              acao: "expirar pendentes",
+              entidade: "Pagamento",
+              entidadeId: null,
+              autor: null,
+            }),
+          ]}
+          estabelecimentoId="e1"
+          filtro={{ busca: "pausar" }}
+          teto={2}
         />,
       ),
   },
