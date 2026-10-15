@@ -69,6 +69,7 @@
 **Decisão:** **AGPL-3.0** no core; **Apache-2.0** nos SDKs/contratos/tokens; **licença comercial** nos módulos enterprise (open-core). Detalhe em [Código Aberto, Licença e Projeções](../codigo-aberto.md).
 **Alternativas:** MIT/Apache no projeto todo (permissivo, mas deixa concorrente fechar e revender — *free-riding*); BSL (source-available, não é OSI). Precedente: **Cal.com** (AGPL + comercial).
 **Consequências:** (+) projeto genuinamente aberto e protegido contra SaaS fechado; modelo de negócio sustentável. (−) algumas empresas evitam AGPL — mitigado pelos SDKs em Apache. **Fixar antes de tornar o repo público.**
+**Complemento (2026-10-15):** a decisão acima cobria só código. Dois casos que ela não previa foram resolvidos na tabela da seção 2 de [Código Aberto, Licença e Projeções](../codigo-aberto.md): **documentação em CC-BY-SA-4.0** (a AGPL é escrita para programa, não para prosa) e **ativos de terceiros sob a licença de origem** — os ícones vindos do template do Flutter são BSD-3-Clause, e não nossos.
 
 ## ADR-0010 — Deploy AWS-native (SST/OpenNext + ECS Fargate)
 **Status:** Aceito · **Data:** 2026-06-16

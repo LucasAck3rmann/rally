@@ -52,5 +52,7 @@ O CI roda **CodeQL**, **Dependabot** e varredura de segredos. Governança do pro
 
 ## Licença
 Core sob **AGPL-3.0** (ver [LICENSE](LICENSE)). Pacotes/SDK em Apache-2.0.
+Documentação em **CC-BY-SA-4.0**. Tabela completa na [seção 2 de
+`docs/codigo-aberto.md`](docs/codigo-aberto.md).
 Uma **edição comercial/hospedada** está disponível — contato: hello@rally.app.
 "Rally" e a marca são reservados.
