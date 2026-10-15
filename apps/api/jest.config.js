@@ -42,15 +42,23 @@ module.exports = {
   // **Medido em 14/10, depois das suítes dos dois guardas e do controlador de
   // relatórios: 93,63/83,72/78,01/93,56.** O salto veio de onde a assimetria
   // apontava: o `JwtAuthGuard` tinha 0% de ramos e o controlador de
-  // exportação tinha os três manipuladores sem nenhuma execução. Os pisos
-  // sobem mantendo a mesma margem de um ponto — e a margem é a regra, não o
-  // número.
+  // exportação tinha os três manipuladores sem nenhuma execução.
+  //
+  // **Medido de novo no fim do dia: 94,41/84,56/82,66/94,44.** O segundo salto
+  // é quase todo de funções, e veio da suíte `identidade-do-token.spec.ts`,
+  // que exercita os manipuladores dos cinco controladores do cliente de uma
+  // vez — ela existe por uma propriedade de segurança, e a cobertura foi
+  // consequência e não objetivo.
+  //
+  // Os pisos sobem mantendo a mesma margem de um ponto. **A margem é a regra,
+  // não o número:** piso colado na medida quebra na primeira linha nova que
+  // alguém não cobrir e ensina a baixar o piso em vez de escrever o teste.
   coverageThreshold: {
     global: {
-      statements: 92,
-      lines: 92,
-      branches: 82,
-      functions: 76,
+      statements: 93,
+      lines: 93,
+      branches: 83,
+      functions: 81,
     },
   },
 };
