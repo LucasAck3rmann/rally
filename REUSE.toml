@@ -1,0 +1,76 @@
+version = 1
+
+SPDX-PackageName = "Rally"
+SPDX-PackageSupplier = "Rally <https://github.com/LucasAck3rmann/rally>"
+SPDX-PackageDownloadLocation = "https://github.com/LucasAck3rmann/rally"
+
+# Como a licença é declarada neste repositório, em duas partes:
+#
+# 1. Código escrito à mão declara a licença no próprio arquivo, na primeira
+#    linha, numa única linha de comentário. Vale para .ts, .tsx, .mts, .mjs,
+#    .js, .dart, .prisma e .css.
+# 2. O resto é declarado aqui, e não recebe cabeçalho: documentação, ativos,
+#    dados, lockfiles, configuração de CI e de infra, o scaffolding que o
+#    Flutter gera em apps/mobile/android, as migrações que o Prisma gera e os
+#    .json — que não aceitam comentário nenhum.
+#
+# O copyright de todo o repositório também fica aqui. É o que permite ao
+# cabeçalho de cada arquivo de código continuar sendo uma linha só, como já
+# era nos 366 arquivos que o declaravam antes deste arquivo existir.
+#
+# Atenção ao mexer: quando duas anotações casam com o mesmo arquivo, a última
+# *substitui* a anterior em vez de somar campo a campo. Por isso cada bloco
+# repete o SPDX-FileCopyrightText — tirar essa linha de um dos blocos derruba
+# o copyright de todos os arquivos que ele alcança, e o `reuse lint` falha.
+
+[[annotations]]
+path = "**"
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Rally"
+
+[[annotations]]
+path = [
+  "**.md",
+  "**.json",
+  "**.yml",
+  "**.yaml",
+  "**.sql",
+  "**.svg",
+  "**.png",
+  "**.xml",
+  "**.kt",
+  "**.kts",
+  "**.properties",
+  "**.toml",
+  "**.lock",
+  "**.html",
+  "**.metadata",
+  "**.nvmrc",
+  "**.example",
+  "**.gitignore",
+  "**.gitkeep",
+  "**.gitattributes",
+  "**.editorconfig",
+  "**.prettierignore",
+  "**.dockerignore",
+  "LICENSE",
+  ".github/CODEOWNERS",
+  "apps/api/Dockerfile",
+  "apps/web/Dockerfile",
+  "apps/web/next-env.d.ts",
+]
+precedence = "aggregate"
+SPDX-FileCopyrightText = "2026 Rally"
+SPDX-License-Identifier = "AGPL-3.0-or-later"
+
+# Os pacotes publicáveis são Apache-2.0, não AGPL — ver a tabela da seção 2 de
+# docs/codigo-aberto.md. Isso alcança também o package.json de cada um, que
+# não pode levar comentário.
+[[annotations]]
+path = [
+  "packages/shared/**",
+  "packages/tokens/**",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Rally"
+SPDX-License-Identifier = "Apache-2.0"

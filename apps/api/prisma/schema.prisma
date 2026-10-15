@@ -1,5 +1,5 @@
-// Rally — schema de dados (PostgreSQL + Prisma)
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Rally — schema de dados (PostgreSQL + Prisma)
 // Multi-tenant por estabelecimentoId (ver docs/adr/0011-multi-tenant.md).
 
 generator client {
