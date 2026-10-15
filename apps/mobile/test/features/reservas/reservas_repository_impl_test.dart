@@ -273,7 +273,7 @@ void main() {
     });
   });
 
-  group("status desconhecido — um risco que vale ficar registrado", () {
+  group("status desconhecido", () {
     test("cada status do contrato vira o seu", () async {
       for (final par in {
         "PENDENTE_PAGAMENTO": ReservaStatus.pendentePagamento,
@@ -293,23 +293,12 @@ void main() {
       }
     });
 
-    test("status novo da API cai em `bloqueio` e é exibido como Bloqueada",
-        () async {
-      // ⚠️ **Este teste documenta um risco, não aprova o comportamento.**
-      //
-      // O `doTexto` usa `_ => ReservaStatus.bloqueio` como padrão. Se a API
-      // ganhar um status novo — e o RF-15, estorno pelo painel, está previsto
-      // —, o aplicativo mostrará **"Bloqueada"** para uma reserva que é outra
-      // coisa. Não é falha visível: é classificação errada em silêncio, com o
-      // rótulo de um estado que significa o oposto para quem lê.
-      //
-      // O padrão seguro seria um valor `desconhecido` com rótulo neutro, e aí
-      // o `switch` exaustivo do `rotulo` obrigaria a decidir o texto. A
-      // mudança mexe no modelo de domínio e fica para um PR próprio; aqui o
-      // comportamento atual fica **preso e declarado**, para que a mudança
-      // seja deliberada e não acidental.
+    test("BLOQUEIO é mapeado explicitamente, e não pelo padrão", () async {
+      // Antes, este era o **único** dos seis status da API que chegava pelo
+      // `_` do `switch`. Funcionava, e fazia "o último valor que eu conheço" e
+      // "um valor que eu não conheço" serem a mesma coisa.
       adaptador.responde([
-        reservaJson(extras: {"status": "REEMBOLSADA"})
+        reservaJson(extras: {"status": "BLOQUEIO"})
       ]);
 
       final r = (await repositorio.minhas()).single;
@@ -317,10 +306,47 @@ void main() {
       expect(r.status.rotulo, "Bloqueada");
     });
 
-    test("status de pagamento novo cai em `pendente`, com o mesmo risco",
-        () async {
-      // Aqui a consequência é mais direta: o aplicativo mostraria
-      // "Aguardando pagamento" para uma cobrança que já foi resolvida.
+    test("status novo da API vira `desconhecido`, e não `bloqueio`", () async {
+      // O RF-15 prevê estorno pelo painel, e o aplicativo é publicado nas
+      // lojas: ele fica mais velho que a API sozinho, sem ninguém errar nada.
+      // Antes, um status novo apareceria como **"Bloqueada"** — o rótulo de um
+      // estado que significa o oposto para quem lê.
+      adaptador.responde([
+        reservaJson(extras: {"status": "REEMBOLSADA"})
+      ]);
+
+      final r = (await repositorio.minhas()).single;
+      expect(r.status, ReservaStatus.desconhecido);
+      // O rótulo diz que **o aplicativo** não sabe, e não que a reserva está
+      // em algum estado.
+      expect(r.status.rotulo, "Status indisponível");
+      expect(r.status.rotulo, isNot(contains("Bloquead")));
+    });
+
+    test("PENDENTE de pagamento também sai do padrão", () async {
+      adaptador.responde([
+        reservaJson(
+          extras: {
+            "pagamento": {
+              "id": "p1",
+              "valor": 90,
+              "metodo": "PIX",
+              "status": "PENDENTE",
+            },
+          },
+        ),
+      ]);
+
+      expect(
+        (await repositorio.minhas()).single.pagamento!.status,
+        PagamentoStatus.pendente,
+      );
+    });
+
+    test("status de pagamento novo vira `desconhecido`", () async {
+      // Aqui a consequência de errar era mais direta que na reserva: com o
+      // `_ => pendente`, uma cobrança em qualquer estado novo apareceria como
+      // **"aguardando pagamento"** para quem já pagou.
       adaptador.responde([
         reservaJson(
           extras: {
@@ -335,7 +361,8 @@ void main() {
       ]);
 
       final r = (await repositorio.minhas()).single;
-      expect(r.pagamento!.status, PagamentoStatus.pendente);
+      expect(r.pagamento!.status, PagamentoStatus.desconhecido);
+      expect(r.pagamento!.pago, isFalse);
     });
   });
 

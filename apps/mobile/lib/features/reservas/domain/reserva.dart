@@ -1,12 +1,30 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 /// Situação da reserva, espelhando o enum da API.
+///
+/// **Os seis status da API são mapeados explicitamente, e o padrão é
+/// [desconhecido].** Antes, `BLOQUEIO` chegava pelo próprio padrão — cinco
+/// casos escritos e o sexto caindo no `_`. Funcionava, mas fazia "o último
+/// valor que eu conheço" e "um valor que eu não conheço" serem a mesma coisa.
+///
+/// A consequência não era visível: um status novo na API — e o RF-15 prevê
+/// estorno pelo painel — faria o aplicativo exibir **"Bloqueada"** para uma
+/// reserva que é outra coisa. Não é falha, é classificação errada em silêncio,
+/// com o rótulo de um estado que significa o oposto para quem lê. E o
+/// aplicativo é publicado nas lojas: ele fica mais velho que a API sozinho,
+/// sem ninguém errar nada.
+///
+/// Com [desconhecido] separado, o `switch` de [rotulo] é exaustivo e passa a
+/// **obrigar** a decidir o texto quando um status novo entrar aqui.
 enum ReservaStatus {
   pendentePagamento,
   confirmada,
   cancelada,
   concluida,
   noShow,
-  bloqueio;
+  bloqueio,
+
+  /// Status que esta versão do aplicativo não conhece.
+  desconhecido;
 
   static ReservaStatus doTexto(String valor) => switch (valor) {
         "PENDENTE_PAGAMENTO" => ReservaStatus.pendentePagamento,
@@ -14,7 +32,8 @@ enum ReservaStatus {
         "CANCELADA" => ReservaStatus.cancelada,
         "CONCLUIDA" => ReservaStatus.concluida,
         "NO_SHOW" => ReservaStatus.noShow,
-        _ => ReservaStatus.bloqueio,
+        "BLOQUEIO" => ReservaStatus.bloqueio,
+        _ => ReservaStatus.desconhecido,
       };
 
   String get rotulo => switch (this) {
@@ -24,22 +43,36 @@ enum ReservaStatus {
         ReservaStatus.concluida => "Concluída",
         ReservaStatus.noShow => "Não compareceu",
         ReservaStatus.bloqueio => "Bloqueada",
+        // Diz que **o aplicativo** não sabe, e não que a reserva está em
+        // algum estado. Inventar um rótulo específico aqui seria repetir o
+        // defeito com outro nome.
+        ReservaStatus.desconhecido => "Status indisponível",
       };
 }
 
+/// Situação da cobrança, espelhando o enum da API.
+///
+/// Mesma correção do [ReservaStatus]: os cinco da API ficam explícitos e o
+/// padrão virou [desconhecido]. Aqui a consequência de errar era mais direta
+/// — `PENDENTE` chegava pelo `_`, de modo que uma cobrança em qualquer estado
+/// novo apareceria como **"aguardando pagamento"** para quem já pagou.
 enum PagamentoStatus {
   pendente,
   pago,
   expirado,
   estornado,
-  falhou;
+  falhou,
+
+  /// Status que esta versão do aplicativo não conhece.
+  desconhecido;
 
   static PagamentoStatus doTexto(String valor) => switch (valor) {
+        "PENDENTE" => PagamentoStatus.pendente,
         "PAGO" => PagamentoStatus.pago,
         "EXPIRADO" => PagamentoStatus.expirado,
         "ESTORNADO" => PagamentoStatus.estornado,
         "FALHOU" => PagamentoStatus.falhou,
-        _ => PagamentoStatus.pendente,
+        _ => PagamentoStatus.desconhecido,
       };
 }
 
