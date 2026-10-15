@@ -16,12 +16,14 @@ import { GestaoModule } from "./modules/gestao/gestao.module";
 import { ReplaysModule } from "./modules/replays/replays.module";
 import { PagamentosModule } from "./modules/pagamentos/pagamentos.module";
 import { PromocoesModule } from "./modules/promocoes/promocoes.module";
+import { AuditoriaModule } from "./modules/auditoria/auditoria.module";
 import { AuthModule } from "./modules/auth/auth.module";
 import { NotificacoesModule } from "./modules/notificacoes/notificacoes.module";
 import { PrivacidadeModule } from "./modules/privacidade/privacidade.module";
 
 @Module({
   imports: [
+    AuditoriaModule,
     ConfigModule.forRoot({ isGlobal: true }),
     // Sem isto o `@Cron` do job de expiração nunca dispara, e a RN-13
     // volta a depender só da varredura preguiçosa da grade.

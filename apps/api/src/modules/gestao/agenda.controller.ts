@@ -9,12 +9,15 @@ import {
   Post,
   Query,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Role } from "@prisma/client";
 
 import { Papeis } from "../auth/decorators/papeis.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PapelGuard } from "../auth/guards/papel.guard";
+import { Auditar } from "../auditoria/auditar.decorator";
+import { AuditoriaInterceptor } from "../auditoria/auditoria.interceptor";
 import { AgendaService } from "./agenda.service";
 import { CriarBloqueioDto } from "./dto/criar-bloqueio.dto";
 import { MoverReservaDto } from "./dto/mover-reserva.dto";
@@ -28,6 +31,7 @@ import { MoverReservaDto } from "./dto/mover-reserva.dto";
  */
 @Controller("gestao/estabelecimentos/:estabelecimentoId")
 @UseGuards(JwtAuthGuard, PapelGuard)
+@UseInterceptors(AuditoriaInterceptor)
 export class AgendaController {
   constructor(private readonly agenda: AgendaService) {}
 
@@ -40,6 +44,7 @@ export class AgendaController {
   }
 
   @Post("bloqueios")
+  @Auditar({ acao: "bloquear horário", entidade: "Reserva" })
   @Papeis(Role.ADMIN)
   criarBloqueio(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -53,6 +58,7 @@ export class AgendaController {
    * cliente, e um arrasto errado na grade desmarca alguém que já pagou.
    */
   @Patch("reservas/:reservaId/mover")
+  @Auditar({ acao: "mover reserva", entidade: "Reserva", parametro: "reservaId" })
   @Papeis(Role.ADMIN)
   moverReserva(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -63,6 +69,7 @@ export class AgendaController {
   }
 
   @Delete("bloqueios/:bloqueioId")
+  @Auditar({ acao: "liberar horário", entidade: "Reserva", parametro: "bloqueioId" })
   @Papeis(Role.ADMIN)
   removerBloqueio(
     @Param("estabelecimentoId") estabelecimentoId: string,

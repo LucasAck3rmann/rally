@@ -7,9 +7,12 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Role } from "@prisma/client";
 
+import { Auditar } from "../auditoria/auditar.decorator";
+import { AuditoriaInterceptor } from "../auditoria/auditoria.interceptor";
 import { Papeis } from "../auth/decorators/papeis.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PapelGuard } from "../auth/guards/papel.guard";
@@ -26,6 +29,7 @@ import { QuadrasGestaoService } from "./quadras-gestao.service";
  */
 @Controller("gestao/estabelecimentos/:estabelecimentoId/quadras")
 @UseGuards(JwtAuthGuard, PapelGuard)
+@UseInterceptors(AuditoriaInterceptor)
 export class QuadrasGestaoController {
   constructor(private readonly quadras: QuadrasGestaoService) {}
 
@@ -43,6 +47,7 @@ export class QuadrasGestaoController {
   }
 
   @Post()
+  @Auditar({ acao: "cadastrar quadra", entidade: "Quadra" })
   @Papeis(Role.ADMIN)
   criar(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -52,6 +57,7 @@ export class QuadrasGestaoController {
   }
 
   @Patch(":quadraId")
+  @Auditar({ acao: "editar quadra", entidade: "Quadra", parametro: "quadraId" })
   @Papeis(Role.ADMIN)
   atualizar(
     @Param("estabelecimentoId") estabelecimentoId: string,
