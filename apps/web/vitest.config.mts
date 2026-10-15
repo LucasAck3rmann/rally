@@ -53,26 +53,33 @@ export default defineConfig({
         "src/app/sitemap.ts",
         "src/middleware.ts",
       ],
-      // **Piso abaixo dos 70% do RNF-13, e isso é declaração e não
-      // descuido.** A primeira medição desta configuração deu 47% de
-      // instruções; com os pontos de entrada excluídos e duas suítes novas —
-      // o cliente autenticado da API e o botão de ação compartilhado — está
-      // em **61,1/65,05/66,2/62,18**. Continua abaixo dos 70.
+      // **As quatro medidas passaram dos 70% que o RNF-13 exige.** O
+      // caminho até aqui vale registrar: a primeira medição desta
+      // configuração deu 47% de instruções, e o requisito estava marcado como
+      // atendido medindo só a API. Depois de excluir os pontos de entrada que
+      // o jsdom não executa e de cobrir o cliente autenticado e o botão de
+      // ação compartilhado, foi a 61%. O que fechou a conta foram as **Server
+      // Actions**, que eram a lacuna nomeada aqui e estavam entre 0% e 17% —
+      // e que não são código de interface: são o que roda no servidor, onde
+      // moram as decisões que a tela não pode desfazer.
       //
-      // O piso entra um ponto abaixo do medido para **impedir piora**
-      // enquanto a cobertura sobe. Fingir 70 aqui faria a CI reprovar hoje e
-      // o piso ser removido amanhã, que é o oposto de uma trava — foi a
-      // lição do piso colado na medida, em 13/10, na API.
+      // Medido: **79,05% de instruções, 72,93% de ramos, 75% de funções e
+      // 80,57% de linhas**, com 247 testes.
       //
-      // **O que falta para os 70 está identificado:** as Server Actions
-      // (`acoes.ts`), em 0% a 17%, e os três formulários de gestão, entre 37%
-      // e 43%. As ações são `"use server"` e exigem dublar `next/headers`
-      // para serem importadas; é trabalho real e está na fila, não escondido.
+      // O piso continua **um ponto abaixo do medido**, e não no valor exigido:
+      // piso colado na medida reprova na primeira linha nova que alguém não
+      // cubra, o que é ruído, e ensina a baixar o piso em vez de escrever o
+      // teste. A margem é a regra, não o número — foi a lição do piso colado
+      // na medida, em 13/10, na API.
+      //
+      // O que resta descoberto são os três formulários de gestão, entre 37% e
+      // 43%, e a grade de horários. São componentes de interface, e o que os
+      // cobre de verdade é o ensaio de usabilidade de novembro.
       thresholds: {
-        statements: 60,
-        lines: 61,
-        branches: 64,
-        functions: 65,
+        statements: 78,
+        lines: 79,
+        branches: 71,
+        functions: 74,
       },
     },
   },
