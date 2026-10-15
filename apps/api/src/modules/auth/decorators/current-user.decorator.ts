@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { createParamDecorator, ExecutionContext } from "@nestjs/common";
 import { Request } from "express";
 

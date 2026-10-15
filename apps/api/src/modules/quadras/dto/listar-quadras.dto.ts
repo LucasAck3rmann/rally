@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { IsOptional, IsString, MaxLength } from "class-validator";
 
 /** Filtros da busca de quadras (chips de modalidade + campo de busca da Home). */
