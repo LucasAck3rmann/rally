@@ -1,6 +1,1 @@
-<svg preserveAspectRatio="none" overflow="visible" style="display: block;" width="16" height="16" viewBox="0 0 16 16" fill="none" xmlns="http://www.w3.org/2000/svg">
-<g id="Frame">
-<path id="Vector" d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z" stroke="#C2410C" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-<path id="Vector_2" d="M8 5V8.33333L10.1333 9.66667" stroke="#C2410C" stroke-width="1.33333" stroke-linecap="round" stroke-linejoin="round"/>
-</g>
-</svg>
+<svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" fill="none" overflow="visible" preserveAspectRatio="none" style="display:block" viewBox="0 0 16 16"><g id="Frame"><path id="Vector" stroke="#C2410C" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.333" d="M8 14C11.3137 14 14 11.3137 14 8C14 4.68629 11.3137 2 8 2C4.68629 2 2 4.68629 2 8C2 11.3137 4.68629 14 8 14Z"/><path id="Vector_2" stroke="#C2410C" stroke-linecap="round" stroke-linejoin="round" stroke-width="1.333" d="M8 5V8.33333L10.1333 9.66667"/></g></svg>
