@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "reserva.dart";
 
 /// O que volta ao cancelar: a reserva já atualizada e se o cancelamento

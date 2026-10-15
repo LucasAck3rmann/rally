@@ -1,5 +1,5 @@
-"use client";
 // SPDX-License-Identifier: AGPL-3.0-or-later
+"use client";
 import { ReactLenis } from "lenis/react";
 import "lenis/dist/lenis.css";
 import { useReducedMotion } from "framer-motion";

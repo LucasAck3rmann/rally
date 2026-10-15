@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Configuração do app (origens externas).
 abstract final class AppConfig {
   /// Base da API. No **emulador Android**, `10.0.2.2` aponta para o host;

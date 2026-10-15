@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Situação da reserva, espelhando o enum da API.
 enum ReservaStatus {
   pendentePagamento,

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:intl/intl.dart";
 
 /// Formatação de moeda e datas em pt-BR, como aparecem nas telas.

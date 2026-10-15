@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "auth_user.dart";
 
 /// Contrato de autenticação (a implementação fica em `data/`).

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /** @type {import('next').NextConfig} */
 
 // As fotos das quadras são servidas pela API (ver apps/api/prisma/seed.ts e, em

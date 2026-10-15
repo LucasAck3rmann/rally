@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import { colors as tokens } from "@rally/tokens";
 import type { Config } from "tailwindcss";
 
