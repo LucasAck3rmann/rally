@@ -7,8 +7,9 @@ import {
   UnauthorizedException,
 } from "@nestjs/common";
 import { ConfigService } from "@nestjs/config";
-import { createHash, timingSafeEqual } from "node:crypto";
 import type { Request } from "express";
+
+import { segredosIguais } from "../../../common/segredo";
 
 /**
  * Autentica o provedor de captação por segredo compartilhado.
@@ -35,24 +36,9 @@ export class SegredoDeIngestaoGuard implements CanActivate {
 
     const req = contexto.switchToHttp().getRequest<Request>();
     const recebido = req.header("x-rally-ingest-secret");
-    if (!recebido || !iguais(recebido, esperado)) {
+    if (!recebido || !segredosIguais(recebido, esperado)) {
       throw new UnauthorizedException("Segredo de ingestão inválido.");
     }
     return true;
   }
-}
-
-/**
- * Comparação em tempo constante.
- *
- * `===` sai na primeira letra diferente, e a diferença de tempo entre
- * "errou no primeiro caractere" e "errou no último" permite descobrir o
- * segredo caractere a caractere. O hash iguala o comprimento primeiro —
- * `timingSafeEqual` exige buffers do mesmo tamanho, e o tamanho do segredo
- * também é informação.
- */
-function iguais(a: string, b: string): boolean {
-  const ha = createHash("sha256").update(a).digest();
-  const hb = createHash("sha256").update(b).digest();
-  return timingSafeEqual(ha, hb);
 }
