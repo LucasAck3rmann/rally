@@ -84,9 +84,20 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final res = await _dio.get<Map<String, dynamic>>("/auth/me");
       return _userFromJson(res.data);
-    } on DioException {
-      // Token inválido/expirado: limpa e considera deslogado.
-      await _tokens.clear();
+    } on DioException catch (e) {
+      // **Só o 401 apaga o token.** Antes, qualquer `DioException` apagava — e
+      // falta de rede é uma `DioException`. O efeito era que abrir o
+      // aplicativo no metrô, ou com a API fora do ar, **deslogava a pessoa de
+      // forma permanente**: ela recuperava a conexão e ainda precisava
+      // digitar a senha outra vez.
+      //
+      // Falta de rede, tempo esgotado e 500 não dizem nada sobre a validade
+      // da credencial. Só o 401 diz. Nos outros casos devolve `null` — a
+      // sessão não pôde ser **confirmada** agora — mas o token fica guardado
+      // para a próxima tentativa.
+      if (e.response?.statusCode == 401) {
+        await _tokens.clear();
+      }
       return null;
     }
   }
