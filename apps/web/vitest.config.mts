@@ -63,8 +63,12 @@ export default defineConfig({
       // e que não são código de interface: são o que roda no servidor, onde
       // moram as decisões que a tela não pode desfazer.
       //
-      // Medido: **79,05% de instruções, 72,93% de ramos, 75% de funções e
-      // 80,57% de linhas**, com 247 testes.
+      // Medido: **80,66% de instruções, 76,19% de ramos, 76,39% de funções e
+      // 81,88% de linhas**, com 285 testes. A tela da trilha de auditoria
+      // subiu as quatro medidas de uma vez porque o que ela acrescentou não
+      // foi tela: foram as funções puras do filtro — dobra de acento, busca
+      // composta e resumo do corpo auditado —, que são onde mora a decisão e
+      // onde o teste rende.
       //
       // O piso continua **um ponto abaixo do medido**, e não no valor exigido:
       // piso colado na medida reprova na primeira linha nova que alguém não
@@ -76,10 +80,10 @@ export default defineConfig({
       // 43%, e a grade de horários. São componentes de interface, e o que os
       // cobre de verdade é o ensaio de usabilidade de novembro.
       thresholds: {
-        statements: 78,
-        lines: 79,
-        branches: 71,
-        functions: 74,
+        statements: 79,
+        lines: 80,
+        branches: 75,
+        functions: 75,
       },
     },
   },

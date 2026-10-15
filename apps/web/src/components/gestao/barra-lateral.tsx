@@ -8,8 +8,19 @@ import { Emblem } from "@/components/ui/emblem";
 import { cn } from "@/lib/cn";
 import { ALVO_MINIMO } from "@/lib/estilos";
 import type { EstabelecimentoGerido } from "@/lib/gestao/contratos";
+import { podeAdministrar } from "@/lib/gestao/permissoes";
 
-const SECOES = [
+/**
+ * As seções do painel.
+ *
+ * `somenteAdmin` entrou com a trilha de auditoria, que é a **primeira seção
+ * cuja leitura é restrita** — até ela, todo o painel era de quem tem vínculo e
+ * só a escrita olhava o papel. Um link visível para uma tela que recusa é pior
+ * que link ausente: ele promete e nega, e o atendente fica achando que algo
+ * quebrou. Quem decide continua sendo o `PapelGuard` da API; isto só evita
+ * oferecer o que ele vai recusar.
+ */
+const SECOES: { slug: string; rotulo: string; somenteAdmin?: boolean }[] = [
   { slug: "", rotulo: "Painel" },
   { slug: "agenda", rotulo: "Agenda" },
   { slug: "quadras", rotulo: "Quadras" },
@@ -17,6 +28,7 @@ const SECOES = [
   { slug: "cupons", rotulo: "Cupons" },
   { slug: "conciliacao", rotulo: "Conciliação" },
   { slug: "equipe", rotulo: "Equipe" },
+  { slug: "auditoria", rotulo: "Auditoria", somenteAdmin: true },
 ];
 
 export function BarraLateral({
@@ -75,7 +87,7 @@ export function BarraLateral({
           ) : null}
 
           <nav className="mt-7 space-y-1">
-            {SECOES.map((secao) => {
+            {secoesVisiveis(atual.meuPapel).map((secao) => {
               const href = `/gestao/${atual.id}${secao.slug ? `/${secao.slug}` : ""}`;
               return (
                 <Link
@@ -141,6 +153,11 @@ export function BarraLateral({
       </div>
     </aside>
   );
+}
+
+/** As seções que este papel alcança. */
+function secoesVisiveis(papel: EstabelecimentoGerido["meuPapel"]) {
+  return SECOES.filter((s) => !s.somenteAdmin || podeAdministrar(papel));
 }
 
 function rotuloDoPapel(papel: EstabelecimentoGerido["meuPapel"]): string {

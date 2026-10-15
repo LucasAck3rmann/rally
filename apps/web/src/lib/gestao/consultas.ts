@@ -11,6 +11,7 @@ import {
   ListaDeQuadras,
   Painel,
   Relatorio,
+  TrilhaDeAuditoria,
 } from "./contratos";
 
 /**
@@ -83,5 +84,28 @@ export function conciliacaoDoEstabelecimento(estabelecimentoId: string) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao`,
     Conciliacao,
+  );
+}
+
+/**
+ * A trilha de auditoria da arena (RN-05).
+ *
+ * **A rota é só do administrador**, e é a única leitura da gestão com essa
+ * restrição — o resto do painel é de toda a equipe com vínculo. Quem chama
+ * isto precisa checar o papel antes: a API devolve 403, e 403 na cara do
+ * usuário é pior que uma tela que explica por que não pode.
+ *
+ * O `limite` tem teto de 500 no serviço da API. A tela pede 100 e oferece um
+ * link para 500 em vez de paginar, porque a pergunta que a trilha responde
+ * — *quem liberou aquele horário* — quase sempre está nas últimas horas.
+ */
+export function trilhaDoEstabelecimento(
+  estabelecimentoId: string,
+  limite: number,
+) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/auditoria`,
+    TrilhaDeAuditoria,
+    { parametros: { limite } },
   );
 }

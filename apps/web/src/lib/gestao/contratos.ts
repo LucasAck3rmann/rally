@@ -253,3 +253,30 @@ export const Conciliacao = z.object({
   ),
 });
 export type Conciliacao = z.infer<typeof Conciliacao>;
+
+/**
+ * Uma linha da trilha de auditoria (RN-05).
+ *
+ * `autor` é nulo para ação de sistema. Hoje toda rota auditada exige token,
+ * mas `autorId` é nullable no esquema e a tela precisa dizer algo em vez de
+ * quebrar quando a expiração automática de Pix passar a escrever aqui.
+ *
+ * `dados` é o corpo enviado **já sem campo sensível**. A remoção acontece no
+ * `AuditoriaInterceptor` da API e é lá que ela fica: uma segunda lista nesta
+ * borda seria a quinta cópia de uma verdade neste projeto, e as quatro
+ * anteriores — tokens de cor, regra de permissão, texto de campo e cópia do
+ * esquema — divergiram todas antes de alguém notar.
+ */
+export const RegistroDaTrilha = z.object({
+  id: z.string(),
+  acao: z.string(),
+  entidade: z.string(),
+  entidadeId: z.string().nullable(),
+  dados: z.unknown(),
+  criadoEm: z.string(),
+  autor: z.object({ id: z.string(), nome: z.string() }).nullable(),
+});
+export type RegistroDaTrilha = z.infer<typeof RegistroDaTrilha>;
+
+export const TrilhaDeAuditoria = z.array(RegistroDaTrilha);
+export type TrilhaDeAuditoria = z.infer<typeof TrilhaDeAuditoria>;
