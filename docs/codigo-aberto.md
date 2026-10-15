@@ -19,7 +19,11 @@ Open source **e** produto comercial coexistem pelo modelo **open-core**: o núcl
 
 ## 3. Governança e higiene de OSS
 Arquivos na raiz do repositório:
-- `LICENSE` (AGPL-3.0) + `LICENSE-APACHE` nos pacotes + headers **SPDX** (`SPDX-License-Identifier: AGPL-3.0-or-later`) por arquivo.
+- `LICENSE` (AGPL-3.0) na raiz + os textos completos em `LICENSES/` (`AGPL-3.0-or-later.txt` e `Apache-2.0.txt`), como o padrão **REUSE** exige + header **SPDX** por arquivo de código.
+  <!-- REUSE-IgnoreStart -->
+  O header é uma linha só (`SPDX-License-Identifier: AGPL-3.0-or-later`) e o copyright do repositório fica centralizado no `REUSE.toml`, em vez de repetido em cada arquivo. O que não aceita comentário (`.json`), o que é gerado (migrações do Prisma, scaffolding do Flutter) e os ativos são declarados no `REUSE.toml` e não recebem header.
+  <!-- REUSE-IgnoreEnd -->
+- **`reuse lint` roda na CI** (job `licenca`) e falha o build quando entra arquivo sem declaração de licença — é o item "automatizar a checagem no CI" da seção 4, agora implementado.
 - `README.md` (o que é, como rodar, screenshots), `CONTRIBUTING.md`, `CODE_OF_CONDUCT.md` (Contributor Covenant), `SECURITY.md` (canal de disclosure responsável — ver [Segurança, Privacidade e LGPD](seguranca-lgpd.md)).
 - **DCO** (Developer Certificate of Origin — `Signed-off-by`) em vez de CLA: mais leve e suficiente para começar.
 - `.github/`: templates de **issue** e **pull request**, **CODEOWNERS**, workflows de CI.

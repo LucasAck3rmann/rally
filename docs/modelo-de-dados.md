@@ -15,9 +15,10 @@
 
 ## `schema.prisma`
 
+<!-- REUSE-IgnoreStart -->
 ```prisma
-// Rally — schema de dados (PostgreSQL + Prisma)
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Rally — schema de dados (PostgreSQL + Prisma)
 // Multi-tenant por estabelecimentoId (ver docs/adr/0011-multi-tenant.md).
 
 generator client {
@@ -426,6 +427,7 @@ model AuditLog {
 // model Plano   { id String @id @default(cuid()) }
 // model Aula    { id String @id @default(cuid()) }
 ```
+<!-- REUSE-IgnoreEnd -->
 
 ## Migrações
 

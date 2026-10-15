@@ -88,6 +88,19 @@ jobs:
       # real. O piso está no `coverageThreshold` do jest.config.js.
       - run: pnpm --filter @rally/api test:cov
 
+  licenca:
+    name: Declaração de licença
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # `reuse lint` cobra declaração de licença em TODO arquivo rastreado:
+      # cabeçalho SPDX no código, REUSE.toml para o resto. Falha o build quando
+      # entra arquivo sem declaração — é o gate da seção 4 de
+      # docs/codigo-aberto.md. Versão fixada na que foi verificada localmente.
+      # O extra charset-normalizer evita depender do libmagic do runner.
+      - run: pipx install "reuse[charset-normalizer]==6.2.0"
+      - run: reuse lint
+
   security:
     name: Varredura de segredos
     runs-on: ubuntu-latest
