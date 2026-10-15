@@ -2,7 +2,7 @@
 
 > **Espelho do schema real.** A fonte de verdade é `apps/api/prisma/schema.prisma`; este documento reproduz o que está lá e explica **por que** está assim. Sincronizado em **29/09/2026** (`main`). Ao mudar o modelo, mude o schema primeiro e traga a mudança para cá no mesmo *pull request* — foi por não fazer isso que este arquivo passou a descrever uma trava anti-overbooking que já não existia.
 >
-> São **19 entidades e 10 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
+> São **21 entidades e 10 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
 
 ## Decisões de modelagem
 
@@ -110,6 +110,8 @@ model Estabelecimento {
   antecedenciaMaxDias  Int       @default(30)
   cancelamentoHoras    Int       @default(12)
   descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2)
+  /// O "salvo configuração" da RN-14: por padrão cupom não soma com o desconto do Pix.
+  cuponsAcumulam       Boolean   @default(false)
   pixExpiraMinutos     Int       @default(30)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -144,6 +146,8 @@ model Usuario {
   telefone      String?
   avatarUrl     String?
   consentLgpdEm DateTime?
+  /// Quando o dono do endereco provou controlar a caixa de entrada (RF-03).
+  emailVerificadoEm DateTime?
   anonimizadoEm DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -153,6 +157,8 @@ model Usuario {
   replays       Replay[]                @relation("ReplayCliente")
   accounts      Account[]
   refreshTokens RefreshToken[]
+  tokensDeSenha TokenDeSenha[]
+  tokensDeEmail TokenDeEmail[]
   notifPref     NotificationPreference?
   notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
@@ -167,6 +173,41 @@ model Account {
   providerAccountId String
 
   @@unique([provider, providerAccountId])
+  @@index([usuarioId])
+}
+
+/// Token de verificacao de endereco de e-mail (RF-03).
+///
+/// Tabela separada da de senha, e nao uma coluna `tipo` na mesma: os dois
+/// tokens tem validade diferente (trinta minutos contra sete dias) e
+/// consequencias diferentes — um troca credencial, o outro confirma um fato.
+/// Juntar obrigaria toda consulta a filtrar por tipo, e um filtro esquecido
+/// deixaria um token de verificacao redefinir senha.
+model TokenDeEmail {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
+/// Token de redefinicao de senha (RF-03).
+///
+/// Guarda o **hash** e nunca o token: quem lesse o banco poderia redefinir a
+/// senha de qualquer pessoa, que e o mesmo motivo de `senhaHash` existir.
+model TokenDeSenha {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
   @@index([usuarioId])
 }
 
@@ -291,6 +332,8 @@ model Reserva {
   promocaoId         String?
   canceladaEm        DateTime?
   motivoCancelamento String?
+  /// Quando o lembrete de jogo foi enviado (RF-17). Nulo = ainda nao foi.
+  lembreteEnviadoEm  DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -381,15 +424,23 @@ model Replay {
   reservaId         String?
   cliente           Usuario?     @relation("ReplayCliente", fields: [clienteId], references: [id])
   clienteId         String?
-  s3Key             String
+  /// Chave do arquivo no provedor. **Única**: é a chave de idempotência da
+  /// ingestão — o provedor reentrega o mesmo clipe quando não recebe 2xx, e
+  /// a trava fica no banco porque a checagem na aplicação tem janela de
+  /// corrida entre o SELECT e o INSERT (mesma razão da RN-01).
+  s3Key             String       @unique
   url               String?
   duracaoSeg        Int?
   status            ReplayStatus @default(PROCESSANDO)
+  /// Instante em que o lance aconteceu. É por ele que o clipe acha a reserva
+  /// — e, por ela, o cliente (RF-30).
+  gravadoEm         DateTime?
   expiraEm          DateTime?
   criadoEm          DateTime     @default(now())
 
   @@index([estabelecimentoId])
   @@index([clienteId])
+  @@index([quadraId, criadoEm])
 }
 
 model WaitlistEntry {
@@ -438,6 +489,11 @@ Em `apps/api/prisma/migrations/`, aplicadas e verificadas contra PostgreSQL real
 | `20260928233000_init` | Linha de base, gerada com `prisma migrate diff --from-empty` (dispensa banco rodando) |
 | `20260928233100_reserva_sem_sobreposicao` | Troca o índice único pela *exclusion constraint* — ver abaixo |
 | `20260929170713_notificacoes` | `Notificacao` e `NotificacaoTipo` (RF-16) |
+| `20261002120000_replay_s3key_unico` | Índice único em `Replay.s3Key`. A idempotência da ingestão fica no banco e não na aplicação: entre o `SELECT` e o `INSERT` cabe a segunda entrega do provedor, e quem perde o conflito devolve o vencedor |
+| `20261013170000_cupom_limite_de_usos` | Restrição `promocao_usos_dentro_do_limite` (CHECK) e a coluna `cuponsAcumulam`. O limite de usos fica no banco pelo mesmo motivo da trava de sobreposição: entre ler o contador e gravar cabe outra requisição, e o cupom de cinquenta usos sai cinquenta e um |
+| `20261013180000_token_de_senha` | `TokenDeSenha` (RF-03). Guarda o **resumo** do token e não o token, pelo mesmo motivo de `senhaHash` |
+| `20261013190000_verificacao_de_email` | `TokenDeEmail` (RF-03). Tabela separada da anterior de propósito: validade diferente (7 dias contra 30 min) e consequência diferente — uma confirma um fato, a outra troca uma credencial |
+| `20261014100000_lembrete_de_jogo` | `Reserva.lembreteEnviadoEm` e um índice **parcial** `WHERE "lembreteEnviadoEm" IS NULL` (RF-17). Parcial porque o job pergunta sempre *quais faltam*: as linhas saem do índice quando o aviso sai, então ele não cresce com o histórico |
 
 ### Anti-overbooking (RN-01) — por que deixou de ser índice único
 
