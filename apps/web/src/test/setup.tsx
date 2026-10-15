@@ -52,3 +52,27 @@ vi.mock("next/image", () => ({
     <img src={typeof src === "string" ? src : src.src} alt={alt} />
   ),
 }));
+
+// Os ganchos de navegação do Next leem o contexto da requisição, que não
+// existe fora do servidor — sem eles a barra lateral não renderiza em teste
+// nenhum. Fica aqui, e não repetido em cada spec, pela mesma razão do
+// next/image acima: é limitação do arcabouço, não escolha de cada teste.
+//
+// `usePathname` devolve uma rota de gestão **que não é a de privacidade**,
+// para que o estado "página atual" seja exercitado pela ausência e os testes
+// que o queiram marquem o caminho por conta própria.
+vi.mock("next/navigation", () => ({
+  usePathname: () => "/gestao/e1",
+  useParams: () => ({ estabelecimentoId: "e1" }),
+  useSearchParams: () => new URLSearchParams(),
+  useRouter: () => ({
+    push: vi.fn(),
+    replace: vi.fn(),
+    refresh: vi.fn(),
+    back: vi.fn(),
+    forward: vi.fn(),
+    prefetch: vi.fn(),
+  }),
+  redirect: vi.fn(),
+  notFound: vi.fn(),
+}));

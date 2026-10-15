@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Janela do filtro da tela de Replays.
 enum PeriodoReplay {
   semana("semana", "Esta semana"),

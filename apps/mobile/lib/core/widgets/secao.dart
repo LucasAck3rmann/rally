@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 
 import "../theme/app_colors.dart";
@@ -21,8 +22,18 @@ class CabecalhoSecao extends StatelessWidget {
     return Row(
       mainAxisAlignment: MainAxisAlignment.spaceBetween,
       children: [
-        Text(titulo, style: AppText.titulo(17)),
-        if (acao != null)
+        // Sem `Flexible`, um título comprido estoura a linha em tela
+        // estreita em vez de truncar — a ação à direita não cede espaço.
+        Flexible(
+          child: Text(
+            titulo,
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.titulo(17),
+          ),
+        ),
+        if (acao != null) ...[
+          const SizedBox(width: 12),
           GestureDetector(
             onTap: onAcao,
             child: Text(
@@ -35,6 +46,7 @@ class CabecalhoSecao extends StatelessWidget {
               ),
             ),
           ),
+        ],
       ],
     );
   }

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ImageResponse } from "next/og";
+import { colors as tokens } from "@rally/tokens";
 
 export const alt = "Rally — do agendamento ao replay";
 export const size = { width: 1200, height: 630 };
@@ -26,11 +27,11 @@ export default function OpenGraphImage() {
             width: 28,
             height: 28,
             borderRadius: 999,
-            background: "#FF6B4A",
+            background: tokens.coral,
             border: "4px solid #1C2B33",
           }}
         />
-        <div style={{ fontSize: 26, letterSpacing: 6, color: "#6B7785" }}>
+        <div style={{ fontSize: 26, letterSpacing: 6, color: tokens.gray }}>
           EST. 2026 · QUADRAS DE AREIA
         </div>
       </div>
@@ -39,11 +40,11 @@ export default function OpenGraphImage() {
         {/* O satori exige display flex em qualquer nó com mais de um filho. */}
         <div style={{ display: "flex", fontSize: 104, fontWeight: 800, lineHeight: 1.05 }}>
           <span>ao&nbsp;</span>
-          <span style={{ color: "#C2410C" }}>replay</span>
+          <span style={{ color: tokens.coralDeep }}>replay</span>
           <span>.</span>
         </div>
       </div>
-      <div style={{ fontSize: 30, color: "#6B7785" }}>
+      <div style={{ fontSize: 30, color: tokens.gray }}>
         Agenda em tempo real · Pix · replays dos jogos
       </div>
     </div>,

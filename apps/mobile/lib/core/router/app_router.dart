@@ -1,11 +1,20 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:go_router/go_router.dart";
 
 import "../../features/auth/presentation/auth_controller.dart";
 import "../../features/auth/presentation/cadastro_page.dart";
+import "../../features/auth/presentation/recuperar_senha_page.dart";
+import "../../features/privacidade/presentation/privacidade_page.dart";
 import "../../features/auth/presentation/login_page.dart";
+import "../../features/gestao/presentation/agenda_page.dart";
+import "../../features/gestao/presentation/equipe_page.dart";
+import "../../features/gestao/presentation/painel_page.dart";
+import "../../features/gestao/presentation/quadra_form_page.dart";
+import "../../features/gestao/presentation/quadras_gestao_page.dart";
 import "../../features/home/presentation/home_page.dart";
+import "../../features/notificacoes/presentation/notificacoes_page.dart";
 import "../../features/perfil/presentation/perfil_page.dart";
 import "../../features/quadras/presentation/quadra_detalhe_page.dart";
 import "../../features/replays/presentation/replays_page.dart";
@@ -26,8 +35,9 @@ const rotasPublicas = {"/login", "/cadastro"};
 /// - sem sessão → `/login` (ou `/cadastro`)
 /// - com sessão → as abas (`/`, `/reservas`, `/replays`, `/perfil`)
 ///
-/// O fluxo de reserva (detalhe → checkout → Pix → confirmação) fica **fora**
-/// das abas, empilhado sobre elas, como manda o desenho das telas.
+/// O fluxo de reserva (detalhe → checkout → Pix → confirmação) e a área de
+/// gestão (`/gestao`) ficam **fora** das abas, empilhados sobre elas, como
+/// manda o desenho das telas.
 final appRouterProvider = Provider<GoRouter>((ref) {
   // Reavalia o redirect sempre que o estado de auth muda.
   final refresh = ValueNotifier<int>(0);
@@ -66,7 +76,14 @@ final appRouterProvider = Provider<GoRouter>((ref) {
       GoRoute(path: "/splash", builder: (_, __) => const SplashPage()),
       GoRoute(path: "/login", builder: (_, __) => const LoginPage()),
       GoRoute(path: "/cadastro", builder: (_, __) => const CadastroPage()),
-
+      GoRoute(
+        path: "/recuperar-senha",
+        builder: (_, __) => const RecuperarSenhaPage(),
+      ),
+      GoRoute(
+        path: "/privacidade",
+        builder: (_, __) => const PrivacidadePage(),
+      ),
       StatefulShellRoute.indexedStack(
         builder: (_, __, shell) => AppShell(navigationShell: shell),
         branches: [
@@ -83,7 +100,8 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
           StatefulShellBranch(
             routes: [
-              GoRoute(path: "/replays", builder: (_, __) => const ReplaysPage()),
+              GoRoute(
+                  path: "/replays", builder: (_, __) => const ReplaysPage()),
             ],
           ),
           StatefulShellBranch(
@@ -93,7 +111,67 @@ final appRouterProvider = Provider<GoRouter>((ref) {
           ),
         ],
       ),
-
+      // Área do dono: entra pelo Perfil e fica empilhada sobre as abas,
+      // porque gerir não é uma quinta aba do app do cliente.
+      GoRoute(
+        path: "/gestao",
+        parentNavigatorKey: _raiz,
+        builder: (_, __) => const GestaoPage(),
+        routes: [
+          GoRoute(
+            path: ":estabelecimentoId/equipe",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => EquipePage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
+          ),
+          GoRoute(
+            path: ":estabelecimentoId/painel",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => PainelPage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
+          ),
+          GoRoute(
+            path: ":estabelecimentoId/agenda",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => AgendaPage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
+          ),
+          GoRoute(
+            path: ":estabelecimentoId/quadras",
+            parentNavigatorKey: _raiz,
+            builder: (_, state) => QuadrasGestaoPage(
+              estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+            ),
+            routes: [
+              // "nova" tem quatro segmentos e a edição tem cinco, então não
+              // há ambiguidade com `:quadraId`.
+              GoRoute(
+                path: "nova",
+                parentNavigatorKey: _raiz,
+                builder: (_, state) => QuadraFormPage(
+                  estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+                ),
+              ),
+              GoRoute(
+                path: ":quadraId/editar",
+                parentNavigatorKey: _raiz,
+                builder: (_, state) => QuadraFormPage(
+                  estabelecimentoId: state.pathParameters["estabelecimentoId"]!,
+                  quadraId: state.pathParameters["quadraId"],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+      GoRoute(
+        path: "/notificacoes",
+        parentNavigatorKey: _raiz,
+        builder: (_, __) => const NotificacoesPage(),
+      ),
       GoRoute(
         path: "/quadras/:id",
         parentNavigatorKey: _raiz,

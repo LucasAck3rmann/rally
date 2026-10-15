@@ -32,6 +32,13 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
   final _confirmacao = TextEditingController();
   bool _obscure = true;
 
+  /// Aceite da politica de privacidade (RNF-07, LGPD).
+  ///
+  /// Comeca **desmarcado**. A lei exige consentimento livre, informado e
+  /// inequivoco; caixa ja marcada registra como aceite o toque de quem nunca
+  /// leu, que e o contrario do que ela pede.
+  bool _aceitouTermos = false;
+
   @override
   void dispose() {
     _nome.dispose();
@@ -51,11 +58,27 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
+    if (!_aceitouTermos) {
+      // Conferido aqui tambem, e nao so no botao: o campo pode ser
+      // desmarcado depois que o formulario ja passou pela validacao.
+      ScaffoldMessenger.of(context)
+        ..hideCurrentSnackBar()
+        ..showSnackBar(
+          const SnackBar(
+            backgroundColor: AppColors.ink,
+            content: Text(
+              "E preciso aceitar a politica de privacidade para criar a conta.",
+            ),
+          ),
+        );
+      return;
+    }
     FocusScope.of(context).unfocus();
     await ref.read(authControllerProvider.notifier).register(
           _nome.text.trim(),
           _email.text.trim(),
           _senha.text,
+          aceitouTermos: _aceitouTermos,
         );
 
     final state = ref.read(authControllerProvider);
@@ -135,8 +158,7 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
                             decoration: const InputDecoration(
                               labelText: "E-mail",
                             ),
-                            validator: (v) =>
-                                (v == null ||
+                            validator: (v) => (v == null ||
                                     !v.contains("@") ||
                                     !v.contains("."))
                                 ? "Informe um e-mail válido"
@@ -182,7 +204,9 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
                                 ? "As senhas não conferem"
                                 : null,
                           ),
-                          const SizedBox(height: 22),
+                          const SizedBox(height: 18),
+                          _aceite(loading),
+                          const SizedBox(height: 18),
                           FilledButton(
                             onPressed: loading ? null : _submit,
                             child: loading
@@ -195,13 +219,6 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
                                     ),
                                   )
                                 : const Text("Criar conta"),
-                          ),
-                          const SizedBox(height: 16),
-                          Text(
-                            "Ao criar a conta você aceita os Termos de Uso e a "
-                            "Política de Privacidade do Rally.",
-                            textAlign: TextAlign.center,
-                            style: AppText.corpo(12, cor: AppColors.gray),
                           ),
                           const SizedBox(height: 8),
                           TextButton(
@@ -219,6 +236,46 @@ class _CadastroPageState extends ConsumerState<CadastroPage> {
                       ),
                     ),
                   ),
+                ),
+              ),
+            ),
+          ],
+        ),
+      ),
+    );
+  }
+
+  /// Caixa de aceite da politica de privacidade (RNF-07, LGPD).
+  ///
+  /// Toda a linha e tocavel, e nao so o quadradinho: um alvo de 24 px num
+  /// requisito de acessibilidade que pede 44 (RNF-08) seria o campo mais
+  /// dificil de acertar justamente na decisao que precisa ser deliberada.
+  Widget _aceite(bool loading) {
+    return InkWell(
+      onTap: loading
+          ? null
+          : () => setState(() => _aceitouTermos = !_aceitouTermos),
+      borderRadius: BorderRadius.circular(10),
+      child: Padding(
+        padding: const EdgeInsets.symmetric(vertical: 6),
+        child: Row(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            Checkbox(
+              value: _aceitouTermos,
+              onChanged: loading
+                  ? null
+                  : (v) => setState(() => _aceitouTermos = v ?? false),
+              semanticLabel: "Aceito a politica de privacidade",
+            ),
+            const SizedBox(width: 4),
+            Expanded(
+              child: Padding(
+                padding: const EdgeInsets.only(top: 12),
+                child: Text(
+                  "Li e aceito os Termos de Uso e a Política de Privacidade "
+                  "do Rally.",
+                  style: AppText.corpo(13, cor: AppColors.ink),
                 ),
               ),
             ),

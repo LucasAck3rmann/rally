@@ -4,14 +4,14 @@ product: Rally — gestão e agendamento de quadras de areia
 tone: [vibrante, esportivo, próximo, confiável]
 color:
   primary: "#FF6B4A"       # coral — CTA e destaque
-  primary_deep: "#C2410C"  # links/texto de destaque em fundo claro (AA)
+  primary_deep: "#9A3412"  # links/texto de destaque em fundo claro (AA)
   secondary: "#0FB5AE"     # teal
   accent: "#FFC24B"        # sun
   surface: "#FFFFFF"
   background: "#FFF7EE"
   sand: "#F4E4CD"
   ink: "#1C2B33"           # texto / superfícies escuras / texto sobre coral
-  muted: "#6B7785"
+  muted: "#5C6671"         # texto secundário — AA sobre surface, background e sand
   line: "#ECE3D5"
 typography:
   display: { family: Sora, weights: [SemiBold, Bold, ExtraBold], use: "títulos, marca, preços" }

@@ -1,6 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { PrismaService } from "../../prisma/prisma.service";
 import { QuadrasService } from "./quadras.service";
+import { ConciliacaoService } from "../conciliacao/conciliacao.service";
 
 /** Terça-feira, 16/06/2026, 10:00 em São Paulo (UTC-3). */
 const AGORA = new Date("2026-06-16T13:00:00.000Z");
@@ -28,7 +29,16 @@ function servico(quadra: unknown, reservas: unknown[] = []) {
     quadra: { findFirst: jest.fn().mockResolvedValue(quadra) },
     reserva: { findMany: jest.fn().mockResolvedValue(reservas) },
   } as unknown as PrismaService;
-  return new QuadrasService(prisma);
+
+  // A grade varre os Pix expirados antes de montar (RN-13). Aqui o dublê
+  // não libera nada: os casos de expiração têm testes próprios no
+  // `conciliacao.service.spec.ts`, e misturá-los aqui esconderia qual dos
+  // dois comportamentos quebrou.
+  const conciliacao = {
+    expirarPendentes: jest.fn().mockResolvedValue(0),
+  } as unknown as ConciliacaoService;
+
+  return new QuadrasService(prisma, conciliacao);
 }
 
 describe("QuadrasService.disponibilidade", () => {

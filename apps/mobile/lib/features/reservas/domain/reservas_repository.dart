@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "reserva.dart";
 
 /// O que volta ao cancelar: a reserva já atualizada e se o cancelamento
@@ -25,6 +26,13 @@ abstract interface class ReservasRepository {
     required DateTime inicio,
     required DateTime fim,
     required String metodo,
+  });
+
+  /// Move a reserva para outro horário (RF-09).
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
   });
 
   /// Cancela a reserva e libera o horário (RF-09).

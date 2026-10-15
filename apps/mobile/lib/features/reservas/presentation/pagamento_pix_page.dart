@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "dart:async";
 
 import "package:flutter/foundation.dart";
@@ -59,12 +60,16 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
   }
 
   void _tick() {
-    final expira =
-        ref.read(reservaProvider(widget.reservaId)).valueOrNull?.pagamento?.expiraEm;
+    final expira = ref
+        .read(reservaProvider(widget.reservaId))
+        .valueOrNull
+        ?.pagamento
+        ?.expiraEm;
     if (expira == null) return;
     final restante = expira.difference(DateTime.now());
     if (mounted) {
-      setState(() => _restante = restante.isNegative ? Duration.zero : restante);
+      setState(
+          () => _restante = restante.isNegative ? Duration.zero : restante);
     }
   }
 
@@ -193,7 +198,8 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
         const SizedBox(height: 18),
         _cartaoQr(pagamento),
         const SizedBox(height: 18),
-        if (pagamento.pixCopiaCola != null) _copiaECola(pagamento.pixCopiaCola!),
+        if (pagamento.pixCopiaCola != null)
+          _copiaECola(pagamento.pixCopiaCola!),
         const SizedBox(height: 18),
         _contagem(),
         if (kDebugMode) ...[
@@ -297,7 +303,8 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
                   children: [
                     const RallyIcon("copiar", tamanho: 15),
                     const SizedBox(width: 6),
-                    Text("COPIAR", style: AppText.rotulo(10, cor: AppColors.ink)),
+                    Text("COPIAR",
+                        style: AppText.rotulo(10, cor: AppColors.ink)),
                   ],
                 ),
               ),
@@ -315,9 +322,15 @@ class _PagamentoPixPageState extends ConsumerState<PagamentoPixPage> {
       children: [
         const RallyIcon("relogio", tamanho: 16, cor: AppColors.coralDeep),
         const SizedBox(width: 7),
-        Text(
-          expirou ? "COBRANÇA EXPIRADA" : "EXPIRA EM ${Formato.contagem(_restante)}",
-          style: AppText.rotulo(11, cor: AppColors.coralDeep),
+        Flexible(
+          child: Text(
+            expirou
+                ? "COBRANÇA EXPIRADA"
+                : "EXPIRA EM ${Formato.contagem(_restante)}",
+            maxLines: 1,
+            overflow: TextOverflow.ellipsis,
+            style: AppText.rotulo(11, cor: AppColors.coralDeep),
+          ),
         ),
       ],
     );

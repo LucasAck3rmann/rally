@@ -1,5 +1,7 @@
 analyzer:
   exclude:
     - build/**
+    - android/**
+    - web/**
 include: package:flutter_lints/flutter.yaml
 # Regras adicionais podem ser ligadas aqui conforme o time decidir.

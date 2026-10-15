@@ -61,7 +61,8 @@ rally/
 ├─ .editorconfig · .nvmrc · .prettierrc.json · .prettierignore
 ├─ .env.example · .gitignore · .dockerignore
 ├─ CLAUDE.md  ·  DESIGN.md  ·  README.md
-├─ LICENSE (AGPL-3.0)  ·  CONTRIBUTING.md  ·  CODE_OF_CONDUCT.md  ·  SECURITY.md
+├─ LICENSE (AGPL-3.0)  ·  LICENSES/ (um texto por licença)  ·  REUSE.toml
+├─ CONTRIBUTING.md  ·  CODE_OF_CONDUCT.md  ·  SECURITY.md
 ├─ GOVERNANCE.md  ·  SUPPORT.md  ·  CHANGELOG.md
 ```
 

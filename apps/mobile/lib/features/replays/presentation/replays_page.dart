@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 import "package:flutter_riverpod/flutter_riverpod.dart";
 import "package:share_plus/share_plus.dart";
@@ -45,18 +46,24 @@ class ReplaysPage extends ConsumerWidget {
                   ),
                 ),
                 const SizedBox(height: 16),
-                Row(
-                  children: [
-                    for (final p in PeriodoReplay.values) ...[
-                      RallyChip(
-                        rotulo: p.rotulo,
-                        ativo: periodo == p,
-                        onTap: () =>
-                            ref.read(periodoReplayProvider.notifier).state = p,
-                      ),
-                      const SizedBox(width: 8),
+                // Rola na horizontal, como os chips de modalidade da Home:
+                // os três rótulos juntos não cabem em tela estreita.
+                SingleChildScrollView(
+                  scrollDirection: Axis.horizontal,
+                  child: Row(
+                    children: [
+                      for (final p in PeriodoReplay.values) ...[
+                        RallyChip(
+                          rotulo: p.rotulo,
+                          ativo: periodo == p,
+                          onTap: () => ref
+                              .read(periodoReplayProvider.notifier)
+                              .state = p,
+                        ),
+                        const SizedBox(width: 8),
+                      ],
                     ],
-                  ],
+                  ),
                 ),
               ],
             ),
@@ -117,7 +124,8 @@ class ReplaysPage extends ConsumerWidget {
 /// Abre o arquivo do clipe no navegador/player do sistema, de onde o usuário
 /// salva o vídeo. O download dentro do app entra junto com o player (fase 2).
 Future<void> _baixar(Replay replay) {
-  return launchUrl(Uri.parse(replay.url!), mode: LaunchMode.externalApplication);
+  return launchUrl(Uri.parse(replay.url!),
+      mode: LaunchMode.externalApplication);
 }
 
 /// Compartilha o clipe (link do replay quando já processado).
@@ -211,18 +219,25 @@ class _Destaque extends StatelessWidget {
                   ],
                 ),
                 const SizedBox(height: 12),
+                // As duas ações dividem a linha: com largura natural elas
+                // estouram o card em tela estreita.
                 Row(
                   children: [
-                    _AcaoAreia(
-                      icone: "compartilhar",
-                      rotulo: "Compartilhar",
-                      onTap: () => _compartilhar(replay),
+                    Expanded(
+                      child: _AcaoAreia(
+                        icone: "compartilhar",
+                        rotulo: "Compartilhar",
+                        onTap: () => _compartilhar(replay),
+                      ),
                     ),
                     const SizedBox(width: 10),
-                    _AcaoAreia(
-                      icone: "baixar",
-                      rotulo: "Baixar",
-                      onTap: replay.url == null ? null : () => _baixar(replay),
+                    Expanded(
+                      child: _AcaoAreia(
+                        icone: "baixar",
+                        rotulo: "Baixar",
+                        onTap:
+                            replay.url == null ? null : () => _baixar(replay),
+                      ),
                     ),
                   ],
                 ),
@@ -295,7 +310,8 @@ class _Linha extends StatelessWidget {
                 const SizedBox(height: 4),
                 Row(
                   children: [
-                    const RallyIcon("relogio", tamanho: 14, cor: AppColors.gray),
+                    const RallyIcon("relogio",
+                        tamanho: 14, cor: AppColors.gray),
                     const SizedBox(width: 5),
                     Flexible(
                       child: Text(
@@ -318,7 +334,8 @@ class _Linha extends StatelessWidget {
           IconButton(
             tooltip: "Compartilhar",
             onPressed: () => _compartilhar(replay),
-            icon: const RallyIcon("compartilhar", tamanho: 20, cor: AppColors.ink),
+            icon: const RallyIcon("compartilhar",
+                tamanho: 20, cor: AppColors.ink),
           ),
         ],
       ),
@@ -402,7 +419,16 @@ class _AcaoAreia extends StatelessWidget {
               children: [
                 RallyIcon(icone, tamanho: 18),
                 const SizedBox(width: 7),
-                Text(rotulo, style: AppText.corpo(13, peso: FontWeight.w600)),
+                // O rótulo cede antes do ícone: "Compartilhar" é o mais
+                // comprido e é ele que estoura quando o card é estreito.
+                Flexible(
+                  child: Text(
+                    rotulo,
+                    maxLines: 1,
+                    overflow: TextOverflow.ellipsis,
+                    style: AppText.corpo(13, peso: FontWeight.w600),
+                  ),
+                ),
               ],
             ),
           ),

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 
 import "../theme/app_colors.dart";
@@ -49,21 +50,40 @@ class BarraPrecoCta extends StatelessWidget {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: [
-          Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              Text(Formato.moeda(valor), style: AppText.titulo(20)),
-              const SizedBox(height: 1),
-              Text(legenda.toUpperCase(), style: AppText.rotulo(11, espacamento: 0.5)),
-            ],
+          Flexible(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisSize: MainAxisSize.min,
+              children: [
+                Text(
+                  Formato.moeda(valor),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.titulo(20),
+                ),
+                const SizedBox(height: 1),
+                Text(
+                  legenda.toUpperCase(),
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.rotulo(11, espacamento: 0.5),
+                ),
+              ],
+            ),
           ),
-          BotaoPrimario(
-            rotulo: rotuloCta,
-            onPressed: onCta,
-            icone: iconeCta,
-            carregando: carregando,
-            expandir: false,
+          const SizedBox(width: 12),
+          // O rótulo do CTA varia bastante entre as telas ("Reservar 19:00",
+          // "Mover para 20:00", "Escolha um horário"). Sem `Flexible`, um
+          // rótulo mais longo estoura a linha em telas estreitas — o botão já
+          // sabe truncar o próprio texto, só precisava poder encolher.
+          Flexible(
+            child: BotaoPrimario(
+              rotulo: rotuloCta,
+              onPressed: onCta,
+              icone: iconeCta,
+              carregando: carregando,
+              expandir: false,
+            ),
           ),
         ],
       ),
@@ -161,6 +181,7 @@ class BotaoSecundario extends StatelessWidget {
         child: Container(
           height: 48,
           alignment: Alignment.center,
+          padding: const EdgeInsets.symmetric(horizontal: 10),
           decoration: BoxDecoration(
             borderRadius: BorderRadius.circular(12),
             border: Border.all(color: AppColors.line, width: 1.5),
@@ -169,7 +190,16 @@ class BotaoSecundario extends StatelessWidget {
             mainAxisSize: MainAxisSize.min,
             children: [
               if (icone != null) ...[icone!, const SizedBox(width: 8)],
-              Text(rotulo, style: AppText.corpo(14, peso: FontWeight.w700)),
+              // Estes botões costumam vir dois lado a lado, cada um com
+              // metade da linha: o rótulo trunca em vez de furar a borda.
+              Flexible(
+                child: Text(
+                  rotulo,
+                  maxLines: 1,
+                  overflow: TextOverflow.ellipsis,
+                  style: AppText.corpo(14, peso: FontWeight.w700),
+                ),
+              ),
             ],
           ),
         ),

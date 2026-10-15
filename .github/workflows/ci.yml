@@ -20,6 +20,10 @@ jobs:
       - run: pnpm lint
       - run: pnpm typecheck
       - run: pnpm test
+      # A web rodava 175 testes sem nunca medir cobertura, enquanto a API mede
+      # desde setembro. O piso está no `vitest.config.mts` e vale só com
+      # `--coverage`, então sem este passo ele não trava nada.
+      - run: pnpm --filter @rally/web test:cov
       - run: pnpm build
 
   mobile:
@@ -35,8 +39,17 @@ jobs:
       - uses: subosito/flutter-action@v2
         with: { flutter-version: 3.47.5, channel: stable, cache: true }
       - run: flutter pub get
+      # O formatador do Dart mudou para o "tall style" no 3.7; o gate garante
+      # que a base não volte a divergir dele.
+      - run: dart format --output=none --set-exit-if-changed .
       - run: flutter analyze
-      - run: flutter test
+      # `--coverage` em vez de `flutter test` seco: o app tinha 206 testes e
+      # nenhuma medida, de modo que ninguém sabia se cobriam 40% ou 90%.
+      - run: flutter test --coverage
+      # O piso é de **linha**, porque é só isso que o lcov do Flutter traz —
+      # não há ramo nem função ali. A assimetria que a API expõe é invisível
+      # aqui, e não por estar resolvida.
+      - run: dart run tool/cobertura.dart
 
   banco:
     name: Migrações e concorrência
@@ -68,7 +81,25 @@ jobs:
       - run: pnpm --filter @rally/api exec prisma db seed
       # Com DATABASE_URL definida, a suíte inclui os testes de integração que
       # provam a trava contra overbooking (RN-01), inclusive sob corrida.
-      - run: pnpm --filter @rally/api test
+      #
+      # A cobertura (RNF-13) é medida aqui, e não no job sem banco, porque é
+      # aqui que a suíte roda inteira: `criar()` só é exercitado pelos testes
+      # de integração, e medir sem eles produziria um número mais baixo que o
+      # real. O piso está no `coverageThreshold` do jest.config.js.
+      - run: pnpm --filter @rally/api test:cov
+
+  licenca:
+    name: Declaração de licença
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      # `reuse lint` cobra declaração de licença em TODO arquivo rastreado:
+      # cabeçalho SPDX no código, REUSE.toml para o resto. Falha o build quando
+      # entra arquivo sem declaração — é o gate da seção 4 de
+      # docs/codigo-aberto.md. Versão fixada na que foi verificada localmente.
+      # O extra charset-normalizer evita depender do libmagic do runner.
+      - run: pipx install "reuse[charset-normalizer]==6.2.0"
+      - run: reuse lint
 
   security:
     name: Varredura de segredos

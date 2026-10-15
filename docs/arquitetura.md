@@ -41,7 +41,7 @@ flowchart TB
 | **Auth** | JWT (access+refresh) · Passport · OAuth social (Google/IG) | padrão de mercado — detalhe em [Segurança, Privacidade e LGPD](seguranca-lgpd.md) |
 | **Pagamentos** | **AbacatePay** (Pix) + cartão · confirmação por **webhook** | gateway BR focado em Pix |
 | **Notificações** | WhatsApp Cloud API · **Push (FCM/APNs)** · e-mail (**AWS SES**) · in-app | multicanal, assíncrono via fila |
-| **Mídia/Replays** | upload → **AWS S3** · transcode → **MediaConvert** · entrega → **CloudFront** | VOD AWS-native (**IVS** p/ live, futuro) |
+| **Mídia/Replays** | captação por **parceria** (adaptador atrás de porta) · storage/entrega a definir com a integração | ver [ADR-0012](adr/0012-replays-por-parceria.md) — substitui o pipeline próprio do ADR-0006 |
 | **Realtime** | WebSocket (NestJS Gateway + **Socket.IO**) | disponibilidade de horários ao vivo |
 | **Cloud/Infra** | **AWS** (ECS Fargate, ECR, RDS, ElastiCache, S3, CloudFront, SES, CloudWatch, Secrets Manager) + **Cloudflare** (DNS/WAF/Registrar) | infra gerenciada, escalável — **desde o início** |
 | **Design → código** | Figma (Variables/Styles) → **Style Dictionary** | tokens exportados p/ Tailwind **e** Flutter |
@@ -123,7 +123,7 @@ rally/
 | Banco | **AWS RDS (PostgreSQL 16, Multi-AZ)** | alta disponibilidade, backups + PITR |
 | Cache/Filas | **AWS ElastiCache (Redis 7)** | cache + BullMQ |
 | Storage | **AWS S3** | uploads, replays, exports (URLs assinadas) |
-| Vídeo (VOD) | **MediaConvert** (transcode) + **CloudFront** | replays; **IVS** p/ live no futuro |
+| Vídeo (VOD) | *em aberto* — depende do formato da integração de replays | captação é por parceria ([ADR-0012](adr/0012-replays-por-parceria.md)); só saberemos o que precisa ser transcodificado quando a interface do parceiro existir |
 | CDN | **CloudFront** | mídia e assets estáticos |
 | E-mail | **AWS SES** | transacional em escala |
 | Segredos/config | **AWS Secrets Manager** + **SSM Parameter Store** | nunca em código |
@@ -185,7 +185,7 @@ erDiagram
 3. **AbacatePay** como gateway (vs Stripe/Mercado Pago) — Pix BR.
 4. **PostgreSQL + Prisma** — relacional + migrations tipadas.
 5. **AWS** como cloud + **Cloudflare** na borda (vs all-Cloudflare / Supabase) — escala e padrão de mercado.
-6. **S3 + MediaConvert + CloudFront** para replays — storage + transcode + entrega (IVS p/ live).
+6. **Replays por parceria** — a captação não é construída; o parceiro entra como adaptador e o vínculo reserva↔clipe fica no domínio ([ADR-0012](adr/0012-replays-por-parceria.md)).
 7. **Turborepo (monorepo)** — web/api/shared juntos.
 8. **Conventional Commits + Trunk-based** — padronização de histórico e fluxo.
 9. **Licença AGPL-3.0 (open-core)** — código aberto que protege o SaaS (ver [Código Aberto, Licença e Projeções](codigo-aberto.md)).

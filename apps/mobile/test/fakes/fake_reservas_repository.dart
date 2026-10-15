@@ -15,9 +15,11 @@ Reserva reservaFalsa({
   bool cancelamentoGratuito = true,
   int cancelamentoHoras = 12,
   String estabelecimentoNome = "Arena Beira-Rio",
+  Pagamento? pagamento,
 }) {
   final inicio = DateTime(2026, 6, 17, 19);
   return Reserva(
+    pagamento: pagamento,
     id: id,
     codigo: "RALLY-7K2P",
     inicio: inicio,
@@ -37,6 +39,23 @@ Reserva reservaFalsa({
   );
 }
 
+/// Cobrança Pix de mentira. `minutosAteExpirar` negativo = já expirada.
+Pagamento pagamentoFalso({
+  PagamentoStatus status = PagamentoStatus.pendente,
+  double valor = 76,
+  String? pixCopiaCola = "00020126BR.GOV.BCB.PIX-TESTE5204000053039865802BR",
+  int minutosAteExpirar = 30,
+}) {
+  return Pagamento(
+    id: "p1",
+    valor: valor,
+    metodo: "PIX",
+    status: status,
+    pixCopiaCola: pixCopiaCola,
+    expiraEm: DateTime.now().add(Duration(minutes: minutosAteExpirar)),
+  );
+}
+
 /// Repositório de reservas de mentira: devolve uma lista fixa e registra os
 /// cancelamentos pedidos, para o teste conferir o que a tela chamou.
 class FakeReservasRepository implements ReservasRepository {
@@ -53,6 +72,15 @@ class FakeReservasRepository implements ReservasRepository {
   /// Quando definido, o próximo `cancelar` falha com este erro.
   Object? erroAoCancelar;
 
+  /// Quando definido, o próximo `remarcar` falha com este erro.
+  Object? erroAoRemarcar;
+
+  /// Quando definido, o próximo `criar` falha com este erro.
+  Object? erroAoCriar;
+
+  /// Argumentos da última chamada a `criar`.
+  ({String quadraId, DateTime inicio, DateTime fim, String metodo})? criacao;
+
   @override
   Future<List<Reserva>> minhas() async => lista;
 
@@ -66,8 +94,24 @@ class FakeReservasRepository implements ReservasRepository {
     required DateTime inicio,
     required DateTime fim,
     required String metodo,
-  }) {
-    throw UnimplementedError();
+  }) async {
+    criacao = (quadraId: quadraId, inicio: inicio, fim: fim, metodo: metodo);
+    if (erroAoCriar != null) throw erroAoCriar!;
+    return lista.isEmpty ? reservaFalsa() : lista.first;
+  }
+
+  /// Argumentos da última chamada a `remarcar`.
+  (String id, DateTime inicio, DateTime fim)? remarcacao;
+
+  @override
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
+  }) async {
+    remarcacao = (id, inicio, fim);
+    if (erroAoRemarcar != null) throw erroAoRemarcar!;
+    return lista.firstWhere((r) => r.id == id);
   }
 
   @override

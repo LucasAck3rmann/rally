@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:dio/dio.dart";
 
 import "../../../core/network/erro_api.dart";
@@ -56,6 +57,27 @@ class ReservasRepositoryImpl implements ReservasRepository {
         return Reserva.doJson(res.data!);
       },
       erroPadrao: "Não foi possível abrir a reserva.",
+    );
+  }
+
+  @override
+  Future<Reserva> remarcar(
+    String id, {
+    required DateTime inicio,
+    required DateTime fim,
+  }) {
+    return chamarApi(
+      () async {
+        final res = await _dio.post<Map<String, dynamic>>(
+          "/reservas/$id/remarcar",
+          data: {
+            "inicio": inicio.toUtc().toIso8601String(),
+            "fim": fim.toUtc().toIso8601String(),
+          },
+        );
+        return Reserva.doJson(res.data!);
+      },
+      erroPadrao: "Não foi possível remarcar a reserva.",
     );
   }
 

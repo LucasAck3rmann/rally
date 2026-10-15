@@ -57,17 +57,25 @@ void main() {
   Finder campo(String rotulo) => find.widgetWithText(TextFormField, rotulo);
   final botaoCriar = find.widgetWithText(FilledButton, "Criar conta");
 
+  /// Marca a caixa de aceite da politica de privacidade (RNF-07).
+  Future<void> marcarAceite(WidgetTester tester) async {
+    await tester.tap(find.byType(Checkbox));
+    await tester.pump();
+  }
+
   Future<void> preencher(
     WidgetTester tester, {
     String nome = "Lucas Ackermann",
     String email = "lucas@rally.com.br",
     String senha = "senha123",
     String? confirmacao,
+    bool aceita = true,
   }) async {
     await tester.enterText(campo("Nome"), nome);
     await tester.enterText(campo("E-mail"), email);
     await tester.enterText(campo("Senha"), senha);
     await tester.enterText(campo("Confirmar senha"), confirmacao ?? senha);
+    if (aceita) await marcarAceite(tester);
   }
 
   testWidgets("não chama a API com o formulário vazio", (tester) async {
@@ -132,8 +140,8 @@ void main() {
     await tester.tap(botaoCriar);
     await tester.pumpAndSettle();
 
-    expect(find.widgetWithText(SnackBar, "E-mail já cadastrado."),
-        findsOneWidget);
+    expect(
+        find.widgetWithText(SnackBar, "E-mail já cadastrado."), findsOneWidget);
     // A tela continua no ar para o cliente corrigir o e-mail.
     expect(find.byType(CadastroPage), findsOneWidget);
   });
@@ -152,5 +160,51 @@ void main() {
     expect(find.byType(CircularProgressIndicator), findsOneWidget);
     expect(tester.widget<FilledButton>(find.byType(FilledButton)).onPressed,
         isNull);
+  });
+
+  testWidgets("a caixa de aceite começa desmarcada", (tester) async {
+    // A LGPD exige consentimento livre, informado e inequívoco; caixa já
+    // marcada registraria como aceite o toque de quem nunca leu.
+    await abrirCadastro(tester);
+
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isFalse);
+  });
+
+  testWidgets("sem aceitar, não cria conta e diz por quê", (tester) async {
+    await abrirCadastro(tester);
+    await preencher(tester, aceita: false);
+
+    await tester.tap(botaoCriar);
+    await tester.pumpAndSettle();
+
+    expect(repositorio.chamadasDeCadastro, 0);
+    expect(
+      find.textContaining("aceitar a politica de privacidade"),
+      findsOneWidget,
+    );
+  });
+
+  testWidgets("com aceite, o consentimento vai para a API", (tester) async {
+    // O que o servidor registra é isto: a coluna existia desde junho e
+    // nunca era escrita porque ninguém mandava o aceite.
+    await abrirCadastro(tester);
+    await preencher(tester);
+
+    await tester.tap(botaoCriar);
+    await tester.pumpAndSettle();
+
+    expect(repositorio.aceiteRecebido, isTrue);
+  });
+
+  testWidgets("a linha inteira do aceite é tocável", (tester) async {
+    // Um alvo de 24 px num requisito que pede 44 (RNF-08) seria o campo
+    // mais difícil de acertar justamente na decisão que precisa ser
+    // deliberada.
+    await abrirCadastro(tester);
+
+    await tester.tap(find.textContaining("Li e aceito"));
+    await tester.pump();
+
+    expect(tester.widget<Checkbox>(find.byType(Checkbox)).value, isTrue);
   });
 }

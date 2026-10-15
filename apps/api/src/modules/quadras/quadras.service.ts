@@ -10,6 +10,7 @@ import {
   horaLocalParaUtc,
   rotuloHoraLocal,
 } from "../../common/timezone";
+import { ConciliacaoService } from "../conciliacao/conciliacao.service";
 import { ListarQuadrasDto } from "./dto/listar-quadras.dto";
 
 /** Status que ocupam o horário na agenda (cancelada libera o slot de volta). */
@@ -54,7 +55,10 @@ const RESUMO = {
 
 @Injectable()
 export class QuadrasService {
-  constructor(private readonly prisma: PrismaService) {}
+  constructor(
+    private readonly prisma: PrismaService,
+    private readonly conciliacao: ConciliacaoService,
+  ) {}
 
   /** Vitrine da Home do cliente: quadras ativas, filtradas por modalidade/busca. */
   async listar(filtros: ListarQuadrasDto) {
@@ -134,7 +138,23 @@ export class QuadrasService {
    * reserva/bloqueio existente, ou está dentro da antecedência mínima. O preço
    * sai da faixa de preço aplicável e cai no preço-base da quadra se não houver.
    */
+  /**
+   * Grade do dia de uma quadra.
+   *
+   * Antes de montar, **libera os horários cujo Pix expirou** (RN-13).
+   * `PENDENTE_PAGAMENTO` ocupa o slot, e a `reserva_sem_sobreposicao` impede
+   * outra reserva no mesmo intervalo enquanto a linha não estiver
+   * `CANCELADA` — então marcar o slot como livre sem cancelar daria 409 na
+   * cara do próximo cliente.
+   *
+   * Quem faz o trabalho é o `ExpiracaoDePendentesJob`, de minuto a minuto.
+   * Esta chamada é **rede de segurança**: se o processo cair, o próximo
+   * cliente que abrir esta quadra ainda vê o horário livre. É barata — uma
+   * consulta que não acha nada no caso comum.
+   */
   async disponibilidade(quadraId: string, data: string) {
+    await this.conciliacao.expirarPendentes({ quadraId });
+
     const quadra = await this.prisma.quadra.findFirst({
       where: { id: quadraId, ativo: true },
       select: {

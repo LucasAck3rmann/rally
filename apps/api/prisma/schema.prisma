@@ -1,5 +1,5 @@
-// Rally — schema de dados (PostgreSQL + Prisma)
 // SPDX-License-Identifier: AGPL-3.0-or-later
+// Rally — schema de dados (PostgreSQL + Prisma)
 // Multi-tenant por estabelecimentoId (ver docs/adr/0011-multi-tenant.md).
 
 generator client {
@@ -91,6 +91,8 @@ model Estabelecimento {
   antecedenciaMaxDias  Int       @default(30)
   cancelamentoHoras    Int       @default(12)
   descontoPixPct       Decimal   @default(0) @db.Decimal(5, 2)
+  /// O "salvo configuração" da RN-14: por padrão cupom não soma com o desconto do Pix.
+  cuponsAcumulam       Boolean   @default(false)
   pixExpiraMinutos     Int       @default(30)
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
@@ -125,6 +127,8 @@ model Usuario {
   telefone      String?
   avatarUrl     String?
   consentLgpdEm DateTime?
+  /// Quando o dono do endereco provou controlar a caixa de entrada (RF-03).
+  emailVerificadoEm DateTime?
   anonimizadoEm DateTime?
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt
@@ -134,7 +138,10 @@ model Usuario {
   replays       Replay[]                @relation("ReplayCliente")
   accounts      Account[]
   refreshTokens RefreshToken[]
+  tokensDeSenha TokenDeSenha[]
+  tokensDeEmail TokenDeEmail[]
   notifPref     NotificationPreference?
+  notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
   auditLogs     AuditLog[]              @relation("AuditAutor")
 }
@@ -150,6 +157,41 @@ model Account {
   @@index([usuarioId])
 }
 
+/// Token de verificacao de endereco de e-mail (RF-03).
+///
+/// Tabela separada da de senha, e nao uma coluna `tipo` na mesma: os dois
+/// tokens tem validade diferente (trinta minutos contra sete dias) e
+/// consequencias diferentes — um troca credencial, o outro confirma um fato.
+/// Juntar obrigaria toda consulta a filtrar por tipo, e um filtro esquecido
+/// deixaria um token de verificacao redefinir senha.
+model TokenDeEmail {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
+/// Token de redefinicao de senha (RF-03).
+///
+/// Guarda o **hash** e nunca o token: quem lesse o banco poderia redefinir a
+/// senha de qualquer pessoa, que e o mesmo motivo de `senhaHash` existir.
+model TokenDeSenha {
+  id        String    @id @default(cuid())
+  usuario   Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tokenHash String    @unique
+  expiraEm  DateTime
+  usadoEm   DateTime?
+  criadoEm  DateTime  @default(now())
+
+  @@index([usuarioId])
+}
+
 model RefreshToken {
   id         String    @id @default(cuid())
   usuario    Usuario   @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
@@ -160,6 +202,32 @@ model RefreshToken {
   criadoEm   DateTime  @default(now())
 
   @@index([usuarioId])
+}
+
+/// Tipos que a tela de Notificações agrupa (ver Telas e Fluxos).
+enum NotificacaoTipo {
+  RESERVA
+  PAGAMENTO
+  REPLAY
+  PROMOCAO
+  LEMBRETE
+}
+
+/// Aviso in-app (RF-16). O e-mail é outro canal e ainda não existe.
+model Notificacao {
+  id        String          @id @default(cuid())
+  usuario   Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  usuarioId String
+  tipo      NotificacaoTipo
+  titulo    String
+  corpo     String
+
+  /// Rota do app que o toque abre, ex.: "/reservas/abc/confirmacao".
+  destino   String?
+  lidaEm    DateTime?
+  createdAt DateTime        @default(now())
+
+  @@index([usuarioId, createdAt])
 }
 
 model NotificationPreference {
@@ -245,6 +313,8 @@ model Reserva {
   promocaoId         String?
   canceladaEm        DateTime?
   motivoCancelamento String?
+  /// Quando o lembrete de jogo foi enviado (RF-17). Nulo = ainda nao foi.
+  lembreteEnviadoEm  DateTime?
   createdAt          DateTime      @default(now())
   updatedAt          DateTime      @updatedAt
 
@@ -335,15 +405,23 @@ model Replay {
   reservaId         String?
   cliente           Usuario?     @relation("ReplayCliente", fields: [clienteId], references: [id])
   clienteId         String?
-  s3Key             String
+  /// Chave do arquivo no provedor. **Única**: é a chave de idempotência da
+  /// ingestão — o provedor reentrega o mesmo clipe quando não recebe 2xx, e
+  /// a trava fica no banco porque a checagem na aplicação tem janela de
+  /// corrida entre o SELECT e o INSERT (mesma razão da RN-01).
+  s3Key             String       @unique
   url               String?
   duracaoSeg        Int?
   status            ReplayStatus @default(PROCESSANDO)
+  /// Instante em que o lance aconteceu. É por ele que o clipe acha a reserva
+  /// — e, por ela, o cliente (RF-30).
+  gravadoEm         DateTime?
   expiraEm          DateTime?
   criadoEm          DateTime     @default(now())
 
   @@index([estabelecimentoId])
   @@index([clienteId])
+  @@index([quadraId, criadoEm])
 }
 
 model WaitlistEntry {

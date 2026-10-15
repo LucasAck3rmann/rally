@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:dio/dio.dart";
 
 import "../../../core/network/erro_api.dart";
@@ -22,7 +23,8 @@ class AuthRepositoryImpl implements AuthRepository {
       );
       return await _saveAndParse(res.data);
     } on DioException catch (e) {
-      throw AuthException(mensagemDeDio(e, padrao: "Não foi possível entrar. Tente novamente."));
+      throw AuthException(mensagemDeDio(e,
+          padrao: "Não foi possível entrar. Tente novamente."));
     }
   }
 
@@ -31,18 +33,43 @@ class AuthRepositoryImpl implements AuthRepository {
     required String nome,
     required String email,
     required String senha,
+    required bool aceitouTermos,
   }) async {
     try {
       // A API devolve o mesmo envelope do login, então o cadastro já
       // entra com a sessão aberta — o cliente não digita a senha duas vezes.
       final res = await _dio.post<Map<String, dynamic>>(
         "/auth/register",
-        data: {"nome": nome, "email": email, "senha": senha},
+        data: {
+          "nome": nome,
+          "email": email,
+          "senha": senha,
+          "aceitouTermos": aceitouTermos,
+        },
       );
       return await _saveAndParse(res.data);
     } on DioException catch (e) {
       throw AuthException(
-        mensagemDeDio(e, padrao: "Não foi possível criar a conta. Tente novamente."),
+        mensagemDeDio(e,
+            padrao: "Não foi possível criar a conta. Tente novamente."),
+      );
+    }
+  }
+
+  @override
+  Future<void> pedirLinkDeSenha({required String email}) async {
+    try {
+      await _dio.post<Map<String, dynamic>>(
+        "/auth/recuperar-senha",
+        data: {"email": email},
+      );
+    } on DioException catch (e) {
+      // 400 e formato invalido, que o campo ja barra. Qualquer outra falha
+      // vira mensagem generica: nenhuma delas pode virar "esse e-mail nao
+      // existe", porque a API nao diz isso e a tela nao pode inventar.
+      throw AuthException(
+        mensagemDeDio(e,
+            padrao: "Nao foi possivel enviar agora. Tente novamente."),
       );
     }
   }
@@ -57,9 +84,20 @@ class AuthRepositoryImpl implements AuthRepository {
     try {
       final res = await _dio.get<Map<String, dynamic>>("/auth/me");
       return _userFromJson(res.data);
-    } on DioException {
-      // Token inválido/expirado: limpa e considera deslogado.
-      await _tokens.clear();
+    } on DioException catch (e) {
+      // **Só o 401 apaga o token.** Antes, qualquer `DioException` apagava — e
+      // falta de rede é uma `DioException`. O efeito era que abrir o
+      // aplicativo no metrô, ou com a API fora do ar, **deslogava a pessoa de
+      // forma permanente**: ela recuperava a conexão e ainda precisava
+      // digitar a senha outra vez.
+      //
+      // Falta de rede, tempo esgotado e 500 não dizem nada sobre a validade
+      // da credencial. Só o 401 diz. Nos outros casos devolve `null` — a
+      // sessão não pôde ser **confirmada** agora — mas o token fica guardado
+      // para a próxima tentativa.
+      if (e.response?.statusCode == 401) {
+        await _tokens.clear();
+      }
       return null;
     }
   }

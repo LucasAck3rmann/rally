@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Promoção em destaque na Home. Os textos já vêm prontos da API.
 class PromocaoDestaque {
   const PromocaoDestaque({

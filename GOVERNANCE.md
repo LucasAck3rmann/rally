@@ -26,5 +26,5 @@ não é reescrito; cria-se outro que o substitui.
 (ver [SECURITY.md](SECURITY.md)).
 
 ## Licença e modelo
-Core **AGPL-3.0**; SDKs/pacotes públicos em Apache-2.0; edição comercial/enterprise à parte
-(open-core). Detalhes em [`docs/codigo-aberto.md`](docs/codigo-aberto.md).
+Core **AGPL-3.0**; SDKs/pacotes públicos em Apache-2.0; documentação em CC-BY-SA-4.0;
+edição comercial/enterprise à parte (open-core). Detalhes em [`docs/codigo-aberto.md`](docs/codigo-aberto.md).

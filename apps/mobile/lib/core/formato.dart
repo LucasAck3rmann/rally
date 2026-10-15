@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:intl/intl.dart";
 
 /// Formatação de moeda e datas em pt-BR, como aparecem nas telas.
@@ -16,8 +17,16 @@ abstract final class Formato {
   /// "R$ 80" para valores redondos, "R$ 76,50" quando há centavos —
   /// é assim que o preço aparece nos cards e na barra de reserva.
   static String moeda(double valor) {
-    final texto = valor % 1 == 0 ? _inteiro.format(valor) : _comCentavos.format(valor);
+    final texto =
+        valor % 1 == 0 ? _inteiro.format(valor) : _comCentavos.format(valor);
     return texto.replaceAll("\u00A0", " ");
+  }
+
+  /// O número cru para dentro de um campo de texto: "80" ou "76,50", sem
+  /// símbolo de moeda. É o que volta editável para o formulário de quadra.
+  static String numeroSimples(double valor) {
+    if (valor % 1 == 0) return valor.toStringAsFixed(0);
+    return valor.toStringAsFixed(2).replaceAll(".", ",");
   }
 
   /// Sempre com centavos ("R$ 76,00"), usado no valor da cobrança Pix.
@@ -54,8 +63,7 @@ abstract final class Formato {
   }
 
   /// Data-calendário "YYYY-MM-DD" para conversar com a API.
-  static String dataIso(DateTime data) =>
-      DateFormat("yyyy-MM-dd").format(data);
+  static String dataIso(DateTime data) => DateFormat("yyyy-MM-dd").format(data);
 
   static String _capitalizar(String texto) {
     final limpo = texto.replaceAll(".", "");

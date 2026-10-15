@@ -1,6 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { Module } from "@nestjs/common";
 
+import { NotificacoesModule } from "../notificacoes/notificacoes.module";
+import { PagamentosController } from "./pagamentos.controller";
 import { PagamentosService } from "./pagamentos.service";
 import { PixDevProvider } from "./pix-dev.provider";
 import { PIX_PROVIDER } from "./pix-provider";
@@ -10,6 +12,8 @@ import { PIX_PROVIDER } from "./pix-provider";
  * provedor de desenvolvimento pela AbacatePay é substituir este `useClass`.
  */
 @Module({
+  imports: [NotificacoesModule],
+  controllers: [PagamentosController],
   providers: [PagamentosService, { provide: PIX_PROVIDER, useClass: PixDevProvider }],
   exports: [PagamentosService],
 })

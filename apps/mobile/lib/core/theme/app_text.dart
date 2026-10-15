@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 import "package:google_fonts/google_fonts.dart";
 
@@ -10,7 +11,9 @@ import "app_colors.dart";
 /// A entrelinha é 1,3 em todo o sistema, o que reproduz os Text Styles do
 /// Figma (ex.: Sora 20/26, Inter 13/17, Mono 11/14).
 abstract final class AppText {
-  static const _entrelinha = 1.3;
+  /// Entrelinha única do sistema. Pública porque quem reserva altura
+  /// para N linhas — uma lista horizontal, por exemplo — precisa dela.
+  static const entrelinha = 1.3;
 
   /// Sora — títulos, nomes e preços.
   static TextStyle titulo(
@@ -22,7 +25,7 @@ abstract final class AppText {
       fontSize: tamanho,
       fontWeight: peso,
       color: cor,
-      height: _entrelinha,
+      height: entrelinha,
     );
   }
 
@@ -36,7 +39,7 @@ abstract final class AppText {
       fontSize: tamanho,
       fontWeight: peso,
       color: cor,
-      height: _entrelinha,
+      height: entrelinha,
     );
   }
 
@@ -50,7 +53,7 @@ abstract final class AppText {
       fontSize: tamanho,
       color: cor,
       letterSpacing: espacamento,
-      height: _entrelinha,
+      height: entrelinha,
     );
   }
 }

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:dio/dio.dart";
 
 /// Falha ao falar com a API, já traduzida para uma mensagem de tela.
@@ -21,8 +22,12 @@ String mensagemDeDio(DioException erro, {required String padrao}) {
   final dados = erro.response?.data;
   if (dados is Map) {
     final mensagem = dados["message"];
-    if (mensagem is String && mensagem.isNotEmpty) return mensagem;
-    if (mensagem is List && mensagem.isNotEmpty) return mensagem.first.toString();
+    if (mensagem is String && mensagem.isNotEmpty) {
+      return mensagem;
+    }
+    if (mensagem is List && mensagem.isNotEmpty) {
+      return mensagem.first.toString();
+    }
   }
   if (erro.type == DioExceptionType.connectionError ||
       erro.type == DioExceptionType.connectionTimeout ||

@@ -131,6 +131,10 @@ void main() {
       noCadastro(find.widgetWithText(TextFormField, "Confirmar senha")),
       "senha123",
     );
+    // O aceite da politica e obrigatorio desde o RNF-07: sem marcar, o
+    // cadastro nem sai do aparelho e o teste nao exercitaria o redirect.
+    await tester.tap(noCadastro(find.byType(Checkbox)));
+    await tester.pump();
 
     await tester.tap(
       noCadastro(find.widgetWithText(FilledButton, "Criar conta")),

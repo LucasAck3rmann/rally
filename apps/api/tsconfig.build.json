@@ -1,0 +1,8 @@
+{
+  "extends": "./tsconfig.json",
+  // O `tsconfig.json` inclui `prisma/**/*` para o `typecheck` cobrir o seed.
+  // Isso sobe o `rootDir` inferido para a raiz do app e faz o build sair em
+  // `dist/src/main.js`, enquanto o `package.json` e o Dockerfile esperam
+  // `dist/main.js`. Aqui o build enxerga só `src`, e a saída volta ao lugar.
+  "exclude": ["node_modules", "dist", "prisma", "**/*.spec.ts"]
+}

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter/material.dart";
 
 import "../../../core/theme/app_colors.dart";
@@ -72,20 +73,31 @@ class QuadraCard extends StatelessWidget {
                 Row(
                   mainAxisAlignment: MainAxisAlignment.spaceBetween,
                   children: [
-                    Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          Formato.moeda(quadra.precoHora),
-                          style: AppText.titulo(17),
-                        ),
-                        const SizedBox(height: 1),
-                        Text(
-                          "POR HORA",
-                          style: AppText.rotulo(11, espacamento: 0.5),
-                        ),
-                      ],
+                    // O preço cede, o botão não: ele é a ação do card, e
+                    // empurrá-lo para fora da tela o tira do alcance do
+                    // toque. Com o texto do sistema ampliado, era isso que
+                    // acontecia.
+                    Expanded(
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            Formato.moeda(quadra.precoHora),
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.titulo(17),
+                          ),
+                          const SizedBox(height: 1),
+                          Text(
+                            "POR HORA",
+                            maxLines: 1,
+                            overflow: TextOverflow.ellipsis,
+                            style: AppText.rotulo(11, espacamento: 0.5),
+                          ),
+                        ],
+                      ),
                     ),
+                    const SizedBox(width: 10),
                     _botaoReservar(),
                   ],
                 ),
@@ -108,7 +120,8 @@ class QuadraCard extends StatelessWidget {
             Image.network(
               quadra.fotoPrincipal!,
               fit: BoxFit.cover,
-              errorBuilder: (_, __, ___) => const ColoredBox(color: AppColors.sand),
+              errorBuilder: (_, __, ___) =>
+                  const ColoredBox(color: AppColors.sand),
             )
           else
             const ColoredBox(color: AppColors.sand),
@@ -150,7 +163,8 @@ class QuadraCard extends StatelessWidget {
           height: 44, // alvo de toque mínimo
           alignment: Alignment.center,
           padding: const EdgeInsets.symmetric(horizontal: 20),
-          child: Text("Reservar", style: AppText.corpo(13, peso: FontWeight.w700)),
+          child:
+              Text("Reservar", style: AppText.corpo(13, peso: FontWeight.w700)),
         ),
       ),
     );

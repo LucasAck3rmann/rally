@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../domain/auth_user.dart";
@@ -19,13 +20,19 @@ class AuthController extends AsyncNotifier<AuthUser?> {
   }
 
   /// Cria a conta e já abre a sessão — o guard do router leva para a home.
-  Future<void> register(String nome, String email, String senha) async {
+  Future<void> register(
+    String nome,
+    String email,
+    String senha, {
+    required bool aceitouTermos,
+  }) async {
     state = const AsyncLoading();
     state = await AsyncValue.guard(
       () => ref.read(authRepositoryProvider).register(
             nome: nome,
             email: email,
             senha: senha,
+            aceitouTermos: aceitouTermos,
           ),
     );
   }

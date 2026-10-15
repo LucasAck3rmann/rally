@@ -10,6 +10,8 @@ import { QuadrasController } from "./modules/quadras/quadras.controller";
 import { PromocoesController } from "./modules/promocoes/promocoes.controller";
 import { ReplaysController } from "./modules/replays/replays.controller";
 import { ReservasController } from "./modules/reservas/reservas.controller";
+import { GestaoController } from "./modules/gestao/gestao.controller";
+import { QuadrasGestaoController } from "./modules/gestao/quadras-gestao.controller";
 
 /** Lista "MÉTODO /caminho" de um controller a partir dos metadados do Nest. */
 function rotasDe(controller: new (...args: never[]) => object): string[] {
@@ -75,6 +77,23 @@ describe("AppModule", () => {
         "POST /reservas",
         "POST /reservas/:id/simular-pagamento",
         "GET /replays/meus",
+      ]),
+    );
+  });
+
+  it("expõe as rotas do painel de gestão", () => {
+    const rotas = [
+      ...rotasDe(GestaoController),
+      ...rotasDe(QuadrasGestaoController),
+    ];
+
+    expect(rotas).toEqual(
+      expect.arrayContaining([
+        "GET /gestao/estabelecimentos",
+        "GET /gestao/estabelecimentos/:estabelecimentoId/quadras",
+        "GET /gestao/estabelecimentos/:estabelecimentoId/quadras/:quadraId",
+        "POST /gestao/estabelecimentos/:estabelecimentoId/quadras",
+        "PATCH /gestao/estabelecimentos/:estabelecimentoId/quadras/:quadraId",
       ]),
     );
   });

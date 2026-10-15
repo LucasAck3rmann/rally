@@ -1,0 +1,111 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
+import { cache } from "react";
+
+import { chamarApiAutenticada } from "../api/autenticado";
+import {
+  AgendaDoDia,
+  Conciliacao,
+  ListaDaEquipe,
+  ListaDeCupons,
+  ListaDeEstabelecimentos,
+  ListaDeQuadras,
+  Painel,
+  Relatorio,
+  TrilhaDeAuditoria,
+} from "./contratos";
+
+/**
+ * O que o usuário administra — alimenta o seletor da barra lateral e a
+ * decisão de quais botões a página mostra.
+ *
+ * Em `cache()` porque o layout **e** a página precisam dela na mesma
+ * renderização: sem isso, cada navegação faria duas chamadas idênticas.
+ */
+export const meusEstabelecimentos = cache(() =>
+  chamarApiAutenticada("/gestao/estabelecimentos", ListaDeEstabelecimentos),
+);
+
+/** O papel do usuário num estabelecimento, ou `null` se ele não tem vínculo. */
+export async function meuPapelEm(estabelecimentoId: string) {
+  const lista = await meusEstabelecimentos();
+  return lista.find((e) => e.id === estabelecimentoId)?.meuPapel ?? null;
+}
+
+export function painelDoEstabelecimento(estabelecimentoId: string, dias: number) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/painel`,
+    Painel,
+    { parametros: { dias } },
+  );
+}
+
+export function agendaDoDia(estabelecimentoId: string, data: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/agenda`,
+    AgendaDoDia,
+    { parametros: { data } },
+  );
+}
+
+export function quadrasDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/quadras`,
+    ListaDeQuadras,
+  );
+}
+
+export function cuponsDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/cupons`,
+    ListaDeCupons,
+  );
+}
+
+export function equipeDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/equipe`,
+    ListaDaEquipe,
+  );
+}
+
+export function relatorioDoPeriodo(
+  estabelecimentoId: string,
+  de: string,
+  ate: string,
+) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/relatorios`,
+    Relatorio,
+    { parametros: { de, ate } },
+  );
+}
+
+export function conciliacaoDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao`,
+    Conciliacao,
+  );
+}
+
+/**
+ * A trilha de auditoria da arena (RN-05).
+ *
+ * **A rota é só do administrador**, e é a única leitura da gestão com essa
+ * restrição — o resto do painel é de toda a equipe com vínculo. Quem chama
+ * isto precisa checar o papel antes: a API devolve 403, e 403 na cara do
+ * usuário é pior que uma tela que explica por que não pode.
+ *
+ * O `limite` tem teto de 500 no serviço da API. A tela pede 100 e oferece um
+ * link para 500 em vez de paginar, porque a pergunta que a trilha responde
+ * — *quem liberou aquele horário* — quase sempre está nas últimas horas.
+ */
+export function trilhaDoEstabelecimento(
+  estabelecimentoId: string,
+  limite: number,
+) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/auditoria`,
+    TrilhaDeAuditoria,
+    { parametros: { limite } },
+  );
+}
