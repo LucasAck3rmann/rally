@@ -25,7 +25,12 @@ import "dart:io";
 /// colado na medida reprova na primeira linha nova que alguém não cubra, o
 /// que é ruído, e ensina a baixar o piso em vez de escrever o teste. Foi a
 /// lição aprendida na API em 13/10.
-const double pisoPadrao = 76;
+///
+/// A primeira medição, com 206 testes, deu **77,74%**. Com as cinco suítes de
+/// repositório — a camada que fala HTTP e desserializa JSON, que estava
+/// **inteiramente sem cobertura** porque os testes de interface usam
+/// repositórios falsos — são 291 testes e **88,52%**.
+const double pisoPadrao = 87;
 
 void main(List<String> argumentos) {
   final piso = _lerPiso(argumentos);
