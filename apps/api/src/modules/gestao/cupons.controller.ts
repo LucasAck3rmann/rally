@@ -7,12 +7,15 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Role } from "@prisma/client";
 
 import { Papeis } from "../auth/decorators/papeis.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PapelGuard } from "../auth/guards/papel.guard";
+import { Auditar } from "../auditoria/auditar.decorator";
+import { AuditoriaInterceptor } from "../auditoria/auditoria.interceptor";
 import { CuponsService } from "./cupons.service";
 import { AtualizarCupomDto, CriarCupomDto } from "./dto/cupom-gestao.dto";
 
@@ -29,6 +32,7 @@ import { AtualizarCupomDto, CriarCupomDto } from "./dto/cupom-gestao.dto";
  */
 @Controller("gestao/estabelecimentos/:estabelecimentoId/cupons")
 @UseGuards(JwtAuthGuard, PapelGuard)
+@UseInterceptors(AuditoriaInterceptor)
 export class CuponsController {
   constructor(private readonly cupons: CuponsService) {}
 
@@ -38,6 +42,7 @@ export class CuponsController {
   }
 
   @Post()
+  @Auditar({ acao: "criar cupom", entidade: "Promocao" })
   @Papeis(Role.ADMIN)
   criar(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -47,6 +52,7 @@ export class CuponsController {
   }
 
   @Patch(":cupomId")
+  @Auditar({ acao: "editar cupom", entidade: "Promocao", parametro: "cupomId" })
   @Papeis(Role.ADMIN)
   atualizar(
     @Param("estabelecimentoId") estabelecimentoId: string,

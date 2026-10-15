@@ -8,6 +8,7 @@ import {
   Patch,
   Post,
   UseGuards,
+  UseInterceptors,
 } from "@nestjs/common";
 import { Role } from "@prisma/client";
 
@@ -16,6 +17,8 @@ import { Papeis } from "../auth/decorators/papeis.decorator";
 import { JwtAuthGuard } from "../auth/guards/jwt-auth.guard";
 import { PapelGuard } from "../auth/guards/papel.guard";
 import { JwtPayload } from "../auth/types/jwt-payload";
+import { Auditar } from "../auditoria/auditar.decorator";
+import { AuditoriaInterceptor } from "../auditoria/auditoria.interceptor";
 import { AdicionarMembroDto, TrocarPapelDto } from "./dto/equipe.dto";
 import { EquipeService } from "./equipe.service";
 
@@ -28,6 +31,7 @@ import { EquipeService } from "./equipe.service";
  */
 @Controller("gestao/estabelecimentos/:estabelecimentoId/equipe")
 @UseGuards(JwtAuthGuard, PapelGuard)
+@UseInterceptors(AuditoriaInterceptor)
 export class EquipeController {
   constructor(private readonly equipe: EquipeService) {}
 
@@ -37,6 +41,7 @@ export class EquipeController {
   }
 
   @Post()
+  @Auditar({ acao: "adicionar à equipe", entidade: "Membership" })
   @Papeis(Role.ADMIN)
   adicionar(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -46,6 +51,7 @@ export class EquipeController {
   }
 
   @Patch(":usuarioId")
+  @Auditar({ acao: "trocar papel", entidade: "Membership", parametro: "usuarioId" })
   @Papeis(Role.ADMIN)
   trocarPapel(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -64,6 +70,7 @@ export class EquipeController {
   }
 
   @Delete(":usuarioId")
+  @Auditar({ acao: "remover da equipe", entidade: "Membership", parametro: "usuarioId" })
   @Papeis(Role.ADMIN)
   remover(
     @Param("estabelecimentoId") estabelecimentoId: string,
