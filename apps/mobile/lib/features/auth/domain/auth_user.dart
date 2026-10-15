@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Usuário autenticado (modelo de domínio).
 class AuthUser {
   const AuthUser({

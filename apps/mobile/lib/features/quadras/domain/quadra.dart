@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 /// Estabelecimento dono da quadra (nome e localização mostrados nos cards).
 class Estabelecimento {
   const Estabelecimento({

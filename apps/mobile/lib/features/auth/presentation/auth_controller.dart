@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: AGPL-3.0-or-later
 import "package:flutter_riverpod/flutter_riverpod.dart";
 
 import "../domain/auth_user.dart";

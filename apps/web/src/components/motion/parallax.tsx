@@ -1,5 +1,5 @@
-"use client";
 // SPDX-License-Identifier: AGPL-3.0-or-later
+"use client";
 import { motion, useReducedMotion, useScroll, useTransform } from "framer-motion";
 import { useRef, type ReactNode } from "react";
 
