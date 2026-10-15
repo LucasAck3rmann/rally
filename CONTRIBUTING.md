@@ -23,9 +23,27 @@ Assine seus commits com `-s` (`git commit -s`). Isso adiciona
 
 ## Licença das contribuições
 Ao contribuir, você concorda em licenciar sua contribuição sob **AGPL-3.0**
-(ou Apache-2.0 nos pacotes assim marcados). Adicione o cabeçalho SPDX em arquivos novos:
+(ou Apache-2.0 nos pacotes assim marcados). Em arquivo novo de código, o
+cabeçalho é **uma linha só**, na **primeira** linha do arquivo:
 
+<!-- REUSE-IgnoreStart -->
 ```ts
 // SPDX-License-Identifier: AGPL-3.0-or-later
-// Copyright (C) 2026 Rally
+```
+<!-- REUSE-IgnoreEnd -->
+
+Não acrescente linha de copyright no arquivo: o copyright do repositório está
+centralizado no `REUSE.toml`. Em `packages/shared` e `packages/tokens` o
+identificador é `Apache-2.0`, não AGPL.
+
+O que **não** leva cabeçalho: arquivo gerado (como `apps/web/next-env.d.ts`,
+as migrações do Prisma e o scaffolding do Flutter), arquivo que não aceita
+comentário (`.json`), documentação e ativos. Tudo isso é declarado no
+`REUSE.toml`.
+
+A CI roda `reuse lint` no job `licenca` e falha se algum arquivo ficar sem
+declaração. Para rodar antes de abrir o PR:
+
+```bash
+pipx run reuse lint
 ```
