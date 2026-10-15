@@ -22,9 +22,11 @@ Assine seus commits com `-s` (`git commit -s`). Isso adiciona
 `Signed-off-by: Seu Nome <email>` e declara que você tem direito de contribuir o código.
 
 ## Licença das contribuições
-Ao contribuir, você concorda em licenciar sua contribuição sob **AGPL-3.0**
-(ou Apache-2.0 nos pacotes assim marcados). Em arquivo novo de código, o
-cabeçalho é **uma linha só**, na **primeira** linha do arquivo:
+Ao contribuir, você concorda em licenciar sua contribuição sob a licença da
+parte que você tocou: **AGPL-3.0** no core, **Apache-2.0** em `packages/shared`
+e `packages/tokens`, e **CC-BY-SA-4.0** na documentação (qualquer `.md`). A
+tabela da seção 2 de `docs/codigo-aberto.md` é a fonte de verdade. Em arquivo
+novo de código, o cabeçalho é **uma linha só**, na **primeira** linha do arquivo:
 
 <!-- REUSE-IgnoreStart -->
 ```ts
@@ -40,6 +42,11 @@ O que **não** leva cabeçalho: arquivo gerado (como `apps/web/next-env.d.ts`,
 as migrações do Prisma e o scaffolding do Flutter), arquivo que não aceita
 comentário (`.json`), documentação e ativos. Tudo isso é declarado no
 `REUSE.toml`.
+
+Não reivindique copyright nosso sobre arquivo de terceiro. Os ícones que o
+`flutter create` gerou, por exemplo, são do projeto Flutter e estão declarados
+como BSD-3-Clause — ao trazer ativo de fora, declare a origem no `REUSE.toml`
+e ponha o texto da licença em `LICENSES/`.
 
 A CI roda `reuse lint` no job `licenca` e falha se algum arquivo ficar sem
 declaração. Para rodar antes de abrir o PR:

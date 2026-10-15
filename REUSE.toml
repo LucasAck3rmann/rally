@@ -14,6 +14,12 @@ SPDX-PackageDownloadLocation = "https://github.com/LucasAck3rmann/rally"
 #    Flutter gera em apps/mobile/android, as migrações que o Prisma gera e os
 #    .json — que não aceitam comentário nenhum.
 #
+# Não é tudo AGPL: os blocos abaixo declaram quatro licenças, na ordem em que
+# aparecem — AGPL-3.0-or-later no núcleo e na infra, Apache-2.0 nas bibliotecas
+# e contratos, BSD-3-Clause nos ícones que vieram do template do Flutter e
+# CC-BY-SA-4.0 na documentação. A tabela da seção 2 de docs/codigo-aberto.md é
+# a fonte de verdade; este arquivo a implementa.
+#
 # O copyright de todo o repositório também fica aqui. É o que permite ao
 # cabeçalho de cada arquivo de código continuar sendo uma linha só, como já
 # era nos 366 arquivos que o declaravam antes deste arquivo existir.
@@ -30,7 +36,6 @@ SPDX-FileCopyrightText = "2026 Rally"
 
 [[annotations]]
 path = [
-  "**.md",
   "**.json",
   "**.yml",
   "**.yaml",
@@ -74,3 +79,41 @@ path = [
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Rally"
 SPDX-License-Identifier = "Apache-2.0"
+
+# Os 10 ícones que o `flutter create` copiou para apps/mobile não são nossos:
+# são os ícones padrão do template do Flutter, byte a byte idênticos aos do SDK
+# (packages/flutter_tools/templates/app). São obra do projeto Flutter, sob
+# BSD-3-Clause — declará-los como "2026 Rally" seria reivindicar copyright
+# alheio. Os .svg e as fotos, sim, são nossos: saíram do nosso Figma.
+[[annotations]]
+path = [
+  "apps/mobile/android/app/src/main/res/mipmap-hdpi/ic_launcher.png",
+  "apps/mobile/android/app/src/main/res/mipmap-mdpi/ic_launcher.png",
+  "apps/mobile/android/app/src/main/res/mipmap-xhdpi/ic_launcher.png",
+  "apps/mobile/android/app/src/main/res/mipmap-xxhdpi/ic_launcher.png",
+  "apps/mobile/android/app/src/main/res/mipmap-xxxhdpi/ic_launcher.png",
+  "apps/mobile/web/favicon.png",
+  "apps/mobile/web/icons/Icon-192.png",
+  "apps/mobile/web/icons/Icon-512.png",
+  "apps/mobile/web/icons/Icon-maskable-192.png",
+  "apps/mobile/web/icons/Icon-maskable-512.png",
+]
+precedence = "override"
+SPDX-FileCopyrightText = "2014 The Flutter Authors"
+SPDX-License-Identifier = "BSD-3-Clause"
+
+# Documentação é prosa, não programa: a AGPL fala em "código-fonte",
+# "código-objeto" e "Corresponding Source", que não querem dizer nada num .md.
+# CC-BY-SA-4.0 é a licença escrita para texto e mantém o mesmo compromisso
+# copyleft do núcleo — quem redistribuir ou adaptar continua obrigado a
+# compartilhar igual, agora em termos que se aplicam de fato. Ver a seção 2 de
+# docs/codigo-aberto.md.
+#
+# Este bloco é o último de propósito: como a última anotação que casa é a que
+# vale, a regra "todo .md é CC-BY-SA-4.0" não tem exceção — inclusive dentro de
+# packages/shared e packages/tokens, que no bloco acima são Apache-2.0.
+[[annotations]]
+path = "**.md"
+precedence = "override"
+SPDX-FileCopyrightText = "2026 Rally"
+SPDX-License-Identifier = "CC-BY-SA-4.0"
