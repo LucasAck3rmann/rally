@@ -63,7 +63,17 @@ abstract final class Formato {
   }
 
   /// Data-calendário "YYYY-MM-DD" para conversar com a API.
-  static String dataIso(DateTime data) => DateFormat("yyyy-MM-dd").format(data);
+  ///
+  /// **O locale é fixado em `en_US`, e não omitido.** Sem ele o `DateFormat`
+  /// cai no `Intl.defaultLocale` do ambiente — hoje isso dá dígito ASCII e
+  /// funciona, mas este valor **vai na URL para a API**, e no dia em que
+  /// alguém localizar o aplicativo para um idioma de dígito não-latino o
+  /// parâmetro viraria texto que o servidor não entende. É o mesmo cuidado
+  /// que a web já toma usando `en-CA` para montar o mesmo formato: locale de
+  /// **máquina** se declara, porque formato de máquina não é preferência de
+  /// quem lê.
+  static String dataIso(DateTime data) =>
+      DateFormat("yyyy-MM-dd", "en_US").format(data);
 
   static String _capitalizar(String texto) {
     final limpo = texto.replaceAll(".", "");
