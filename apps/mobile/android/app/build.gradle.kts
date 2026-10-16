@@ -15,11 +15,20 @@ android {
     }
 
     defaultConfig {
-        // TODO: Specify your own unique Application ID (https://developer.android.com/studio/build/application-id.html).
-        applicationId = "br.com.rally.rally_mobile"
-        // You can update the following values to match your application needs.
-        // For more information, see: https://flutter.dev/to/review-gradle-config.
-        minSdk = flutter.minSdkVersion
+        // `br.com.rally`, e nao o `br.com.rally.rally_mobile` que o Flutter
+        // derivou do nome da pasta. E o identificador que a documentacao do
+        // projeto declara, e trocar e **de graca antes de publicar** — depois
+        // da primeira publicacao o identificador e permanente e um app novo
+        // perderia as instalacoes.
+        applicationId = "br.com.rally"
+        // **Android 8.0 (API 26), declarado — e nao herdado.** O RNF-09 promete
+        // "Android 8+", e `flutter.minSdkVersion` vale **24** nesta versao do
+        // SDK, que e Android 7.0. O numero estava so no documento: o build
+        // aceitava Android 7 e ninguem sabia, e uma mudanca no padrao do
+        // Flutter trocaria o alvo do produto sem ninguem notar. Fixar aqui faz
+        // o documento e o build dizerem a mesma coisa, e o teste
+        // `alvos_de_plataforma_test.dart` cobra os dois.
+        minSdk = 26
         targetSdk = flutter.targetSdkVersion
         // Uses the version code from pubspec.yaml. When using split APKs, 1000 * ABI_VERSION
         // is added automatically by Flutter. (https://developer.android.com/studio/build/configure-apk-splits#configure-APK-versions)
@@ -31,8 +40,12 @@ android {
 
     buildTypes {
         release {
-            // TODO: Add your own signing config for the release build.
-            // Signing with the debug keys for now, so `flutter run --release` works.
+            // ⚠️ **Assinado com a chave de depuracao**, que e o scaffold do
+            // Flutter e nao uma escolha. Build de release assim **nao sobe para
+            // a Play Store**: ela recusa APK assinado com a chave de debug.
+            // Resolver exige um keystore fora do repositorio (`key.properties`
+            // no .gitignore), e isso entra junto com a publicacao (M5). Fica
+            // declarado em vez de escondido atras de um TODO generico.
             signingConfig = signingConfigs.getByName("debug")
         }
     }
