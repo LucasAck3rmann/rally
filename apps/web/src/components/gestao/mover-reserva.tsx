@@ -91,7 +91,7 @@ export function MoverReserva({
         value={quadraId}
         onChange={(e) => setQuadraId(e.target.value)}
         className="mt-1 w-full rounded-button border border-line px-2 py-1.5
-          text-[12px] text-ink outline-none focus:border-coral"
+          text-[12px] text-ink focus:border-coral"
       >
         {quadras.map((q) => (
           <option key={q.id} value={q.id}>
@@ -111,7 +111,7 @@ export function MoverReserva({
         value={hora}
         onChange={(e) => setHora(Number(e.target.value))}
         className="mt-1 w-full rounded-button border border-line px-2 py-1.5
-          text-[12px] text-ink outline-none focus:border-coral"
+          text-[12px] text-ink focus:border-coral"
       >
         {horas.map((h) => (
           <option key={h} value={h}>
