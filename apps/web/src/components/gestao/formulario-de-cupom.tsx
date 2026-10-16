@@ -80,7 +80,7 @@ export function FormularioDeCupom({
     "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray";
   const campo =
     "w-full rounded-button border border-line px-3 py-2 text-[14px] text-ink " +
-    "outline-none focus:border-coral";
+    "focus:border-coral";
 
   return (
     <form

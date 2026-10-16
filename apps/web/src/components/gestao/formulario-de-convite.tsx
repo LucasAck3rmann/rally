@@ -67,7 +67,7 @@ export function FormularioDeConvite({
             required
             placeholder="augusto@rally.com.br"
             className="min-h-[44px] w-full rounded-button border border-line px-3 py-2.5 text-[14px]
-              text-ink outline-none focus:border-coral"
+              text-ink focus:border-coral"
           />
         </label>
 
@@ -79,7 +79,7 @@ export function FormularioDeConvite({
             name="papel"
             defaultValue="ATENDENTE"
             className="min-h-[44px] rounded-button border border-line bg-white px-3 py-2.5 text-[14px]
-              text-ink outline-none focus:border-coral"
+              text-ink focus:border-coral"
           >
             {PAPEIS.map((p) => (
               <option key={p.valor} value={p.valor}>

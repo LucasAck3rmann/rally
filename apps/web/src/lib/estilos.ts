@@ -26,10 +26,10 @@ export const ALVO_MINIMO = "min-h-[44px]";
  */
 export const CAMPO =
   `w-full ${ALVO_MINIMO} rounded-button border border-line bg-white px-4 py-3 ` +
-  "text-[15px] text-ink outline-none transition focus:border-coral " +
+  "text-[15px] text-ink transition focus:border-coral " +
   "focus:ring-2 focus:ring-coral/30";
 
 /** Campo compacto das barras de filtro, onde o rótulo fica fora do controle. */
 export const CAMPO_COMPACTO =
   `${ALVO_MINIMO} rounded-button border border-line bg-white px-3 py-2 ` +
-  "text-[14px] text-ink outline-none transition focus:border-coral";
+  "text-[14px] text-ink transition focus:border-coral";
