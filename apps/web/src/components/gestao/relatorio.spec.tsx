@@ -31,6 +31,10 @@ const BASE: Relatorio = {
   porQuadra: [
     { quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 },
   ],
+  porModalidade: [
+    { modalidade: "Beach Tennis", reservas: 6, horas: 6, receita: 640, quadras: 2 },
+    { modalidade: "Futevôlei", reservas: 2, horas: 2, receita: 240, quadras: 1 },
+  ],
 };
 
 function montar(parcial: Partial<Relatorio> = {}) {
@@ -142,4 +146,27 @@ describe("Relatório da arena", () => {
     montar({ porMetodo: [] });
     expect(screen.getByText(/nenhuma venda no período/i)).toBeInTheDocument();
   });
+
+  it("mostra a receita por modalidade, com quantas quadras a atendem", () => {
+    // A pergunta veio do campo livre do Instrumento I, escrita por um gestor:
+    // "qual esporte que mais tem procura". O relatório respondia por quadra e
+    // por dia, e não por modalidade.
+    montar();
+
+    expect(screen.getByText("Por modalidade")).toBeInTheDocument();
+    expect(screen.getByText("Beach Tennis")).toBeInTheDocument();
+    // Plural e singular, que é onde o rótulo costuma sair errado.
+    expect(screen.getByText("2 quadras")).toBeInTheDocument();
+    expect(screen.getByText("1 quadra")).toBeInTheDocument();
+  });
+
+  it("avisa que os valores por modalidade não somam o total", () => {
+    // **Sem este aviso o número engana.** Uma quadra pode atender mais de uma
+    // modalidade, e a reserva registra a quadra, não o esporte jogado — somar
+    // a coluna daria mais que a receita real.
+    montar();
+
+    expect(screen.getByText(/não somam o total/)).toBeInTheDocument();
+  });
+
 });

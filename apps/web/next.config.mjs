@@ -31,6 +31,11 @@ const nextConfig = {
   reactStrictMode: true,
   transpilePackages: ["@rally/tokens"],
   images: { remotePatterns },
+  // O selo de desenvolvimento do Next fica fixo no canto inferior esquerdo e
+  // **cobre conteúdo** — atrapalha a inspeção visual das telas e aparece em
+  // qualquer captura feita do servidor de desenvolvimento, inclusive nas
+  // figuras do relatório. Desligá-lo não afeta produção, onde ele não existe.
+  devIndicators: false,
 };
 
 export default nextConfig;
