@@ -9,21 +9,55 @@ enum PapelGestao {
   atendente,
   financeiro,
   admin,
-  mantenedor;
+  mantenedor,
+
+  /// Papel que esta versão do aplicativo não conhece.
+  ///
+  /// Mesma correção que [ReservaStatus] e [PagamentoStatus] receberam no
+  /// #104 — e aqui ela **faltava**, apesar de a Matriz dar a classe como
+  /// fechada. O `ATENDENTE` chegava pelo `_`, de modo que qualquer papel
+  /// novo da API virava atendente.
+  ///
+  /// **Por que aqui era pior que nos outros dois.** Lá o padrão errado
+  /// produzia um rótulo errado numa tela de leitura. Aqui o papel volta para
+  /// a API em [paraApi], no menu de troca de papel: um papel desconhecido
+  /// lido como `atendente` e reenviado **rebaixaria a pessoa de verdade**,
+  /// gravando `ATENDENTE` sobre o papel que o aplicativo não soube ler. Erro
+  /// de leitura virava escrita.
+  desconhecido;
+
+  /// Os papéis que o menu de troca oferece.
+  ///
+  /// `mantenedor` fica fora porque é papel de plataforma: o
+  /// `PAPEIS_DE_GESTAO` da API não o inclui e o `PapelGuard` o recusa em
+  /// toda rota de arena. `desconhecido` fica fora porque não é papel — é a
+  /// ausência de um. A lista mora aqui, e não na tela, para que o portão
+  /// `enums_espelham_a_api_test.dart` possa cobrá-la contra o esquema.
+  static const List<PapelGestao> atribuiveis = [atendente, financeiro, admin];
 
   static PapelGestao doTexto(String valor) => switch (valor) {
-        "ADMIN" => PapelGestao.admin,
+        "ATENDENTE" => PapelGestao.atendente,
         "FINANCEIRO" => PapelGestao.financeiro,
+        "ADMIN" => PapelGestao.admin,
         "MANTENEDOR" => PapelGestao.mantenedor,
-        _ => PapelGestao.atendente,
+        _ => PapelGestao.desconhecido,
       };
 
   /// O texto que a API espera — o inverso de [doTexto].
+  ///
+  /// **Lança para [desconhecido] de propósito.** É inalcançável por
+  /// construção, porque o menu de troca só oferece [atribuiveis]; se algum
+  /// caminho novo chegar aqui, falhar alto é o que impede o erro de leitura
+  /// de se tornar uma escrita que rebaixa alguém.
   String get paraApi => switch (this) {
         PapelGestao.atendente => "ATENDENTE",
         PapelGestao.financeiro => "FINANCEIRO",
         PapelGestao.admin => "ADMIN",
         PapelGestao.mantenedor => "MANTENEDOR",
+        PapelGestao.desconhecido => throw StateError(
+            "PapelGestao.desconhecido nao pode ser enviado a API: "
+            "o papel lido nao foi reconhecido, e grava-lo apagaria o real.",
+          ),
       };
 
   String get rotulo => switch (this) {
@@ -31,6 +65,9 @@ enum PapelGestao {
         PapelGestao.financeiro => "Financeiro",
         PapelGestao.admin => "Administrador",
         PapelGestao.mantenedor => "Mantenedor",
+        // Diz que **o aplicativo** não sabe, e não que a pessoa tem um papel
+        // chamado assim.
+        PapelGestao.desconhecido => "Papel indisponível",
       };
 
   /// Só o administrador cria, edita ou pausa quadra — é o que a API exige

@@ -41,17 +41,55 @@ void main() {
       expect(PapelGestao.doTexto("ATENDENTE"), PapelGestao.atendente);
     });
 
-    test("papel desconhecido cai no menos poderoso, e não no mais", () {
-      // Um papel novo na API chegando como `admin` abriria escrita para quem
-      // o servidor recusaria; como `atendente`, no pior caso esconde botão.
+    test("papel desconhecido vira `desconhecido`, e não `atendente`", () {
+      // **Este teste afirmava o contrário, e o raciocínio dele estava certo
+      // mas incompleto.** Ele dizia que cair em `atendente` era seguro,
+      // porque um papel novo lido como `admin` abriria escrita que o
+      // servidor recusaria, enquanto `atendente` no pior caso esconde botão.
+      // Verdade — para *leitura*. O que faltava é que o papel **volta para a
+      // API** em `paraApi`, no menu de troca: lido como `atendente` e
+      // reenviado, ele **rebaixaria a pessoa de verdade**, gravando
+      // `ATENDENTE` sobre o papel que o aplicativo não soube ler. Erro de
+      // leitura virava escrita.
+      //
+      // `desconhecido` mantém a propriedade antiga — não escreve quadra,
+      // como o teste de `podeEditarQuadras` cobra — e acrescenta a que
+      // faltava: não pode ser enviado.
       expect(PapelGestao.doTexto("PAPEL_QUE_AINDA_NAO_EXISTE"),
-          PapelGestao.atendente);
+          PapelGestao.desconhecido);
+      expect(PapelGestao.desconhecido.podeEditarQuadras, isFalse);
     });
 
-    test("ida e volta preserva o papel", () {
-      for (final papel in PapelGestao.values) {
+    test("`desconhecido` não pode ser enviado à API", () {
+      // Falhar alto é o que impede o erro de leitura de se tornar escrita.
+      // É inalcançável por construção, porque o menu só oferece
+      // `atribuiveis` — e se algum caminho novo chegar aqui, quebra.
+      expect(() => PapelGestao.desconhecido.paraApi, throwsStateError);
+    });
+
+    test("ida e volta preserva todo papel que a API nomeia", () {
+      // `desconhecido` fica fora por não ser papel da API: ele é a ausência
+      // de um, e não tem texto para onde voltar.
+      final daApi =
+          PapelGestao.values.where((p) => p != PapelGestao.desconhecido);
+      expect(daApi, isNotEmpty);
+      for (final papel in daApi) {
         expect(PapelGestao.doTexto(papel.paraApi), papel);
       }
+    });
+
+    test("os papéis oferecidos no menu são atribuíveis de verdade", () {
+      // `mantenedor` fora porque o `PapelGuard` o recusa em rota de arena;
+      // `desconhecido` fora porque não é papel. A lista mora no enum, e as
+      // duas telas que a usam deixaram de ter cópia própria.
+      expect(PapelGestao.atribuiveis, [
+        PapelGestao.atendente,
+        PapelGestao.financeiro,
+        PapelGestao.admin,
+      ]);
+      expect(PapelGestao.atribuiveis, isNot(contains(PapelGestao.mantenedor)));
+      expect(
+          PapelGestao.atribuiveis, isNot(contains(PapelGestao.desconhecido)));
     });
   });
 }
