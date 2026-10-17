@@ -164,6 +164,10 @@ const RELATORIO: Relatorio = {
   porQuadra: [
     { quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 },
   ],
+  porModalidade: [
+    { modalidade: "Beach Tennis", reservas: 6, horas: 6, receita: 640, quadras: 2 },
+    { modalidade: "Futevôlei", reservas: 2, horas: 2, receita: 240, quadras: 1 },
+  ],
 };
 
 /**

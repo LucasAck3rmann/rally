@@ -209,6 +209,20 @@ export const Relatorio = z.object({
       receita: z.number(),
     }),
   ),
+  /**
+   * Receita por esporte. **Os valores não somam o total**, porque uma quadra
+   * pode atender mais de uma modalidade e a reserva registra a quadra, não o
+   * esporte jogado — a tela diz isso embaixo da tabela.
+   */
+  porModalidade: z.array(
+    z.object({
+      modalidade: z.string(),
+      reservas: z.number(),
+      horas: z.number(),
+      receita: z.number(),
+      quadras: z.number(),
+    }),
+  ),
 });
 export type Relatorio = z.infer<typeof Relatorio>;
 

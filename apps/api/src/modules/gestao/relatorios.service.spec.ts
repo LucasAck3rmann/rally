@@ -64,7 +64,17 @@ function servico(
     quadra: {
       findMany: jest
         .fn()
-        .mockResolvedValue(opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }]),
+        .mockResolvedValue(
+          // `modalidades` entra no padrão porque a consulta real sempre a
+          // traz: fixture sem ela deixaria o agrupamento por modalidade
+          // passar num teste e quebrar em produção.
+          (opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }]).map(
+            (q: { id: string; nome: string; modalidades?: { nome: string }[] }) => ({
+              modalidades: [],
+              ...q,
+            }),
+          ),
+        ),
     },
     reserva: { findMany: jest.fn().mockResolvedValue(opcoes.reservas ?? []) },
   } as unknown as PrismaService & Record<string, never>;
@@ -278,6 +288,95 @@ describe("RelatoriosService", () => {
     });
   });
 
+  describe("por modalidade (RF-28)", () => {
+    /**
+     * A pergunta veio do campo livre do Instrumento I, escrita por um gestor:
+     * *"qual esporte que mais tem procura"*. O relatório respondia por quadra
+     * e por dia, e não por modalidade.
+     */
+    const comModalidades = [
+      { id: "q1", nome: "Quadra 1", modalidades: [{ nome: "Beach Tennis" }] },
+      {
+        id: "q2",
+        nome: "Quadra 2",
+        modalidades: [{ nome: "Beach Tennis" }, { nome: "Futevôlei" }],
+      },
+    ];
+
+    it("agrupa receita e horas por modalidade", async () => {
+      const { servico: s } = servico({
+        quadras: comModalidades,
+        reservas: [reserva({ quadraId: "q1", preco: 100 })],
+      });
+
+      const r = await s.relatorio("e1", "2026-09-10", "2026-09-10");
+
+      expect(r.porModalidade).toEqual([
+        { modalidade: "Beach Tennis", reservas: 1, horas: 1, receita: 100, quadras: 1 },
+      ]);
+    });
+
+    it("quadra de duas modalidades conta nas duas, e os valores não somam o total", () => {
+      // **É da natureza do dado, não defeito.** A reserva registra a quadra,
+      // não o esporte jogado. Dividir a receita entre as modalidades daria
+      // números que somam bonito e que nenhum gestor poderia conferir.
+      return servico({
+        quadras: comModalidades,
+        reservas: [reserva({ quadraId: "q2", preco: 80 })],
+      })
+        .servico.relatorio("e1", "2026-09-10", "2026-09-10")
+        .then((r) => {
+          expect(r.porModalidade.map((m) => m.modalidade).sort()).toEqual([
+            "Beach Tennis",
+            "Futevôlei",
+          ]);
+          for (const m of r.porModalidade) expect(m.receita).toBe(80);
+          // A soma das modalidades (160) excede a receita real (80).
+          const soma = r.porModalidade.reduce((t, m) => t + m.receita, 0);
+          expect(soma).toBeGreaterThan(r.resumo.receitaTotal);
+        });
+    });
+
+    it("quadra sem modalidade cadastrada vira \"Não informada\", e não some", async () => {
+      // Receita que desaparece de um relatório é pior que receita numa linha
+      // sem nome: o gestor conferiria o total e não fecharia.
+      const { servico: s } = servico({
+        quadras: [{ id: "q1", nome: "Quadra 1", modalidades: [] }],
+        reservas: [reserva({ quadraId: "q1", preco: 50 })],
+      });
+
+      const r = await s.relatorio("e1", "2026-09-10", "2026-09-10");
+
+      expect(r.porModalidade).toEqual([
+        { modalidade: "Não informada", reservas: 1, horas: 1, receita: 50, quadras: 1 },
+      ]);
+    });
+
+    it("ordena pela receita, da maior para a menor", async () => {
+      const { servico: s } = servico({
+        quadras: comModalidades,
+        reservas: [
+          reserva({ quadraId: "q1", preco: 30 }),
+          reserva({ quadraId: "q2", preco: 200 }),
+        ],
+      });
+
+      const r = await s.relatorio("e1", "2026-09-10", "2026-09-10");
+
+      expect(r.porModalidade[0].modalidade).toBe("Beach Tennis");
+      expect(r.porModalidade[0].receita).toBe(230);
+      expect(r.porModalidade[0].quadras).toBe(2);
+    });
+
+    it("quadra ativa sem reserva no período não cria linha vazia", async () => {
+      const { servico: s } = servico({ quadras: comModalidades, reservas: [] });
+
+      const r = await s.relatorio("e1", "2026-09-10", "2026-09-10");
+
+      expect(r.porModalidade).toEqual([]);
+    });
+  });
+
   describe("xlsx (RF-28)", () => {
     it("nomeia o arquivo com o período e a extensão certa", async () => {
       const { servico: s } = servico();
@@ -322,6 +421,19 @@ describe("RelatoriosService", () => {
       expect(dias.getCell("A2").value).toBeInstanceOf(Date);
     });
 
+    it("a aba de modalidade traz a ressalva de que os valores não somam", async () => {
+      // Quem recebe a planilha por e-mail não recebe a tela junto, e somaria
+      // a coluna de receita. A ressalva precisa viajar dentro do arquivo.
+      const { servico: s } = servico();
+      const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
+
+      const lido = await abrirPlanilha(conteudo);
+      const aba = lido.getWorksheet("Por modalidade")!;
+      const textos: string[] = [];
+      aba.eachRow((linha) => textos.push(String(linha.getCell(1).value ?? "")));
+      expect(textos.some((t) => t.includes("não somam o total"))).toBe(true);
+    });
+
     it("tem uma aba por seção do relatório", async () => {
       const { servico: s } = servico();
       const { conteudo } = await s.xlsx("e1", "2026-09-10", "2026-09-10");
@@ -332,6 +444,7 @@ describe("RelatoriosService", () => {
         "Por método",
         "Dia por dia",
         "Por quadra",
+        "Por modalidade",
       ]);
     });
 

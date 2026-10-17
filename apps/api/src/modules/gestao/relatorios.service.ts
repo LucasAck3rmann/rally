@@ -78,7 +78,15 @@ export class RelatoriosService {
     const [quadras, reservas] = await Promise.all([
       this.prisma.quadra.findMany({
         where: { estabelecimentoId, ativo: true },
-        select: { id: true, nome: true },
+        // As modalidades entram aqui para o agrupamento por esporte (RF-28).
+        // A pergunta veio do campo livre do Instrumento I, escrita por um
+        // gestor: *"qual esporte que mais tem procura"*. O relatório sabia
+        // responder por quadra e por dia, e não por modalidade.
+        select: {
+          id: true,
+          nome: true,
+          modalidades: { select: { nome: true }, orderBy: { nome: "asc" } },
+        },
         orderBy: { nome: "asc" },
       }),
       this.prisma.reserva.findMany({
@@ -104,6 +112,7 @@ export class RelatoriosService {
       porMetodo: this.porMetodo(vendidas),
       porDia: this.porDia(vendidas, horarios, de, dias, quadras.length, timezone),
       porQuadra: this.porQuadra(quadras, vendidas),
+      porModalidade: this.porModalidade(quadras, vendidas),
     };
   }
 
@@ -149,6 +158,18 @@ export class RelatoriosService {
         numeroBr(q.horas, 1),
         numeroBr(q.receita),
       ]),
+      [],
+      // O aviso vai **dentro** da exportação, e não só na tela: quem abre o
+      // arquivo no Excel não vê a nota da interface, e somaria a coluna.
+      ["Modalidade", "Reservas", "Horas", "Receita", "Quadras"],
+      ...r.porModalidade.map((m) => [
+        m.modalidade,
+        String(m.reservas),
+        numeroBr(m.horas, 1),
+        numeroBr(m.receita),
+        String(m.quadras),
+      ]),
+      ["Uma quadra pode atender mais de uma modalidade; os valores acima nao somam o total."],
     ];
 
     return {
@@ -248,6 +269,31 @@ export class RelatoriosService {
         receita: q.receita,
       });
     }
+
+    const modalidades = livro.addWorksheet("Por modalidade");
+    modalidades.columns = [
+      { header: "Modalidade", key: "modalidade", width: 24 },
+      { header: "Reservas", key: "reservas", width: 12 },
+      { header: "Horas", key: "horas", width: 10 },
+      { header: "Receita", key: "receita", width: 14, style: { numFmt: "#,##0.00" } },
+      { header: "Quadras", key: "quadras", width: 10 },
+    ];
+    for (const m of r.porModalidade) {
+      modalidades.addRow({
+        modalidade: m.modalidade,
+        reservas: m.reservas,
+        horas: m.horas,
+        receita: m.receita,
+        quadras: m.quadras,
+      });
+    }
+    // A ressalva vai na própria aba: quem recebe a planilha por e-mail não
+    // recebe a tela junto, e somaria a coluna de receita sem pensar.
+    modalidades.addRow({});
+    modalidades.addRow({
+      modalidade:
+        "Uma quadra pode atender mais de uma modalidade; os valores acima não somam o total.",
+    });
 
     for (const aba of livro.worksheets) {
       aba.getRow(1).font = { bold: true };
@@ -388,6 +434,64 @@ export class RelatoriosService {
       });
     }
     return saida;
+  }
+
+  /**
+   * Receita e horas por modalidade (RF-28).
+   *
+   * **Os valores não somam o total, e isso é da natureza do dado, não um
+   * defeito.** Uma quadra pode atender beach tennis e futevôlei ao mesmo
+   * tempo, e a reserva não registra qual esporte foi jogado — registra a
+   * quadra. Atribuir a reserva a **cada** modalidade da quadra é a leitura
+   * honesta: responde "quais esportes têm procura" sem inventar uma
+   * desambiguação que o dado não tem. Dividir a receita entre as modalidades
+   * daria números que somam bonito e que nenhum gestor poderia conferir.
+   *
+   * Quadra sem modalidade cadastrada entra em "Não informada", em vez de
+   * sumir: receita que desaparece de um relatório é pior que receita numa
+   * linha sem nome.
+   */
+  private porModalidade(
+    quadras: { id: string; nome: string; modalidades: { nome: string }[] }[],
+    vendidas: ReservaDoRelatorio[],
+  ) {
+    const acumulado = new Map<
+      string,
+      { reservas: number; horas: number; receita: number; quadras: Set<string> }
+    >();
+
+    for (const quadra of quadras) {
+      const daQuadra = vendidas.filter((r) => r.quadraId === quadra.id);
+      if (daQuadra.length === 0) continue;
+      const nomes = quadra.modalidades.length
+        ? quadra.modalidades.map((m) => m.nome)
+        : ["Não informada"];
+      for (const nome of nomes) {
+        const atual = acumulado.get(nome) ?? {
+          reservas: 0,
+          horas: 0,
+          receita: 0,
+          quadras: new Set<string>(),
+        };
+        atual.reservas += daQuadra.length;
+        atual.horas += somaHoras(daQuadra);
+        atual.receita += daQuadra.reduce((s, r) => s + Number(r.preco), 0);
+        atual.quadras.add(quadra.id);
+        acumulado.set(nome, atual);
+      }
+    }
+
+    return [...acumulado.entries()]
+      .map(([modalidade, v]) => ({
+        modalidade,
+        reservas: v.reservas,
+        horas: arredondar(v.horas, 1),
+        receita: arredondar(v.receita),
+        // Quantas quadras atendem a modalidade: é o que explica por que uma
+        // modalidade pode ter mais receita sem ter mais procura por horário.
+        quadras: v.quadras.size,
+      }))
+      .sort((a, b) => b.receita - a.receita || a.modalidade.localeCompare(b.modalidade));
   }
 
   private porQuadra(

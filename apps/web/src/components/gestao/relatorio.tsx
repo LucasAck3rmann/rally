@@ -31,7 +31,7 @@ export function RelatorioDaArena({
   urlDoXlsx: string;
   urlDoPdf: string;
 }) {
-  const { resumo, porMetodo, porDia, porQuadra, periodo } = relatorio;
+  const { resumo, porMetodo, porDia, porQuadra, porModalidade, periodo } = relatorio;
   // Escala do gráfico: o maior dia define 100%. Fixar um máximo arbitrário
   // achataria a semana fraca e esconderia a diferença entre os dias.
   const maiorReceita = Math.max(...porDia.map((d) => d.receita), 1);
@@ -214,6 +214,50 @@ export function RelatorioDaArena({
               <li className="text-[13px] text-gray">Nenhuma quadra ativa.</li>
             ) : null}
           </ul>
+
+          {/* A pergunta "qual esporte tem mais procura" veio do campo livre
+              do Instrumento I, escrita por um gestor. O relatório sabia
+              responder por quadra e por dia, e não por modalidade. */}
+          <h2 className="mt-8 font-display text-[19px] font-bold text-ink">
+            Por modalidade
+          </h2>
+          <ul className="mt-4 space-y-2">
+            {porModalidade.map((m) => (
+              <li
+                key={m.modalidade}
+                className="flex items-center justify-between gap-3 border-b
+                  border-line/60 pb-2 text-[14px]"
+              >
+                <span className="min-w-0 truncate text-ink">
+                  {m.modalidade}
+                  <span className="ml-2 font-mono text-[10px] uppercase tracking-[0.1em] text-gray">
+                    {m.quadras} quadra{m.quadras === 1 ? "" : "s"}
+                  </span>
+                </span>
+                <span className="shrink-0 text-gray">
+                  {m.reservas} · {numero(m.horas)}h
+                </span>
+                <span className="shrink-0 font-semibold text-ink">
+                  {formatarPreco(m.receita)}
+                </span>
+              </li>
+            ))}
+            {porModalidade.length === 0 ? (
+              <li className="text-[13px] text-gray">
+                Nenhuma reserva no período.
+              </li>
+            ) : null}
+          </ul>
+          {porModalidade.length > 0 ? (
+            <p className="mt-3 text-[13px] text-gray">
+              {/* Dito aqui e também dentro do CSV e da planilha: quem recebe o
+                  arquivo por e-mail não recebe esta tela junto. */}
+              Uma quadra pode atender mais de uma modalidade, e a reserva
+              registra a quadra e não o esporte jogado. Por isso a receita
+              aparece em cada modalidade da quadra e{" "}
+              <strong>estes valores não somam o total</strong>.
+            </p>
+          ) : null}
         </section>
 
         <section>
