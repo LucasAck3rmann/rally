@@ -346,11 +346,7 @@ class _CardMembroState extends ConsumerState<_CardMembro> {
         }
       },
       itemBuilder: (_) => [
-        for (final papel in [
-          PapelGestao.atendente,
-          PapelGestao.financeiro,
-          PapelGestao.admin,
-        ])
+        for (final papel in PapelGestao.atribuiveis)
           PopupMenuItem(
             value: papel.paraApi,
             // O último administrador não pode ser rebaixado: a API recusa,
@@ -452,11 +448,7 @@ class _FolhaAdicionarState extends State<_FolhaAdicionar> {
                 onChanged: (v) => setState(() => _papel = v ?? _papel),
                 child: Column(
                   children: [
-                    for (final papel in [
-                      PapelGestao.atendente,
-                      PapelGestao.financeiro,
-                      PapelGestao.admin,
-                    ])
+                    for (final papel in PapelGestao.atribuiveis)
                       RadioListTile<PapelGestao>(
                         value: papel,
                         contentPadding: EdgeInsets.zero,

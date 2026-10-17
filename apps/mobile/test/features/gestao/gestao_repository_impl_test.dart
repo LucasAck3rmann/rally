@@ -269,7 +269,15 @@ void main() {
       // `paraApi` é o inverso de `doTexto`, e um desalinho entre os dois faria
       // a troca de papel gravar outro papel — silenciosamente, porque a API
       // aceitaria o texto e devolveria o que gravou.
-      for (final papel in PapelGestao.values) {
+      //
+      // `desconhecido` fica fora porque não é papel da API: ele não tem texto
+      // para onde voltar, e `paraApi` lança nele de propósito — é o que
+      // impede um papel que o aplicativo não soube ler de ser reenviado como
+      // outro. O teste do enum cobre esse caso em separado.
+      final daApi =
+          PapelGestao.values.where((p) => p != PapelGestao.desconhecido);
+      expect(daApi.length, 4);
+      for (final papel in daApi) {
         adaptador.responde(membroJson(papel: papel.paraApi));
 
         final membro = await repositorio.trocarPapel(arena, "u2", papel);
@@ -279,30 +287,40 @@ void main() {
       }
     });
 
-    test("papel desconhecido cai em atendente — o menor privilégio", () async {
-      // Contraste proposital com o `ReservaStatus.doTexto`, que cai em
-      // `bloqueio`: **aqui o padrão é seguro**. Papel novo na API faz a tela
-      // esconder botões, não mostrar botões indevidos. Se caísse em `admin`,
-      // uma adição de papel na API abriria escrita para quem não deveria —
-      // a interface, não o servidor, que continuaria recusando.
+    test("papel desconhecido vira `desconhecido`, e não `atendente`", () async {
+      // **Este teste afirmava `atendente`, e o argumento dele estava certo
+      // pela metade.** Ele dizia que o padrão era seguro porque papel novo
+      // faz a tela esconder botões em vez de mostrar botões indevidos — o
+      // que vale para *leitura*, e `desconhecido` preserva essa propriedade
+      // (`podeEditarQuadras` é falso nele).
+      //
+      // O que faltava: o papel **volta para a API** em `paraApi`, no menu de
+      // troca. Lido como `atendente` e reenviado, ele gravaria `ATENDENTE`
+      // sobre o papel real — erro de leitura virando escrita que rebaixa
+      // alguém. `desconhecido` não tem texto para enviar, e lança se alguém
+      // tentar.
       adaptador.responde([
         {"id": arena, "nome": "A", "meuPapel": "PAPEL_QUE_NAO_EXISTE"},
       ]);
 
       final lista = await repositorio.meusEstabelecimentos();
 
-      expect(lista.single.meuPapel, PapelGestao.atendente);
+      expect(lista.single.meuPapel, PapelGestao.desconhecido);
+      expect(lista.single.meuPapel.podeEditarQuadras, isFalse);
       expect(lista.single.meuPapel.podeEditarQuadras, isFalse);
     });
 
-    test("papel ausente também cai em atendente", () async {
+    test("papel ausente também vira `desconhecido`", () async {
+      // Campo que a API deveria mandar e não mandou é quebra de contrato, e
+      // `desconhecido` é o que diz isso. Escolher um papel plausível no
+      // lugar esconderia o defeito da API atrás de uma tela que funciona.
       adaptador.responde([
         {"id": arena, "nome": "A"},
       ]);
 
       expect(
         (await repositorio.meusEstabelecimentos()).single.meuPapel,
-        PapelGestao.atendente,
+        PapelGestao.desconhecido,
       );
     });
 

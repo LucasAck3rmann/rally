@@ -7,14 +7,23 @@ enum NotificacaoTipo {
   pagamento,
   replay,
   promocao,
-  lembrete;
+  lembrete,
+
+  /// Tipo que esta versão do aplicativo não conhece.
+  ///
+  /// O `LEMBRETE` chegava pelo `_`, de modo que qualquer tipo novo da API
+  /// aparecia com o sino e a cor de lembrete. Dano menor que o do
+  /// [PapelGestao], porque aqui nada volta para a API — mas é a mesma classe
+  /// de defeito, e a Matriz dava a classe como fechada pelo #104.
+  desconhecido;
 
   static NotificacaoTipo doTexto(String valor) => switch (valor) {
         "RESERVA" => NotificacaoTipo.reserva,
         "PAGAMENTO" => NotificacaoTipo.pagamento,
         "REPLAY" => NotificacaoTipo.replay,
         "PROMOCAO" => NotificacaoTipo.promocao,
-        _ => NotificacaoTipo.lembrete,
+        "LEMBRETE" => NotificacaoTipo.lembrete,
+        _ => NotificacaoTipo.desconhecido,
       };
 
   /// Ícone de linha correspondente em `assets/icons`.
@@ -24,6 +33,10 @@ enum NotificacaoTipo {
         NotificacaoTipo.replay => "play-circulo",
         NotificacaoTipo.promocao => "estrela",
         NotificacaoTipo.lembrete => "sino",
+        // O sino genérico é o certo aqui: o aviso existe e deve aparecer,
+        // só não se sabe de que tipo é. Esconder a notificação seria pior
+        // que mostrá-la sem categoria.
+        NotificacaoTipo.desconhecido => "sino",
       };
 }
 
