@@ -2,7 +2,7 @@
 
 > **Espelho do schema real.** A fonte de verdade é `apps/api/prisma/schema.prisma`; este documento reproduz o que está lá e explica **por que** está assim. Sincronizado em **29/09/2026** (`main`). Ao mudar o modelo, mude o schema primeiro e traga a mudança para cá no mesmo *pull request* — foi por não fazer isso que este arquivo passou a descrever uma trava anti-overbooking que já não existia.
 >
-> São **21 entidades e 10 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
+> São **22 entidades e 11 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
 
 ## Decisões de modelagem
 
@@ -44,6 +44,12 @@ enum ModalidadeTipo {
   FUTEVOLEI
   VOLEI
   OUTRO
+}
+
+enum RecorrenciaStatus {
+  ATIVA
+  PAUSADA
+  ENCERRADA
 }
 
 enum ReservaStatus {
@@ -116,19 +122,20 @@ model Estabelecimento {
   createdAt            DateTime  @default(now())
   updatedAt            DateTime  @updatedAt
 
-  quadras   Quadra[]
-  membros   Membership[]
-  horarios  HorarioFuncionamento[]
-  reservas  Reserva[]
-  materiais Material[]
-  promocoes Promocao[]
-  eventos   Evento[]
-  replays   Replay[]
-  auditLogs AuditLog[]
+  quadras      Quadra[]
+  membros      Membership[]
+  horarios     HorarioFuncionamento[]
+  reservas     Reserva[]
+  materiais    Material[]
+  promocoes    Promocao[]
+  eventos      Evento[]
+  replays      Replay[]
+  auditLogs    AuditLog[]
+  recorrencias Recorrencia[]
 }
 
 model HorarioFuncionamento {
-  id                String  @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
   diaSemana         Int
@@ -139,18 +146,18 @@ model HorarioFuncionamento {
 }
 
 model Usuario {
-  id            String    @id @default(cuid())
-  nome          String
-  email         String    @unique
-  senhaHash     String?
-  telefone      String?
-  avatarUrl     String?
-  consentLgpdEm DateTime?
+  id                String    @id @default(cuid())
+  nome              String
+  email             String    @unique
+  senhaHash         String?
+  telefone          String?
+  avatarUrl         String?
+  consentLgpdEm     DateTime?
   /// Quando o dono do endereco provou controlar a caixa de entrada (RF-03).
   emailVerificadoEm DateTime?
-  anonimizadoEm DateTime?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
+  anonimizadoEm     DateTime?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
 
   memberships   Membership[]
   reservas      Reserva[]               @relation("ReservaCliente")
@@ -163,6 +170,7 @@ model Usuario {
   notificacoes  Notificacao[]
   waitlist      WaitlistEntry[]
   auditLogs     AuditLog[]              @relation("AuditAutor")
+  recorrencias  Recorrencia[]           @relation("RecorrenciaCliente")
 }
 
 model Account {
@@ -244,7 +252,7 @@ model Notificacao {
   /// Rota do app que o toque abre, ex.: "/reservas/abc/confirmacao".
   destino   String?
   lidaEm    DateTime?
-  createdAt DateTime        @default(now())
+  createdAt DateTime  @default(now())
 
   @@index([usuarioId, createdAt])
 }
@@ -260,13 +268,13 @@ model NotificationPreference {
 }
 
 model Membership {
-  id                String   @id @default(cuid())
-  usuario           Usuario  @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
+  id                String          @id @default(cuid())
+  usuario           Usuario         @relation(fields: [usuarioId], references: [id], onDelete: Cascade)
   usuarioId         String
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
-  role              Role     @default(CLIENTE)
-  createdAt         DateTime @default(now())
+  role              Role            @default(CLIENTE)
+  createdAt         DateTime        @default(now())
 
   @@unique([usuarioId, estabelecimentoId])
   @@index([estabelecimentoId])
@@ -280,24 +288,26 @@ model Modalidade {
 }
 
 model Quadra {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
   nome              String
   descricao         String?
-  precoHora         Decimal  @db.Decimal(10, 2)
+  precoHora         Decimal         @db.Decimal(10, 2)
   capacidade        Int?
   fotos             String[]
   comodidades       String[]
-  ativo             Boolean  @default(true)
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   modalidades Modalidade[]    @relation("QuadraModalidade")
   faixasPreco FaixaPreco[]
   reservas    Reserva[]
   replays     Replay[]
   waitlist    WaitlistEntry[]
+
+  recorrencias Recorrencia[]
 
   @@index([estabelecimentoId])
 }
@@ -316,26 +326,30 @@ model FaixaPreco {
 
 // ───────────── Reserva & pagamento ─────────────
 model Reserva {
-  id                 String        @id @default(cuid())
+  id                 String          @id @default(cuid())
   estabelecimento    Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   estabelecimentoId  String
-  quadra             Quadra        @relation(fields: [quadraId], references: [id])
+  quadra             Quadra          @relation(fields: [quadraId], references: [id])
   quadraId           String
-  cliente            Usuario?      @relation("ReservaCliente", fields: [clienteId], references: [id])
+  cliente            Usuario?        @relation("ReservaCliente", fields: [clienteId], references: [id])
   clienteId          String?
   inicio             DateTime
   fim                DateTime
-  status             ReservaStatus @default(PENDENTE_PAGAMENTO)
-  origem             ReservaOrigem @default(APP)
-  preco              Decimal       @db.Decimal(10, 2)
-  promocao           Promocao?     @relation(fields: [promocaoId], references: [id])
+  status             ReservaStatus   @default(PENDENTE_PAGAMENTO)
+  origem             ReservaOrigem   @default(APP)
+  preco              Decimal         @db.Decimal(10, 2)
+  promocao           Promocao?       @relation(fields: [promocaoId], references: [id])
   promocaoId         String?
   canceladaEm        DateTime?
   motivoCancelamento String?
   /// Quando o lembrete de jogo foi enviado (RF-17). Nulo = ainda nao foi.
   lembreteEnviadoEm  DateTime?
-  createdAt          DateTime      @default(now())
-  updatedAt          DateTime      @updatedAt
+  /// A serie que gerou esta ocorrencia, quando ela e de mensalista (ADR-0014).
+  /// Nulo na reserva avulsa, que e a maioria.
+  recorrencia        Recorrencia?    @relation(fields: [recorrenciaId], references: [id], onDelete: SetNull)
+  recorrenciaId      String?
+  createdAt          DateTime        @default(now())
+  updatedAt          DateTime        @updatedAt
 
   pagamento Pagamento?
   replays   Replay[]
@@ -346,6 +360,57 @@ model Reserva {
   // deixava passar 19:30 sobre 19:00 e prendia para sempre um horário cancelado.
   @@index([estabelecimentoId, inicio])
   @@index([quadraId, inicio, fim])
+  /// Para listar e encerrar as ocorrencias futuras de uma serie sem varrer
+  /// a tabela inteira.
+  @@index([recorrenciaId, inicio])
+}
+
+/// Serie semanal de um mensalista (ADR-0014, RF-35).
+///
+/// A regra fica aqui; as ocorrencias sao `Reserva` de verdade, materializadas
+/// por horizonte deslizante. Mensalista virtual nao teria linha no banco, e a
+/// restricao `reserva_sem_sobreposicao` protege **linha que existe** -- outro
+/// cliente reservaria por cima e o banco aceitaria.
+model Recorrencia {
+  id                String          @id @default(cuid())
+  estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
+  estabelecimentoId String
+  quadra            Quadra          @relation(fields: [quadraId], references: [id])
+  quadraId          String
+  cliente           Usuario         @relation("RecorrenciaCliente", fields: [clienteId], references: [id])
+  clienteId         String
+
+  /// 0 = domingo, como `Date.getUTCDay` e os horarios de funcionamento.
+  diaSemana      Int
+  /// "19:00", na hora local do estabelecimento.
+  horaInicio     String
+  duracaoMinutos Int
+
+  vigenciaInicio DateTime
+  /// Nulo = sem data de termino definida; o horizonte segue avancando.
+  vigenciaFim    DateTime?
+
+  /// Preco acordado da ocorrencia. Fica congelado em cada `Reserva` gerada,
+  /// como manda a RN-12: reajuste vale para as proximas, nao para as geradas.
+  preco  Decimal           @db.Decimal(10, 2)
+  status RecorrenciaStatus @default(ATIVA)
+
+  /// Ate que data as ocorrencias ja foram criadas.
+  ///
+  /// **E a mitigacao medida do risco declarado no ADR-0014**: se o trabalho
+  /// agendado falhar, as ocorrencias deixam de nascer em silencio e o horario
+  /// aparece livre. A distancia entre este campo e o horizonte esperado e um
+  /// numero que o painel mostra e que um teste cobra -- intencao nao mede.
+  materializadaAte DateTime?
+
+  observacao   String?
+  criadaEm     DateTime @default(now())
+  atualizadaEm DateTime @updatedAt
+
+  ocorrencias Reserva[]
+
+  @@index([estabelecimentoId, status])
+  @@index([quadraId, diaSemana])
 }
 
 model Pagamento {
@@ -367,32 +432,32 @@ model Pagamento {
 
 // ───────────── Apoio à gestão ─────────────
 model Material {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
   nome              String
-  quantidade        Int      @default(0)
+  quantidade        Int             @default(0)
   unidade           String?
   estoqueMinimo     Int?
-  createdAt         DateTime @default(now())
-  updatedAt         DateTime @updatedAt
+  createdAt         DateTime        @default(now())
+  updatedAt         DateTime        @updatedAt
 
   @@index([estabelecimentoId])
 }
 
 model Promocao {
-  id                String       @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
   codigo            String
-  tipo              PromocaoTipo @default(PERCENTUAL)
-  valor             Decimal      @db.Decimal(10, 2)
+  tipo              PromocaoTipo    @default(PERCENTUAL)
+  valor             Decimal         @db.Decimal(10, 2)
   validadeInicio    DateTime
   validadeFim       DateTime
   usosMax           Int?
-  usosFeitos        Int          @default(0)
-  ativo             Boolean      @default(true)
-  createdAt         DateTime     @default(now())
+  usosFeitos        Int             @default(0)
+  ativo             Boolean         @default(true)
+  createdAt         DateTime        @default(now())
 
   reservas Reserva[]
 
@@ -401,7 +466,7 @@ model Promocao {
 }
 
 model Evento {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
   nome              String
@@ -409,34 +474,34 @@ model Evento {
   inicio            DateTime
   fim               DateTime
   vagas             Int?
-  createdAt         DateTime @default(now())
+  createdAt         DateTime        @default(now())
 
   @@index([estabelecimentoId])
 }
 
 model Replay {
-  id                String       @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id], onDelete: Cascade)
   estabelecimentoId String
-  quadra            Quadra       @relation(fields: [quadraId], references: [id])
+  quadra            Quadra          @relation(fields: [quadraId], references: [id])
   quadraId          String
-  reserva           Reserva?     @relation(fields: [reservaId], references: [id])
+  reserva           Reserva?        @relation(fields: [reservaId], references: [id])
   reservaId         String?
-  cliente           Usuario?     @relation("ReplayCliente", fields: [clienteId], references: [id])
+  cliente           Usuario?        @relation("ReplayCliente", fields: [clienteId], references: [id])
   clienteId         String?
   /// Chave do arquivo no provedor. **Única**: é a chave de idempotência da
   /// ingestão — o provedor reentrega o mesmo clipe quando não recebe 2xx, e
   /// a trava fica no banco porque a checagem na aplicação tem janela de
   /// corrida entre o SELECT e o INSERT (mesma razão da RN-01).
-  s3Key             String       @unique
+  s3Key             String          @unique
   url               String?
   duracaoSeg        Int?
-  status            ReplayStatus @default(PROCESSANDO)
+  status            ReplayStatus    @default(PROCESSANDO)
   /// Instante em que o lance aconteceu. É por ele que o clipe acha a reserva
   /// — e, por ela, o cliente (RF-30).
   gravadoEm         DateTime?
   expiraEm          DateTime?
-  criadoEm          DateTime     @default(now())
+  criadoEm          DateTime        @default(now())
 
   @@index([estabelecimentoId])
   @@index([clienteId])
@@ -458,16 +523,16 @@ model WaitlistEntry {
 }
 
 model AuditLog {
-  id                String   @id @default(cuid())
+  id                String          @id @default(cuid())
   estabelecimento   Estabelecimento @relation(fields: [estabelecimentoId], references: [id])
   estabelecimentoId String
-  autor             Usuario? @relation("AuditAutor", fields: [autorId], references: [id])
+  autor             Usuario?        @relation("AuditAutor", fields: [autorId], references: [id])
   autorId           String?
   acao              String
   entidade          String
   entidadeId        String?
   dados             Json?
-  criadoEm          DateTime @default(now())
+  criadoEm          DateTime        @default(now())
 
   @@index([estabelecimentoId, criadoEm])
 }
@@ -494,6 +559,7 @@ Em `apps/api/prisma/migrations/`, aplicadas e verificadas contra PostgreSQL real
 | `20261013180000_token_de_senha` | `TokenDeSenha` (RF-03). Guarda o **resumo** do token e não o token, pelo mesmo motivo de `senhaHash` |
 | `20261013190000_verificacao_de_email` | `TokenDeEmail` (RF-03). Tabela separada da anterior de propósito: validade diferente (7 dias contra 30 min) e consequência diferente — uma confirma um fato, a outra troca uma credencial |
 | `20261014100000_lembrete_de_jogo` | `Reserva.lembreteEnviadoEm` e um índice **parcial** `WHERE "lembreteEnviadoEm" IS NULL` (RF-17). Parcial porque o job pergunta sempre *quais faltam*: as linhas saem do índice quando o aviso sai, então ele não cresce com o histórico |
+| `20261017120000_mensalistas` | `Recorrencia` e a chave estrangeira anulável `Reserva.recorrenciaId` (ADR-0014, RF-35). A ocorrência de mensalista é **reserva de verdade**, e por isso cai sob a `reserva_sem_sobreposicao` como qualquer outra — série virtual não teria linha, e a restrição protege linha que existe. O índice `(recorrenciaId, inicio)` serve a encerrar as ocorrências futuras de uma série sem varrer a tabela |
 
 ### Anti-overbooking (RN-01) — por que deixou de ser índice único
 

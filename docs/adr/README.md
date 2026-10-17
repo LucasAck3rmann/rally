@@ -92,5 +92,21 @@
 **Consequências:** (+) sai da disputa em hardware e visão computacional; o vínculo reserva↔clipe fica no domínio e o fornecedor é substituível. (−) a FilmaEu não tem API pública documentada — **risco declarado**: a integração depende de interface que eles forneçam.
 **Versão por extenso:** [ADR-0012 — Captação de replays por parceria](0012-replays-por-parceria.md).
 
+## ADR-0013 — Conciliação interna, sem extrato do gateway
+**Status:** Aceito · **Data:** 2026-10-14
+**Contexto:** O relatório de conciliação (RF-29) compara reserva e cobrança para achar divergência — Pix expirado que ainda ocupa horário, reserva confirmada sem pagamento, valor divergente. A comparação ideal seria contra o **extrato do gateway**, que é a fonte externa, mas o projeto não tem credencial da AbacatePay (ADR-0003) e não terá antes do M5.
+**Decisão:** conciliar **dentro do Rally**, comparando a `Reserva` com o `Pagamento` que o próprio sistema gravou, e **declarar o limite na tela e no código** em vez de sugerir uma conferência externa que não acontece.
+**Alternativas:** esperar a credencial e não entregar conciliação nenhuma (deixaria o gestor sem o relatório que ele mais usa para fechar o caixa); importar extrato por CSV manual (acrescenta trabalho de digitação ao problema que o sistema existe para remover).
+**Consequências:** (+) acha as seis divergências que nascem dentro do sistema, que são as que o gestor resolve sozinho; a porta para o extrato continua aberta e é um adaptador. (−) **não acha divergência que só o extrato revelaria** — pagamento que entrou no gateway e não chegou ao Rally, por exemplo —, e isso está escrito na própria tela de conciliação.
+**Nota:** este ADR já era citado em três pontos do código (`conciliacao.service.ts`, `conciliacao.tsx` e o teste da tela) **antes de existir**. Foi escrito em 17/10 para fechar a referência pendente; o conteúdo é a decisão que o código já implementava.
+
+## ADR-0014 — Mensalistas como reservas materializadas
+**Status:** Proposto · **Data:** 2026-10-17
+**Contexto:** Cinco dos dez gestores da pesquisa de campo marcaram **controle de mensalistas** como recurso indispensável, e é o único da lista que o sistema não entrega de forma alguma. Um deles escreveu, no campo livre, *"campo com os mensalistas"*.
+**Decisão (resumo):** a série recorrente **materializa reservas reais** no banco, por horizonte deslizante, em vez de ser ocupação calculada na leitura. Colisão com reserva existente **pula a semana e reporta**, sem recusar a série nem deslocar ninguém.
+**Alternativas:** ocupação virtual (recusada — a restrição de exclusão `reserva_sem_sobreposicao` protege **linhas que existem**, e um mensalista sem linha poderia ser reservado por cima, devolvendo à aplicação a verificação que o projeto tirou dela de propósito); recusar a série inteira na colisão; deslocar a reserva conflitante.
+**Consequências:** (+) a ocorrência é reserva comum — entra na agenda, no relatório, na conciliação e sob a trava do banco, sem que nenhum desses caminhos precise conhecer mensalista. (−) horizonte é estado que envelhece, e a mitigação tem de ser **medida** e não intenção: a série guarda até quando foi materializada. (−) a alteração de série com ocorrências já geradas **fica declarada como pendência**, não resolvida aqui.
+**Versão por extenso:** [ADR-0014 — Mensalistas como reservas materializadas](0014-mensalistas.md).
+
 ---
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.
