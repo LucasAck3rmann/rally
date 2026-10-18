@@ -63,6 +63,7 @@ function servico(
   const criarSerie = jest.fn().mockResolvedValue(opcoes.serie ?? serieBase());
   const cancelarMuitas = jest.fn().mockResolvedValue({ count: 3 });
 
+  const acharSeries = jest.fn().mockResolvedValue([serieBase()]);
   const acharUsuario = jest
     .fn()
     .mockResolvedValue(opcoes.cliente === undefined ? { id: "u1" } : opcoes.cliente);
@@ -78,7 +79,7 @@ function servico(
       findFirst: jest
         .fn()
         .mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
-      findMany: jest.fn().mockResolvedValue([serieBase()]),
+      findMany: acharSeries,
       create: criarSerie,
       update: atualizarSerie,
     },
@@ -102,6 +103,7 @@ function servico(
     atualizarSerie,
     cancelarMuitas,
     acharUsuario,
+    acharSeries,
   };
 }
 
@@ -328,6 +330,74 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
           preco: 90,
         }),
       ).rejects.toThrow(BadRequestException);
+    });
+  });
+
+  describe("estenderHorizonte", () => {
+    it("a falha de uma série não interrompe as outras", async () => {
+      // **É a propriedade decisiva deste trabalho agendado.** Quadra removida,
+      // cliente anonimizado pela LGPD ou erro de banco numa série fazem a
+      // volta dela falhar. Abortar ali deixaria **todas as séries seguintes
+      // da lista** sem materializar, em silêncio, e o defeito apareceria
+      // semanas depois como horário livre que tem dono.
+      const { servico: s, acharSeries } = servico();
+      acharSeries.mockResolvedValueOnce([{ id: "s1" }, { id: "s2" }, { id: "s3" }]);
+      const materializar = jest
+        .spyOn(s, "materializar")
+        .mockResolvedValueOnce({ criadas: 9, puladas: [] })
+        .mockRejectedValueOnce(new Error("quadra removida"))
+        .mockResolvedValueOnce({
+          criadas: 8,
+          puladas: [{ data: "2026-11-03", motivo: "o horário já estava ocupado" }],
+        });
+
+      const r = await s.estenderHorizonte(AGORA);
+
+      // A terceira foi tentada **depois** de a segunda estourar.
+      expect(materializar).toHaveBeenCalledTimes(3);
+      expect(materializar).toHaveBeenLastCalledWith("s3", AGORA);
+      expect(r).toEqual({ series: 3, criadas: 17, puladas: 1, falhas: 1 });
+    });
+
+    it("só busca série ativa, não cheia e com vigência em pé", async () => {
+      // Série encerrada, série já materializada até o horizonte e série cuja
+      // vigência acabou não geram nada. Trazê-las seria pagar a consulta, uma
+      // vez por dia para sempre, para descobrir isso de novo.
+      const { servico: s, acharSeries } = servico();
+      acharSeries.mockResolvedValueOnce([]);
+      jest.spyOn(s, "materializar");
+
+      await s.estenderHorizonte(AGORA);
+
+      const onde = acharSeries.mock.calls[0][0].where as {
+        status: RecorrenciaStatus;
+        OR: { materializadaAte: null | { lt: Date } }[];
+        AND: { OR: { vigenciaFim: null | { gte: Date } }[] }[];
+      };
+      expect(onde.status).toBe(RecorrenciaStatus.ATIVA);
+      // O limite é o mesmo horizonte que o `materializar` usa. Um número
+      // diferente aqui faria o filtro pular série que o materializar ainda
+      // estenderia — e a série ficaria parada sem ninguém saber por quê.
+      const esperado = new Date(AGORA);
+      esperado.setUTCDate(esperado.getUTCDate() + SEMANAS_DE_HORIZONTE * 7);
+      expect(onde.OR).toEqual([
+        { materializadaAte: null },
+        { materializadaAte: { lt: esperado } },
+      ]);
+      expect(onde.AND).toEqual([
+        { OR: [{ vigenciaFim: null }, { vigenciaFim: { gte: AGORA } }] },
+      ]);
+    });
+
+    it("sem série pendente, não chama o materializar nenhuma vez", async () => {
+      const { servico: s, acharSeries } = servico();
+      acharSeries.mockResolvedValueOnce([]);
+      const materializar = jest.spyOn(s, "materializar");
+
+      const r = await s.estenderHorizonte(AGORA);
+
+      expect(materializar).not.toHaveBeenCalled();
+      expect(r).toEqual({ series: 0, criadas: 0, puladas: 0, falhas: 0 });
     });
   });
 

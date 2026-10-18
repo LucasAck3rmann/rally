@@ -14,6 +14,7 @@ import { EquipeService } from "./equipe.service";
 import { GestaoController } from "./gestao.controller";
 import { PainelController } from "./painel.controller";
 import { RelatoriosController } from "./relatorios.controller";
+import { HorizonteDeMensalistasJob } from "./horizonte.job";
 import { RecorrenciasController } from "./recorrencias.controller";
 import { RecorrenciasService } from "./recorrencias.service";
 import { RelatoriosService } from "./relatorios.service";
@@ -26,6 +27,6 @@ import { QuadrasGestaoService } from "./quadras-gestao.service";
 @Module({
   imports: [AuthModule, ConciliacaoModule],
   controllers: [RecorrenciasController, GestaoController, AuditoriaController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController, ConciliacaoController, CuponsController],
-  providers: [RecorrenciasService, GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService, CuponsService],
+  providers: [RecorrenciasService, HorizonteDeMensalistasJob, GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService, CuponsService],
 })
 export class GestaoModule {}

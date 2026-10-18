@@ -202,6 +202,59 @@ export class RecorrenciasService {
     return { criadas, puladas };
   }
 
+  /**
+   * Estende o horizonte de todas as séries ativas (ADR-0014).
+   *
+   * **Esta é a outra metade da mitigação que o ADR-0014 exigiu que fosse
+   * medida.** A série guarda `materializadaAte` e o painel mostra a folga em
+   * vermelho abaixo de duas semanas — mas uma medida sem nada que a mantenha
+   * mede a queda, não a evita. Sem este trabalho agendado, o horizonte só
+   * avançaria por clique no botão "Gerar semanas", e o botão existe para
+   * pressa, não para rotina.
+   *
+   * **Uma série que falha não interrompe as outras.** Quadra removida,
+   * cliente anonimizado pela LGPD ou erro de banco numa série fazem a volta
+   * dela falhar; abortar ali deixaria **todas as séries seguintes da lista**
+   * sem materializar, em silêncio, e o defeito apareceria semanas depois como
+   * horário livre que tem dono. O erro é contado e registrado, e a volta
+   * segue.
+   */
+  async estenderHorizonte(agora = new Date()) {
+    const horizonte = new Date(agora);
+    horizonte.setUTCDate(horizonte.getUTCDate() + SEMANAS_DE_HORIZONTE * 7);
+
+    const pendentes = await this.prisma.recorrencia.findMany({
+      where: {
+        status: RecorrenciaStatus.ATIVA,
+        // Série já cheia até o horizonte não precisa de volta: filtrar aqui
+        // troca N consultas que não criariam nada por uma que não as traz.
+        OR: [{ materializadaAte: null }, { materializadaAte: { lt: horizonte } }],
+        // Vigência encerrada também não gera nada. O `materializar` já
+        // respeita o fim, mas trazer a série seria pagar a consulta para
+        // descobrir isso uma vez por dia, para sempre.
+        AND: [{ OR: [{ vigenciaFim: null }, { vigenciaFim: { gte: agora } }] }],
+      },
+      select: { id: true },
+      orderBy: { criadaEm: "asc" },
+    });
+
+    let criadas = 0;
+    let puladas = 0;
+    let falhas = 0;
+    for (const { id } of pendentes) {
+      try {
+        const feito = await this.materializar(id, agora);
+        criadas += feito.criadas;
+        puladas += feito.puladas.length;
+      } catch (erro) {
+        falhas++;
+        this.log.error(`Série ${id}: falha ao estender o horizonte: ${erro}`);
+      }
+    }
+
+    return { series: pendentes.length, criadas, puladas, falhas };
+  }
+
   async editar(
     estabelecimentoId: string,
     id: string,
