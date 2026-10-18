@@ -48,6 +48,15 @@ Prioridade: **M** = Must (MVP) · **S** = Should · **C** = Could · **W** = Won
 - **RF-24 (S):** Controle de **materiais/estoque**.
 - **RF-25 (S):** **Promoções/cupons** (código, desconto, validade, usos).
 - **RF-26 (C):** **Eventos/torneios** (inscrição, chaveamento básico).
+- **RF-36 (M):** **Controle de mensalistas** — série semanal que ocupa o mesmo horário (cliente, quadra, dia, hora, duração, vigência e preço acordado), materializada como **reservas reais** ([ADR-0014](adr/0014-mensalistas.md)). A cobrança mensal fica **fora** do sistema.
+
+> **O RF-36 entrou depois da pesquisa de campo, e o número está fora da ordem de propósito.**
+>
+> Foi acrescentado em 17/10/2026, quando o Instrumento I (n = 10 gestores) mostrou **controle de mensalistas marcado por cinco dos dez** como recurso indispensável — e o único da lista que o sistema não entregava de forma alguma, enquanto autoatendimento, agenda visual, Pix antecipado, lembrete e relatório já existiam. Um gestor escreveu, no campo livre, *"campo com os mensalistas"*.
+>
+> O número segue o último existente em vez de se encaixar na seção porque **número de requisito é identificador, não posição**: renumerar invalidaria as citações no código, nos ADRs e na Matriz de Rastreabilidade, e trocaria um desconforto de leitura por um conjunto de referências erradas.
+>
+> ⚠️ **Entre 17/10 de manhã e 17/10 de noite, este trabalho foi citado como RF-35 em seis lugares.** O RF-35 é outro requisito — *multi-estabelecimento e módulo de clubes*, marcado `W→futuro` —, de modo que as citações afirmavam a entrega de algo que o projeto declarou **não** fazer. A palavra "mensalidades" aparece no texto do RF-35 e foi o que me levou ao erro: lá ela é a mensalidade de um clube, não o horário semanal de um cliente.
 
 ### Financeiro e relatórios
 - **RF-27 (M):** Relatórios de receita, ocupação, ticket médio e métodos de pagamento.

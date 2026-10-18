@@ -13,7 +13,7 @@ import {
 } from "class-validator";
 
 /**
- * Criação de uma série de mensalista (ADR-0014, RF-35).
+ * Criação de uma série de mensalista (ADR-0014, RF-36).
  *
  * **Os campos que definem o horário não aparecem em nenhum DTO de edição, e
  * isso é a decisão que o ADR-0014 deixou em aberto.** Alterar a quadra, o dia

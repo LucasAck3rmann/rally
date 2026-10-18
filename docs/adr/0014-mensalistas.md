@@ -1,6 +1,6 @@
 # ADR-0014 — Mensalistas como reservas materializadas
 
-**Status:** Aceito · **Data:** 2026-10-17
+**Status:** Aceito · **Data:** 2026-10-17 · **Requisito:** [RF-36](../requisitos.md)
 
 ## Contexto
 
@@ -45,7 +45,11 @@ Materializar custa linhas e disciplina de horizonte. Virtualizar custa a proprie
 
 **(+)** Cancelar uma ocorrência não desfaz a série, e encerrar a série não apaga o histórico — que é o que o relatório precisa para fechar o mês passado.
 
-**(−)** Horizonte é estado que envelhece. Se o trabalho agendado falhar, as ocorrências deixam de ser criadas em silêncio e o horário aparece como livre. **A mitigação precisa ser uma medida, não uma intenção:** a série guarda até que data foi materializada, e a diferença entre essa data e o horizonte esperado é um número que o painel pode mostrar e um teste pode cobrar.
+**(−)** Horizonte é estado que envelhece. Se o trabalho agendado falhar, as ocorrências deixam de ser criadas em silêncio e o horário aparece como livre. **A mitigação precisa ser uma medida, não uma intenção:** a série guarda até que data foi materializada, e a diferença entre essa data e o horizonte esperado é um número que o painel mostra em vermelho abaixo de duas semanas.
+
+A medida e o que a mantém são coisas diferentes, e por um dia só a medida existiu: o campo e o aviso do painel foram escritos antes do trabalho agendado, de modo que o sistema media a queda sem evitá-la. O `HorizonteDeMensalistasJob` roda **uma vez por dia**, e a cadência se justifica por comparação: a expiração de Pix roda de minuto a minuto porque cada minuto prende um horário vendável, o lembrete de jogo de dez em dez minutos porque sai três horas antes; aqui a folga é de oito semanas, e o aviso dispara com duas restantes — quatorze execuções de margem antes de alguém precisar olhar.
+
+**Uma série que falha não interrompe as outras.** Abortar a varredura na primeira falha deixaria todas as séries seguintes da lista sem materializar, em silêncio, e o defeito apareceria semanas depois como horário livre que tem dono. A falha é contada, registrada com a consequência escrita no log, e a volta segue.
 
 **(−)** Alterar a série exige decidir o que fazer com as ocorrências já materializadas e ainda não jogadas. **A decisão, tomada no desenho detalhado: a série não muda.** Os campos que definem o horário — quadra, dia da semana, hora de início e duração — não existem em nenhum DTO de edição. Trocar o horário de um mensalista é **encerrar a série e cadastrar outra**.
 
