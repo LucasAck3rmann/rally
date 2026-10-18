@@ -129,6 +129,6 @@ Prioridade: **M** = Must (MVP) · **S** = Should · **C** = Could · **W** = Won
 
 ## 6. Recorte do MVP (TCC)
 **Must** = MVP: RF-01,02,05,06,07,08,09,12,13,16,20,21,22,23,27,28 + RNF-01,03,04,06,07,08,10,12,13.
-*Should/Could* (replays em produção, WhatsApp, eventos, mantenedor completo, clubes) entram como **evolução** — ver [§14 de Arquitetura](Arquitetura%20e%20Stack.md) e Roadmap.
+*Should/Could* (replays em produção, WhatsApp, eventos, mantenedor completo, clubes) entram como **evolução** — ver [§14 de Arquitetura](arquitetura.md) e Roadmap.
 
 > Próximo refinamento: diagramas de caso de uso (UML) e de sequência para CU-01, se a banca pedir formalização.

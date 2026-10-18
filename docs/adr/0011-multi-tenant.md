@@ -4,7 +4,7 @@
 **Relacionado:** [Modelo de Dados (schema.prisma)](../modelo-de-dados.md) · [Segurança, Privacidade e LGPD](../seguranca-lgpd.md) (RN-16) · [Decisões de Arquitetura (ADRs)](README.md)
 
 ## Contexto
-O Rally é um **SaaS multi-tenant**: muitos estabelecimentos (quadras/arenas) compartilham a mesma aplicação, cada um com seus dados (quadras, reservas, clientes, financeiro). O isolamento entre tenants é um **requisito de segurança crítico** ([RN-16](Requisitos.md)): nenhum estabelecimento pode ver/alterar dado de outro, e um bug não pode virar vazamento (**IDOR**). Precisamos decidir **onde e como** esse isolamento é garantido, considerando que a stack usa **PostgreSQL + Prisma** (ADR-0004) com **connection pooling** e a meta de escalar para milhares de tenants pequenos.
+O Rally é um **SaaS multi-tenant**: muitos estabelecimentos (quadras/arenas) compartilham a mesma aplicação, cada um com seus dados (quadras, reservas, clientes, financeiro). O isolamento entre tenants é um **requisito de segurança crítico** ([RN-16](../requisitos.md)): nenhum estabelecimento pode ver/alterar dado de outro, e um bug não pode virar vazamento (**IDOR**). Precisamos decidir **onde e como** esse isolamento é garantido, considerando que a stack usa **PostgreSQL + Prisma** (ADR-0004) com **connection pooling** e a meta de escalar para milhares de tenants pequenos.
 
 ### Forças/requisitos
 - **Isolamento forte** (defesa em profundidade desejável) e baixo risco de erro humano.
@@ -58,7 +58,7 @@ Adotar **(A) banco e schema compartilhados com isolamento por `estabelecimentoId
 3. **Proibir bypass:** acesso ao `PrismaClient` só via repositórios; ESLint/review barram query crua em controllers.
 4. **Testes de isolamento (CI):** suíte que cria 2 tenants e garante que A nunca lê/escreve em B (RNF-06).
 5. **Caminho RLS (futuro):** habilitar `ROW LEVEL SECURITY` nas tabelas, `CREATE POLICY tenant_isolation USING (estabelecimento_id = current_setting('app.tenant')::text)`, e abrir cada transação com `SET LOCAL app.tenant = $id`. Conta de aplicação **sem** `BYPASSRLS`; jobs cross-tenant usam conta separada e explícita.
-6. **Mantenedor/SaaS-admin:** acessos cross-tenant (métricas da plataforma) passam por um caminho **explícito e auditado** ([AuditLog](Modelo%20de%20Dados%20(schema.prisma).md)), nunca pelo escopo padrão.
+6. **Mantenedor/SaaS-admin:** acessos cross-tenant (métricas da plataforma) passam por um caminho **explícito e auditado** ([AuditLog](../modelo-de-dados.md)), nunca pelo escopo padrão.
 
 ## Revisão
 Revisar quando: (a) o 1º cliente **enterprise** exigir isolamento físico → avaliar (D) para ele; (b) volume/tenant justificar RLS obrigatório → promover (B) a primário. Um novo ADR substituirá este se a estratégia primária mudar.
