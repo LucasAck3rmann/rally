@@ -22,6 +22,8 @@ const PARA_CONCILIAR = {
   inicio: true,
   quadra: { select: { nome: true } },
   cliente: { select: { nome: true } },
+  /// Se a reserva veio de uma serie de mensalista (ADR-0014).
+  recorrenciaId: true,
   pagamento: {
     select: { status: true, valor: true, metodo: true, expiraEm: true },
   },
@@ -183,6 +185,8 @@ const DESCRICOES: Record<
 type ReservaConciliada = {
   status: ReservaStatus;
   preco: Prisma.Decimal;
+  /** Nulo na reserva avulsa; preenchido na ocorrencia de mensalista. */
+  recorrenciaId?: string | null;
   pagamento: {
     status: PagamentoStatus;
     valor: Prisma.Decimal;
@@ -201,7 +205,13 @@ function classificar(r: ReservaConciliada, agora: Date): TipoDeDivergencia[] {
 
   if (!p) {
     if (r.status === ReservaStatus.PENDENTE_PAGAMENTO) tipos.push("SEM_COBRANCA");
-    else if (r.status === ReservaStatus.CONFIRMADA) {
+    else if (r.status === ReservaStatus.CONFIRMADA && !r.recorrenciaId) {
+      // **Ocorrencia de mensalista fica fora**, e nao por ser menos
+      // divergente: por ser divergente *por desenho*. O mensalista paga por
+      // acordo mensal, fora do fluxo de cobranca por reserva, de modo que
+      // toda ocorrencia dele apareceria aqui. Cinco mensalistas rendem vinte
+      // linhas de "atencao" por mes, e afogariam as divergencias que o gestor
+      // precisa resolver -- que e o oposto do que esta tela existe para fazer.
       tipos.push("CONFIRMADA_SEM_PAGAMENTO");
     }
     return tipos;

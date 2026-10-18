@@ -2,16 +2,11 @@
 import { METHOD_METADATA, PATH_METADATA } from "@nestjs/common/constants";
 import { RequestMethod } from "@nestjs/common";
 
+import { readFileSync } from "node:fs";
+import { join } from "node:path";
+
 import { ACAO_AUDITADA, DescricaoDaAcao } from "../auditoria/auditar.decorator";
-import { AgendaController } from "./agenda.controller";
-import { AuditoriaController } from "./auditoria.controller";
-import { ConciliacaoController } from "./conciliacao.controller";
-import { CuponsController } from "./cupons.controller";
-import { EquipeController } from "./equipe.controller";
-import { GestaoController } from "./gestao.controller";
-import { PainelController } from "./painel.controller";
-import { QuadrasGestaoController } from "./quadras-gestao.controller";
-import { RelatoriosController } from "./relatorios.controller";
+import { GestaoModule } from "./gestao.module";
 
 /**
  * **Toda rota de escrita da gestão é auditada (RN-05).**
@@ -29,18 +24,29 @@ import { RelatoriosController } from "./relatorios.controller";
  * for deliberadamente não auditável, a exceção se declara aqui, com o motivo.
  */
 
-/** Todos os controladores que o `GestaoModule` registra. */
-const CONTROLADORES = [
-  GestaoController,
-  AuditoriaController,
-  QuadrasGestaoController,
-  AgendaController,
-  PainelController,
-  EquipeController,
-  RelatoriosController,
-  ConciliacaoController,
-  CuponsController,
-];
+/**
+ * Os controladores vêm **do próprio módulo**, e não de uma lista aqui.
+ *
+ * Esta lista era escrita à mão, e em 17/10 ela mostrou o limite dessa escolha:
+ * o `RecorrenciasController` entrou no `GestaoModule` com quatro rotas de
+ * escrita e **o portão não o viu**, porque ninguém o acrescentou aqui. Ele
+ * passava verde sobre um controlador que não tinha conferido.
+ *
+ * É a lição do #95 levada um passo adiante. Lá a resposta foi *portão
+ * alimentado à mão precisa de âncora que cubra a alimentação*; aqui a resposta
+ * é melhor — **não alimentar à mão**. O Nest guarda os controladores do módulo
+ * em metadado, de modo que a fonte da lista passa a ser a mesma que o
+ * aplicativo usa para registrar as rotas: controlador novo entra no portão no
+ * instante em que entra no módulo.
+ */
+/** O esquema, que e a fonte dos nomes de entidade. */
+const schema = readFileSync(
+  join(__dirname, "..", "..", "..", "prisma", "schema.prisma"),
+  "utf-8",
+);
+
+const CONTROLADORES = (Reflect.getMetadata("controllers", GestaoModule) ??
+  []) as { name: string; prototype: object }[];
 
 const ESCRITA = new Set([
   RequestMethod.POST,
@@ -131,14 +137,14 @@ describe("RN-05 — toda escrita da gestão deixa rastro", () => {
     // O texto é lido pelo dono da arena, não pelo time: "pausar quadra" e não
     // "PATCH /quadras/:id". E a entidade precisa ser uma do modelo, para que
     // a trilha possa ser filtrada por ela.
-    const ENTIDADES = new Set([
-      "Quadra",
-      "Reserva",
-      "Promocao",
-      "Membership",
-      "Pagamento",
-      "Estabelecimento",
-    ]);
+    // As entidades saem do **esquema**, pela mesma razão que os controladores
+    // saem do módulo: lista escrita à mão envelhece calada. Esta tinha seis
+    // nomes e não incluía `Recorrencia`, de modo que uma entidade nova do
+    // modelo seria recusada pelo portão como se fosse erro de digitação.
+    const ENTIDADES = new Set(
+      [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]),
+    );
+    expect(ENTIDADES.size).toBeGreaterThan(15);
 
     // Cada afirmacao leva a rota dentro do valor, para a falha dizer qual e.
     const curtas: string[] = [];

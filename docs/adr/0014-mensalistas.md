@@ -1,6 +1,6 @@
 # ADR-0014 — Mensalistas como reservas materializadas
 
-**Status:** Proposto · **Data:** 2026-10-17
+**Status:** Aceito · **Data:** 2026-10-17
 
 ## Contexto
 
@@ -25,6 +25,8 @@ A geração das ocorrências é feita por um **horizonte deslizante**: ao criar 
 
 Quando uma ocorrência **colide** com reserva já existente, ela é **pulada e reportada** — a série não é recusada inteira, e nada é deslocado. O gestor recebe a lista das semanas que não couberam e decide.
 
+O cliente é identificado **pelo e-mail**, e não pelo identificador, como já faz a gestão de equipe (RF-23). O painel é preenchido por uma pessoa, e ninguém sabe o UUID de ninguém — um campo de identificador seria um formulário impossível de preencher. Quem não tem conta no Rally recebe recusa com o motivo, e a tela manda pedir o cadastro. Convite pendente exigiria token e e-mail transacional, que o MVP não tem e de que o controle de mensalistas não depende.
+
 ## Alternativas consideradas
 
 **Ocupação virtual, calculada na leitura.** A série ficaria só como regra, e a grade de horários a aplicaria ao montar a disponibilidade. Economiza linhas e torna trivial alterar a série inteira.
@@ -45,7 +47,9 @@ Materializar custa linhas e disciplina de horizonte. Virtualizar custa a proprie
 
 **(−)** Horizonte é estado que envelhece. Se o trabalho agendado falhar, as ocorrências deixam de ser criadas em silêncio e o horário aparece como livre. **A mitigação precisa ser uma medida, não uma intenção:** a série guarda até que data foi materializada, e a diferença entre essa data e o horizonte esperado é um número que o painel pode mostrar e um teste pode cobrar.
 
-**(−)** Alterar a série (mudar o horário, por exemplo) exige decidir o que fazer com as ocorrências já materializadas e ainda não jogadas. Esta decisão **não está tomada aqui**, e fica declarada como pendência do desenho detalhado.
+**(−)** Alterar a série exige decidir o que fazer com as ocorrências já materializadas e ainda não jogadas. **A decisão, tomada no desenho detalhado: a série não muda.** Os campos que definem o horário — quadra, dia da semana, hora de início e duração — não existem em nenhum DTO de edição. Trocar o horário de um mensalista é **encerrar a série e cadastrar outra**.
+
+A alternativa seria cancelar N reservas e criar N outras, cada uma podendo colidir com algo já marcado. O resultado possível é uma série movida pela metade, e o gestor sem como saber quais semanas mudaram. Encerrar e recriar chega ao mesmo lugar por um caminho que o sistema já sabe explicar: as passadas ficam como histórico do relatório, as futuras são canceladas com motivo registrado, e a série nova materializa com o próprio relatório de colisão. O ganho é uma propriedade forte — **nenhuma reserva pode discordar da série que a gerou**, porque a regra que a gerou nunca muda.
 
 **(−)** O preço fica congelado na reserva, como já acontece hoje (RN-12). Reajuste de mensalidade vale para as ocorrências geradas depois, e isso precisa estar visível para o gestor — caso contrário ele reajusta e não entende por que o mês seguinte não mudou.
 
