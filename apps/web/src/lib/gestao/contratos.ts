@@ -296,7 +296,7 @@ export const TrilhaDeAuditoria = z.array(RegistroDaTrilha);
 export type TrilhaDeAuditoria = z.infer<typeof TrilhaDeAuditoria>;
 
 /**
- * Mensalista: a série semanal, não a ocorrência (RF-35, ADR-0014).
+ * Mensalista: a série semanal, não a ocorrência (RF-36, ADR-0014).
  *
  * `materializadaAte` é o campo que denuncia falha: ele diz até quando as
  * ocorrências já foram criadas, e a distância entre ele e hoje revela um
