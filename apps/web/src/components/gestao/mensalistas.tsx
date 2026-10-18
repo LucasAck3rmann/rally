@@ -146,7 +146,9 @@ export function MensalistasDaArena({
                       {folga === null
                         ? "Nenhuma semana gerada ainda."
                         : `Horários criados até ${data(m.materializadaAte!)}`}
-                      {curto ? " — gere mais antes que a agenda abra o horário." : ""}
+                      {curto
+                        ? " — isto avança sozinho todo dia, e parou. Gere agora para a agenda não abrir o horário."
+                        : ""}
                     </p>
                     {podeEditar ? (
                       <>
@@ -184,6 +186,13 @@ export function MensalistasDaArena({
         o Rally registra quem tem o horário e quanto vale, e não emite a fatura.
         Para trocar o dia ou a hora de um mensalista, encerre e cadastre de
         novo — assim nenhuma reserva fica discordando da série que a gerou.
+      </p>
+
+      <p className="mt-3 text-[13px] text-gray">
+        O horizonte de oito semanas <strong>avança sozinho todo dia</strong>.
+        O botão de gerar existe para pressa — cadastrou agora e quer ver as
+        semanas na agenda — e para o caso em que o aviso acima aparece, que
+        é sinal de que o trabalho automático parou.
       </p>
     </div>
   );

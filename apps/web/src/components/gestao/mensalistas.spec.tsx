@@ -109,13 +109,15 @@ describe("MensalistasDaArena", () => {
     // o cliente chega e a quadra foi vendida para outro.
     montar([mensalista({ materializadaAte: "2026-10-27" })]);
 
-    expect(screen.getByText(/gere mais antes que a agenda abra o horário/)).toBeInTheDocument();
+    expect(
+      screen.getByText(/avança sozinho todo dia, e parou/),
+    ).toBeInTheDocument();
   });
 
   it("não avisa quando o horizonte está folgado", () => {
     montar([mensalista({ materializadaAte: "2026-12-15" })]);
 
-    expect(screen.queryByText(/gere mais antes/)).not.toBeInTheDocument();
+    expect(screen.queryByText(/e parou/)).not.toBeInTheDocument();
     expect(screen.getByText(/Horários criados até 15\/12\/2026/)).toBeInTheDocument();
   });
 

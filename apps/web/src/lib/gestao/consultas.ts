@@ -111,7 +111,7 @@ export function trilhaDoEstabelecimento(
   );
 }
 
-/** Os mensalistas da arena (RF-35). Ler é de toda a equipe com vínculo. */
+/** Os mensalistas da arena (RF-36). Ler é de toda a equipe com vínculo. */
 export function mensalistasDoEstabelecimento(estabelecimentoId: string) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas`,
