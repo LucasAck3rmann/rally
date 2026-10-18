@@ -80,11 +80,17 @@ export class RecorrenciasService {
     });
     if (!quadra) throw new NotFoundException("Quadra não encontrada.");
 
+    // O cliente chega por e-mail, como na equipe (RF-23): o painel é
+    // preenchido por uma pessoa, e a recusa precisa dizer o que fazer.
     const cliente = await this.prisma.usuario.findUnique({
-      where: { id: dto.clienteId },
+      where: { email: dto.clienteEmail.trim().toLowerCase() },
       select: { id: true },
     });
-    if (!cliente) throw new NotFoundException("Cliente não encontrado.");
+    if (!cliente) {
+      throw new NotFoundException(
+        "Ninguém com esse e-mail tem conta no Rally. Peça para se cadastrar primeiro.",
+      );
+    }
 
     const inicio = this.soData(dto.vigenciaInicio, "vigenciaInicio");
     const fim = dto.vigenciaFim ? this.soData(dto.vigenciaFim, "vigenciaFim") : null;
@@ -96,7 +102,7 @@ export class RecorrenciasService {
       data: {
         estabelecimentoId,
         quadraId: dto.quadraId,
-        clienteId: dto.clienteId,
+        clienteId: cliente.id,
         diaSemana: dto.diaSemana,
         horaInicio: dto.horaInicio,
         duracaoMinutos: dto.duracaoMinutos,

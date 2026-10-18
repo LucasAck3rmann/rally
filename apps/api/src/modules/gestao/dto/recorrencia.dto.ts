@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import {
+  IsEmail,
   IsISO8601,
   IsInt,
   IsNumber,
@@ -30,8 +31,17 @@ export class CriarRecorrenciaDto {
   @IsString()
   quadraId!: string;
 
-  @IsString()
-  clienteId!: string;
+  /**
+   * E-mail de quem tem o horário, e não o identificador.
+   *
+   * **O painel é preenchido por uma pessoa, e ninguém sabe o UUID de
+   * ninguém.** O caminho é o mesmo que a equipe já usa (RF-23): quem não tem
+   * conta no Rally recebe 404 com o motivo, e a tela manda pedir o cadastro.
+   * Convite pendente exigiria token e e-mail transacional — dois recursos que
+   * o MVP não tem, e o ADR-0014 não precisa deles para entregar o controle.
+   */
+  @IsEmail({}, { message: "Informe um e-mail válido para o cliente." })
+  clienteEmail!: string;
 
   /** 0 = domingo, como `Date.getUTCDay` e os horários de funcionamento. */
   @IsInt()

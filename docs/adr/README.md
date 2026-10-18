@@ -101,11 +101,11 @@
 **Nota:** este ADR já era citado em três pontos do código (`conciliacao.service.ts`, `conciliacao.tsx` e o teste da tela) **antes de existir**. Foi escrito em 17/10 para fechar a referência pendente; o conteúdo é a decisão que o código já implementava.
 
 ## ADR-0014 — Mensalistas como reservas materializadas
-**Status:** Proposto · **Data:** 2026-10-17
+**Status:** Aceito · **Data:** 2026-10-17
 **Contexto:** Cinco dos dez gestores da pesquisa de campo marcaram **controle de mensalistas** como recurso indispensável, e é o único da lista que o sistema não entrega de forma alguma. Um deles escreveu, no campo livre, *"campo com os mensalistas"*.
 **Decisão (resumo):** a série recorrente **materializa reservas reais** no banco, por horizonte deslizante, em vez de ser ocupação calculada na leitura. Colisão com reserva existente **pula a semana e reporta**, sem recusar a série nem deslocar ninguém.
 **Alternativas:** ocupação virtual (recusada — a restrição de exclusão `reserva_sem_sobreposicao` protege **linhas que existem**, e um mensalista sem linha poderia ser reservado por cima, devolvendo à aplicação a verificação que o projeto tirou dela de propósito); recusar a série inteira na colisão; deslocar a reserva conflitante.
-**Consequências:** (+) a ocorrência é reserva comum — entra na agenda, no relatório, na conciliação e sob a trava do banco, sem que nenhum desses caminhos precise conhecer mensalista. (−) horizonte é estado que envelhece, e a mitigação tem de ser **medida** e não intenção: a série guarda até quando foi materializada. (−) a alteração de série com ocorrências já geradas **fica declarada como pendência**, não resolvida aqui.
+**Consequências:** (+) a ocorrência é reserva comum — entra na agenda, no relatório, na conciliação e sob a trava do banco, sem que nenhum desses caminhos precise conhecer mensalista. (−) horizonte é estado que envelhece, e a mitigação tem de ser **medida** e não intenção: a série guarda até quando foi materializada, e o painel mostra a folga. (−) a série **não se altera**: trocar quadra, dia ou hora é encerrar e cadastrar outra, e nenhum DTO de edição aceita esses campos — o preço disso é um cadastro a mais, e o ganho é que nenhuma reserva pode discordar da série que a gerou.
 **Versão por extenso:** [ADR-0014 — Mensalistas como reservas materializadas](0014-mensalistas.md).
 
 ---

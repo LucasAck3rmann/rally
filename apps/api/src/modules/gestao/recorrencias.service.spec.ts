@@ -60,7 +60,12 @@ function servico(
     return { id: `r${criadas.length}` };
   });
   const atualizarSerie = jest.fn().mockResolvedValue(serieBase());
+  const criarSerie = jest.fn().mockResolvedValue(opcoes.serie ?? serieBase());
   const cancelarMuitas = jest.fn().mockResolvedValue({ count: 3 });
+
+  const acharUsuario = jest
+    .fn()
+    .mockResolvedValue(opcoes.cliente === undefined ? { id: "u1" } : opcoes.cliente);
 
   const prisma = {
     recorrencia: {
@@ -74,7 +79,7 @@ function servico(
         .fn()
         .mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
       findMany: jest.fn().mockResolvedValue([serieBase()]),
-      create: jest.fn().mockResolvedValue(opcoes.serie ?? serieBase()),
+      create: criarSerie,
       update: atualizarSerie,
     },
     quadra: {
@@ -84,13 +89,7 @@ function servico(
           opcoes.quadra === undefined ? { id: "q1" } : opcoes.quadra,
         ),
     },
-    usuario: {
-      findUnique: jest
-        .fn()
-        .mockResolvedValue(
-          opcoes.cliente === undefined ? { id: "u1" } : opcoes.cliente,
-        ),
-    },
+    usuario: { findUnique: acharUsuario },
     reserva: { create: criarReserva, updateMany: cancelarMuitas },
   } as unknown as PrismaService;
 
@@ -99,8 +98,10 @@ function servico(
     prisma,
     criadas,
     criarReserva,
+    criarSerie,
     atualizarSerie,
     cancelarMuitas,
+    acharUsuario,
   };
 }
 
@@ -252,7 +253,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       await expect(
         s.criar("e1", {
           quadraId: "q-de-outra",
-          clienteId: "u1",
+          clienteEmail: "augusto@rally.com.br",
           diaSemana: TERCA,
           horaInicio: "19:00",
           duracaoMinutos: 60,
@@ -268,7 +269,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       await expect(
         s.criar("e1", {
           quadraId: "q1",
-          clienteId: "fantasma",
+          clienteEmail: "fantasma@rally.com.br",
           diaSemana: TERCA,
           horaInicio: "19:00",
           duracaoMinutos: 60,
@@ -278,13 +279,47 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       ).rejects.toThrow(NotFoundException);
     });
 
+    it("acha o cliente pelo e-mail normalizado e guarda o id, não o e-mail", async () => {
+      // Dois defeitos moram aqui, e os dois passariam pelo compilador porque
+      // e-mail e id são os dois `string`.
+      //
+      // O primeiro: e-mail digitado com espaço ou em maiúscula não acha
+      // ninguém, e a recusa diria "não tem conta no Rally" para quem tem — o
+      // gestor concluiria que o cliente precisa se cadastrar de novo.
+      //
+      // O segundo: gravar o e-mail onde vai o id deixa a série apontando para
+      // um cliente que não existe. A chave estrangeira recusaria, mas só na
+      // hora de materializar a primeira ocorrência, longe de onde o erro foi
+      // cometido e já dentro de uma transação que não explica o motivo.
+      const { servico: s, criarSerie, acharUsuario } = servico();
+
+      await s.criar("e1", {
+        quadraId: "q1",
+        clienteEmail: "  Augusto@Rally.com.BR  ",
+        diaSemana: TERCA,
+        horaInicio: "19:00",
+        duracaoMinutos: 60,
+        vigenciaInicio: "2026-10-01",
+        preco: 90,
+      });
+
+      expect(acharUsuario).toHaveBeenCalledWith({
+        where: { email: "augusto@rally.com.br" },
+        select: { id: true },
+      });
+      const criada = criarSerie.mock.calls[0][0] as {
+        data: { clienteId: string };
+      };
+      expect(criada.data.clienteId).toBe("u1");
+    });
+
     it("recusa vigência que termina antes de começar", async () => {
       const { servico: s } = servico();
 
       await expect(
         s.criar("e1", {
           quadraId: "q1",
-          clienteId: "u1",
+          clienteEmail: "augusto@rally.com.br",
           diaSemana: TERCA,
           horaInicio: "19:00",
           duracaoMinutos: 60,
