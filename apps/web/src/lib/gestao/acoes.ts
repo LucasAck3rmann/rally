@@ -265,7 +265,8 @@ export async function criarMensalista(
   estabelecimentoId: string,
   dados: {
     quadraId: string;
-    clienteId: string;
+    /** E-mail, e não id: ninguém no painel sabe o UUID de ninguém. */
+    clienteEmail: string;
     diaSemana: number;
     horaInicio: string;
     duracaoMinutos: number;
@@ -274,7 +275,12 @@ export async function criarMensalista(
     preco: number;
     observacao?: string;
   },
-): Promise<Resultado & { puladas?: { data: string; motivo: string }[] }> {
+): Promise<
+  Resultado & {
+    criadas?: number;
+    puladas?: { data: string; motivo: string }[];
+  }
+> {
   try {
     const criado = await chamarApiAutenticada(
       `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas`,
@@ -282,7 +288,9 @@ export async function criarMensalista(
       { metodo: "POST", corpo: dados },
     );
     recarregar(estabelecimentoId);
-    return { ok: true, puladas: criado.puladas };
+    // As duas contagens sobem juntas: "criei 9 semanas e pulei 1" é a frase
+    // que o ADR-0014 prometeu ao gestor, e só uma das metades não a forma.
+    return { ok: true, criadas: criado.criadas, puladas: criado.puladas };
   } catch (erro) {
     return comoResultado(erro);
   }

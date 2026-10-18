@@ -6,6 +6,7 @@ import { hojeNaQuadra } from "@/lib/formato";
 import {
   mensalistasDoEstabelecimento,
   meuPapelEm,
+  quadrasDoEstabelecimento,
 } from "@/lib/gestao/consultas";
 import { podeAdministrar } from "@/lib/gestao/permissoes";
 
@@ -17,14 +18,16 @@ export default async function Mensalistas({
   params: Promise<{ estabelecimentoId: string }>;
 }) {
   const { estabelecimentoId } = await params;
-  const [mensalistas, papel] = await Promise.all([
+  const [mensalistas, quadras, papel] = await Promise.all([
     mensalistasDoEstabelecimento(estabelecimentoId),
+    quadrasDoEstabelecimento(estabelecimentoId),
     meuPapelEm(estabelecimentoId),
   ]);
 
   return (
     <MensalistasDaArena
       mensalistas={mensalistas}
+      quadras={quadras}
       estabelecimentoId={estabelecimentoId}
       // O "hoje" vem daqui, e não do componente: o cálculo de folga precisa do
       // dia na hora da arena, e o componente não conhece o fuso dela.

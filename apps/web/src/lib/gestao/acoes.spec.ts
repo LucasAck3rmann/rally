@@ -135,7 +135,7 @@ const ESCRITAS: {
     executar: () =>
       acoes.criarMensalista(ARENA, {
         quadraId: "q1",
-        clienteId: "u1",
+        clienteEmail: "augusto@rally.com.br",
         diaSemana: 2,
         horaInicio: "19:00",
         duracaoMinutos: 60,

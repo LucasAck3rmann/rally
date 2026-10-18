@@ -1,15 +1,27 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import { fireEvent, render, screen } from "@testing-library/react";
-import { afterEach, describe, expect, it, vi } from "vitest";
+import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
 
-import { encerrarMensalista } from "@/lib/gestao/acoes";
-import type { Mensalista } from "@/lib/gestao/contratos";
+import { criarMensalista, encerrarMensalista } from "@/lib/gestao/acoes";
+import type { Mensalista, QuadraDaGestao } from "@/lib/gestao/contratos";
 import { MensalistasDaArena } from "./mensalistas";
 
 vi.mock("@/lib/gestao/acoes", () => ({
+  criarMensalista: vi.fn(),
   encerrarMensalista: vi.fn(),
   materializarMensalista: vi.fn(),
 }));
+
+beforeEach(() => {
+  // O padrão fica aqui, e não na fábrica do `vi.mock`: implementação posta na
+  // fábrica depende de o `clearAllMocks` não apagá-la, e isso é detalhe de
+  // versão do Vitest. Aqui é explícito e não envelhece.
+  vi.mocked(criarMensalista).mockResolvedValue({
+    ok: true,
+    criadas: 9,
+    puladas: [],
+  });
+});
 
 afterEach(() => {
   vi.restoreAllMocks();
@@ -38,10 +50,31 @@ function mensalista(opcoes: Partial<Mensalista> = {}): Mensalista {
   };
 }
 
-function montar(lista: Mensalista[], podeEditar = true) {
+function quadra(extras: Partial<QuadraDaGestao> = {}): QuadraDaGestao {
+  return {
+    id: "q1",
+    nome: "Quadra 1",
+    descricao: null,
+    precoHora: 120,
+    capacidade: null,
+    fotos: [],
+    comodidades: [],
+    modalidades: [],
+    faixasPreco: [],
+    ativo: true,
+    ...extras,
+  };
+}
+
+function montar(
+  lista: Mensalista[],
+  podeEditar = true,
+  quadras: QuadraDaGestao[] = [quadra()],
+) {
   render(
     <MensalistasDaArena
       mensalistas={lista}
+      quadras={quadras}
       estabelecimentoId="e1"
       hoje={HOJE}
       podeEditar={podeEditar}
@@ -99,6 +132,9 @@ describe("MensalistasDaArena", () => {
 
     expect(screen.queryByRole("button", { name: "Encerrar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Gerar semanas" })).not.toBeInTheDocument();
+    expect(
+      screen.queryByRole("button", { name: "Cadastrar mensalista" }),
+    ).not.toBeInTheDocument();
   });
 
   it("série encerrada não oferece encerrar de novo", () => {
@@ -141,5 +177,141 @@ describe("MensalistasDaArena", () => {
     montar([mensalista()]);
 
     expect(screen.getByText(/cobrança mensal é combinada fora do sistema/)).toBeInTheDocument();
+  });
+  function abrirCadastro(quadras?: QuadraDaGestao[]) {
+    montar([], true, quadras);
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cadastrar mensalista" }),
+    );
+  }
+
+  /** Só o que o `required` cobra: o resto do formulário já vem preenchido. */
+  function preencherMinimo(email = "augusto@rally.com.br", preco = "90") {
+    fireEvent.change(screen.getByLabelText("E-mail do cliente"), {
+      target: { value: email },
+    });
+    fireEvent.change(screen.getByLabelText("Preço por semana (R$)"), {
+      target: { value: preco },
+    });
+  }
+
+  it("sem quadra ativa, o cadastro diz o motivo em vez de abrir o formulário", () => {
+    // Série semanal numa quadra pausada combinaria um horário que a arena não
+    // vai cumprir, e o cliente só descobriria ao chegar.
+    montar([], true, [quadra({ ativo: false })]);
+
+    expect(
+      screen.queryByRole("button", { name: "Cadastrar mensalista" }),
+    ).not.toBeInTheDocument();
+    expect(
+      screen.getByText(/Nenhuma quadra ativa para receber mensalista/),
+    ).toBeInTheDocument();
+  });
+
+  it("quadra pausada não entra nas opções", () => {
+    abrirCadastro([
+      quadra(),
+      quadra({ id: "q2", nome: "Quadra 2 em manutenção", ativo: false }),
+    ]);
+
+    const opcoes = screen.getAllByRole("option").map((o) => o.textContent);
+    expect(opcoes).toContain("Quadra 1");
+    expect(opcoes).not.toContain("Quadra 2 em manutenção");
+  });
+
+  it("a tabela da quadra aparece como dica e o campo de preço fica vazio", () => {
+    // Preencher por cima seria o defeito do `?? padrao` que apagou um `null`
+    // deliberado no serviço: o número da tabela entraria como se fosse o
+    // acordado, e um mensalista que combinou 90 sairia cobrado em 120.
+    abrirCadastro();
+
+    expect(screen.getByText(/esse horário sai por R\$ 120,00/)).toBeInTheDocument();
+    expect(screen.getByLabelText("Preço por semana (R$)")).toHaveValue(null);
+  });
+
+  it("o cadastro converte os números e apara o e-mail", async () => {
+    // Dia da semana e duração saem de um `select` como texto, e a API cobra
+    // número. Mandar "4" onde vai 4 seria recusado pelo DTO, e o gestor leria
+    // "erro de validação" sem saber em qual campo.
+    abrirCadastro();
+    preencherMinimo("  augusto@rally.com.br  ");
+    fireEvent.change(screen.getByLabelText("Dia da semana"), {
+      target: { value: "4" },
+    });
+    fireEvent.change(screen.getByLabelText("Duração"), {
+      target: { value: "90" },
+    });
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cadastrar mensalista" }),
+    );
+
+    await waitFor(() =>
+      expect(vi.mocked(criarMensalista)).toHaveBeenCalledTimes(1),
+    );
+    expect(vi.mocked(criarMensalista)).toHaveBeenCalledWith("e1", {
+      quadraId: "q1",
+      clienteEmail: "augusto@rally.com.br",
+      diaSemana: 4,
+      horaInicio: "19:00",
+      duracaoMinutos: 90,
+      vigenciaInicio: HOJE,
+      // Vigência em branco é "sem fim definido", e não a data de hoje.
+      vigenciaFim: undefined,
+      preco: 90,
+      observacao: undefined,
+    });
+  });
+
+  it("as semanas que não couberam aparecem e sobrevivem ao formulário fechar", async () => {
+    // **É a promessa central do ADR-0014.** Ele recusou recusar a série
+    // inteira e recusou deslocar a reserva no caminho: a colisão pula a semana
+    // **e reporta**. Relatório que morre junto com o formulário não reporta —
+    // depois dali, nada no sistema diz que aquela terça ficou de fora.
+    vi.mocked(criarMensalista).mockResolvedValueOnce({
+      ok: true,
+      criadas: 8,
+      puladas: [
+        { data: "2026-10-27", motivo: "o horário já estava ocupado nessa semana" },
+      ],
+    });
+    abrirCadastro();
+    preencherMinimo();
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cadastrar mensalista" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByText(/Uma semana não entrou/)).toBeInTheDocument(),
+    );
+    expect(screen.getByText(/27\/10\/2026/)).toBeInTheDocument();
+    expect(screen.getByText(/nada foi deslocado/)).toBeInTheDocument();
+    // O formulário fechou — o campo de e-mail saiu da tela — e o aviso ficou.
+    expect(screen.queryByLabelText("E-mail do cliente")).not.toBeInTheDocument();
+  });
+
+  it("recusa do servidor aparece no formulário, que continua aberto", async () => {
+    // "Ninguém com esse e-mail tem conta no Rally" é acionável; fechar o
+    // formulário obrigaria a digitar os sete campos de novo para corrigir um.
+    vi.mocked(criarMensalista).mockResolvedValueOnce({
+      ok: false,
+      erro: "Ninguém com esse e-mail tem conta no Rally.",
+    });
+    abrirCadastro();
+    preencherMinimo("fantasma@rally.com.br");
+
+    fireEvent.click(
+      screen.getByRole("button", { name: "Cadastrar mensalista" }),
+    );
+
+    await waitFor(() =>
+      expect(screen.getByRole("alert")).toHaveTextContent(
+        "Ninguém com esse e-mail tem conta no Rally.",
+      ),
+    );
+    expect(screen.getByLabelText("E-mail do cliente")).toHaveValue(
+      "fantasma@rally.com.br",
+    );
   });
 });

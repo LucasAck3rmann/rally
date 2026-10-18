@@ -1,9 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
+import { FormularioDeMensalista } from "@/components/gestao/formulario-de-mensalista";
 import { cn } from "@/lib/cn";
 import { formatarPreco } from "@/lib/formato";
 import { encerrarMensalista, materializarMensalista } from "@/lib/gestao/acoes";
-import type { Mensalista } from "@/lib/gestao/contratos";
+import type { Mensalista, QuadraDaGestao } from "@/lib/gestao/contratos";
 
 const DIAS = [
   "Domingo",
@@ -47,11 +48,14 @@ function diasDeFolga(m: Mensalista, hoje: string): number | null {
 
 export function MensalistasDaArena({
   mensalistas,
+  quadras,
   estabelecimentoId,
   hoje,
   podeEditar,
 }: {
   mensalistas: Mensalista[];
+  /** Para o cadastro escolher a quadra — ninguém digita o id de uma. */
+  quadras: QuadraDaGestao[];
   estabelecimentoId: string;
   /** "YYYY-MM-DD" na hora da arena, para o cálculo de folga não usar o fuso do servidor. */
   hoje: string;
@@ -74,6 +78,14 @@ export function MensalistasDaArena({
             : `${ativos.length} ativo${ativos.length > 1 ? "s" : ""} · ${formatarPreco(receitaSemanal)} por semana`}
         </p>
       </header>
+
+      {podeEditar ? (
+        <FormularioDeMensalista
+          estabelecimentoId={estabelecimentoId}
+          quadras={quadras}
+          hoje={hoje}
+        />
+      ) : null}
 
       {mensalistas.length === 0 ? (
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
