@@ -8,6 +8,7 @@ import {
   ListaDaEquipe,
   ListaDeCupons,
   ListaDeEstabelecimentos,
+  ListaDeMensalistas,
   ListaDeQuadras,
   Painel,
   Relatorio,
@@ -107,5 +108,13 @@ export function trilhaDoEstabelecimento(
     `/gestao/estabelecimentos/${estabelecimentoId}/auditoria`,
     TrilhaDeAuditoria,
     { parametros: { limite } },
+  );
+}
+
+/** Os mensalistas da arena (RF-35). Ler é de toda a equipe com vínculo. */
+export function mensalistasDoEstabelecimento(estabelecimentoId: string) {
+  return chamarApiAutenticada(
+    `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas`,
+    ListaDeMensalistas,
   );
 }
