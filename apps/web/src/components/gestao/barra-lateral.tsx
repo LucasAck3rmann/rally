@@ -27,6 +27,7 @@ const SECOES: { slug: string; rotulo: string; somenteAdmin?: boolean }[] = [
   { slug: "relatorios", rotulo: "Relatórios" },
   { slug: "cupons", rotulo: "Cupons" },
   { slug: "conciliacao", rotulo: "Conciliação" },
+  { slug: "mensalistas", rotulo: "Mensalistas" },
   { slug: "equipe", rotulo: "Equipe" },
   { slug: "auditoria", rotulo: "Auditoria", somenteAdmin: true },
 ];

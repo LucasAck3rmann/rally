@@ -17,11 +17,11 @@ vi.mock("../api/autenticado", async (importOriginal) => ({
 vi.mock("next/cache", () => ({ revalidatePath: vi.fn() }));
 
 /**
- * **As dez escritas do painel, que estavam sem cobertura.**
+ * **As escritas do painel, que estavam sem cobertura.**
  *
  * Eram a lacuna nomeada na configuração de cobertura da web. Como na API, não
- * escrevi dez suítes de "a ação chama o cliente": as dez compartilham **três
- * propriedades** que nenhuma declara sozinha, e é delas que esta suíte trata.
+ * escrevi uma suíte por ação: todas compartilham **três propriedades** que
+ * nenhuma declara sozinha, e é delas que esta suíte trata.
  *
  * 1. **Toda rota carrega o estabelecimento pedido** — o isolamento do
  *    ADR-0011 visto da web, e nenhum identificador é tipado, de modo que uma
@@ -127,6 +127,36 @@ const ESCRITAS: {
     caminho: `/gestao/estabelecimentos/${ARENA}/conciliacao/expirar-pendentes`,
     metodo: "POST",
   },
+  // Mensalistas (ADR-0014). Criar e materializar **ocupam horário**; encerrar
+  // devolve os futuros para a venda — as três são escrita de agenda e caem nas
+  // mesmas três propriedades que as demais.
+  {
+    nome: "criarMensalista",
+    executar: () =>
+      acoes.criarMensalista(ARENA, {
+        quadraId: "q1",
+        clienteId: "u1",
+        diaSemana: 2,
+        horaInicio: "19:00",
+        duracaoMinutos: 60,
+        vigenciaInicio: "2026-10-01",
+        preco: 90,
+      }),
+    caminho: `/gestao/estabelecimentos/${ARENA}/mensalistas`,
+    metodo: "POST",
+  },
+  {
+    nome: "encerrarMensalista",
+    executar: () => acoes.encerrarMensalista(ARENA, "s1"),
+    caminho: `/gestao/estabelecimentos/${ARENA}/mensalistas/s1`,
+    metodo: "DELETE",
+  },
+  {
+    nome: "materializarMensalista",
+    executar: () => acoes.materializarMensalista(ARENA, "s1"),
+    caminho: `/gestao/estabelecimentos/${ARENA}/mensalistas/s1/materializar`,
+    metodo: "POST",
+  },
 ];
 
 beforeEach(() => {
@@ -138,7 +168,7 @@ afterEach(() => {
   vi.restoreAllMocks();
 });
 
-describe("as dez escritas do painel", () => {
+describe("as escritas do painel", () => {
   it("a lista cobre todas as ações exportadas", () => {
     // Âncora: ação nova no módulo sem entrada aqui faz o teste reprovar, em
     // vez de ficar sem cobertura em silêncio. É o que faltou no cenário dos

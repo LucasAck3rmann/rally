@@ -8,6 +8,8 @@ import { chamarApiAutenticada, SemSessao } from "../api/autenticado";
 import { ErroDeApi } from "../api/client";
 import {
   CupomDaGestao,
+  Mensalista,
+  MensalistaCriado,
   ItemDaAgenda,
   MembroDaEquipe,
   Papel,
@@ -242,6 +244,85 @@ export async function expirarPendentes(
     await chamarApiAutenticada(
       `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao/expirar-pendentes`,
       z.object({ liberadas: z.number() }),
+      { metodo: "POST" },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
+/**
+ * Cria a série de um mensalista (RF-35, ADR-0014).
+ *
+ * Devolve `puladas` junto do `ok`: as semanas que colidiram com reserva já
+ * existente **não** fazem a criação falhar, e o gestor precisa saber quais
+ * foram. Tratar colisão como erro recusaria uma série de seis meses por causa
+ * de um jogo marcado na semana que vem.
+ */
+export async function criarMensalista(
+  estabelecimentoId: string,
+  dados: {
+    quadraId: string;
+    clienteId: string;
+    diaSemana: number;
+    horaInicio: string;
+    duracaoMinutos: number;
+    vigenciaInicio: string;
+    vigenciaFim?: string;
+    preco: number;
+    observacao?: string;
+  },
+): Promise<Resultado & { puladas?: { data: string; motivo: string }[] }> {
+  try {
+    const criado = await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas`,
+      MensalistaCriado,
+      { metodo: "POST", corpo: dados },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true, puladas: criado.puladas };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
+/**
+ * Encerra a série e devolve os horários futuros para a venda.
+ *
+ * As ocorrências passadas ficam: são o histórico que o relatório usa para
+ * fechar o mês, e apagá-las mudaria a receita de um período encerrado.
+ */
+export async function encerrarMensalista(
+  estabelecimentoId: string,
+  mensalistaId: string,
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas/${mensalistaId}`,
+      Mensalista.extend({ canceladas: z.number() }),
+      { metodo: "DELETE" },
+    );
+    recarregar(estabelecimentoId);
+    return { ok: true };
+  } catch (erro) {
+    return comoResultado(erro);
+  }
+}
+
+/** Força a criação das ocorrências que faltam, sem esperar o ciclo agendado. */
+export async function materializarMensalista(
+  estabelecimentoId: string,
+  mensalistaId: string,
+): Promise<Resultado> {
+  try {
+    await chamarApiAutenticada(
+      `/gestao/estabelecimentos/${estabelecimentoId}/mensalistas/${mensalistaId}/materializar`,
+      z.object({
+        criadas: z.number(),
+        puladas: z.array(z.object({ data: z.string(), motivo: z.string() })),
+      }),
       { metodo: "POST" },
     );
     recarregar(estabelecimentoId);

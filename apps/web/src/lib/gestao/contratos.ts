@@ -294,3 +294,37 @@ export type RegistroDaTrilha = z.infer<typeof RegistroDaTrilha>;
 
 export const TrilhaDeAuditoria = z.array(RegistroDaTrilha);
 export type TrilhaDeAuditoria = z.infer<typeof TrilhaDeAuditoria>;
+
+/**
+ * Mensalista: a série semanal, não a ocorrência (RF-35, ADR-0014).
+ *
+ * `materializadaAte` é o campo que denuncia falha: ele diz até quando as
+ * ocorrências já foram criadas, e a distância entre ele e hoje revela um
+ * trabalho agendado que parou — sem ele, o horário aparece livre e ninguém
+ * sabe por quê.
+ */
+export const Mensalista = z.object({
+  id: z.string(),
+  quadraId: z.string(),
+  quadra: z.string(),
+  clienteId: z.string(),
+  cliente: z.string(),
+  diaSemana: z.number(),
+  horaInicio: z.string(),
+  duracaoMinutos: z.number(),
+  vigenciaInicio: z.string(),
+  vigenciaFim: z.string().nullable(),
+  preco: z.number(),
+  status: z.enum(["ATIVA", "PAUSADA", "ENCERRADA"]),
+  materializadaAte: z.string().nullable(),
+  observacao: z.string().nullable(),
+});
+export type Mensalista = z.infer<typeof Mensalista>;
+
+export const ListaDeMensalistas = z.array(Mensalista);
+
+/** O que a criação devolve: a série e o que não coube. */
+export const MensalistaCriado = Mensalista.extend({
+  criadas: z.number(),
+  puladas: z.array(z.object({ data: z.string(), motivo: z.string() })),
+});
