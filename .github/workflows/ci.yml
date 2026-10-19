@@ -50,6 +50,23 @@ jobs:
       # não há ramo nem função ali. A assimetria que a API expõe é invisível
       # aqui, e não por estar resolvida.
       - run: dart run tool/cobertura.dart
+      # **APK instalavel, para demonstracao em aparelho.** Esta maquina de
+      # desenvolvimento nao tem SDK do Android -- o `flutter test` roda na VM
+      # do Dart e nao precisa dele, mas compilar para Android precisa. O
+      # runner do GitHub ja traz o SDK, entao o APK nasce aqui e desce como
+      # artefato, em vez de exigir ~2 GB de instalacao local.
+      #
+      # `--release` com a chave de depuracao, que e o que o
+      # `build.gradle.kts` declara: instala em aparelho com "fontes
+      # desconhecidas" liberado, e **nao serve para a Play Store**. Publicar
+      # pede keystore proprio, que e outra decisao.
+      - run: flutter build apk --release
+      - uses: actions/upload-artifact@v4
+        with:
+          name: rally-android
+          path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
+          if-no-files-found: error
+          retention-days: 30
 
   banco:
     name: Migrações e concorrência
