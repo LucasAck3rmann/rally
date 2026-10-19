@@ -88,6 +88,59 @@ jobs:
       # real. O piso está no `coverageThreshold` do jest.config.js.
       - run: pnpm --filter @rally/api test:cov
 
+  telas:
+    name: As telas do painel abrem
+    runs-on: ubuntu-latest
+    # Existe porque seis telas do painel estiveram quebradas na `main` com a
+    # suite inteira verde. Elas falhavam no runtime do Next -- Server
+    # Component passando funcao a Client Component --, e teste de unidade nao
+    # alcanca isso: ele monta o componente no jsdom, onde a fronteira entre
+    # servidor e cliente nao existe. O unico jeito de saber se uma tela abre e
+    # abrindo.
+    services:
+      postgres:
+        image: postgres:17
+        env:
+          POSTGRES_USER: rally
+          POSTGRES_PASSWORD: rally
+          POSTGRES_DB: rally
+        ports: ["5432:5432"]
+        options: >-
+          --health-cmd="pg_isready -U rally"
+          --health-interval=10s
+          --health-timeout=5s
+          --health-retries=5
+    env:
+      DATABASE_URL: postgresql://rally:rally@localhost:5432/rally
+      API_URL: http://localhost:3333/api/v1
+      API_PUBLIC_URL: http://localhost:3333
+      NEXT_PUBLIC_SITE_URL: http://localhost:3000
+      # Segredo de execucao efemera: o processo morre com o job e nada
+      # assinado aqui vale fora dele.
+      JWT_ACCESS_SECRET: ci-efemero-nao-vale-fora-deste-job
+      JWT_REFRESH_SECRET: ci-efemero-nao-vale-fora-deste-job
+    steps:
+      - uses: actions/checkout@v7
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v6
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm --filter @rally/api exec prisma migrate deploy
+      # O seed e o que da conteudo as telas: sem reserva, sem serie e sem
+      # trilha, o painel abre vazio e o portao nao exercita o que importa.
+      - run: pnpm --filter @rally/api exec prisma db seed
+      - run: pnpm build
+      - name: Sobe a API e a web
+        run: |
+          pnpm --filter @rally/api start &
+          pnpm --filter @rally/web start &
+      # O navegador vem do Playwright, na versao que o package.json fixa.
+      - run: pnpm exec playwright install --with-deps chromium
+      # `--sem-salvar` percorre as mesmas telas da captura e cobra o titulo de
+      # cada uma, sem escrever imagem. A lista de telas e uma so, de proposito:
+      # duas listas divergiriam, e a que nao fosse exercitada quebraria calada.
+      - run: node tools/capturas.mjs --sem-salvar
+
   licenca:
     name: Declaração de licença
     runs-on: ubuntu-latest
