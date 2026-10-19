@@ -1,4 +1,20 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+"use client";
+
+/*
+ * **Esta tela precisa ser Client Component, e a razao nao e interatividade.**
+ *
+ * Ela passa `acao={(…) => algumaAcao(…)}` para o `BotaoDeAcao`, que e Client
+ * Component. Num Server Component essa seta e uma **funcao comum criada no
+ * servidor**, e o Next recusa serializa-la: *"Functions cannot be passed
+ * directly to Client Components"*. A pagina quebrava em tempo de execucao,
+ * inteira, antes de renderizar o titulo.
+ *
+ * As Server Actions de `lib/gestao/acoes.ts` continuam no servidor — elas tem
+ * `"use server"` e sao chamadas daqui normalmente. O que muda e **onde a seta
+ * que as envolve nasce**: no cliente, onde funcao nao precisa atravessar
+ * fronteira nenhuma.
+ */
 import { BotaoDeAcao } from "@/components/gestao/botao-de-acao";
 import { TrocaDePapel } from "@/components/gestao/troca-de-papel";
 import { FormularioDeConvite } from "@/components/gestao/formulario-de-convite";
