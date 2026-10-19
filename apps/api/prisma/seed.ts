@@ -6,6 +6,8 @@
 import { PrismaClient } from "@prisma/client";
 import { hash } from "@node-rs/argon2";
 
+import { horaLocalParaUtc } from "../src/common/timezone";
+
 const db = new PrismaClient();
 
 /** Base pública da API — as fotos do seed são servidas de `public/fotos`. */
@@ -169,10 +171,185 @@ async function main() {
     });
   }
 
+  // ── Movimento: reservas, pagamentos, mensalista e trilha ──────────────
+  //
+  // **Sem isto o sistema sobe vazio, e tela vazia não demonstra produto.** O
+  // painel dizia "nenhum movimento no período", a agenda não tinha o que
+  // mostrar e a trilha abria em branco — as três telas que a pesquisa de
+  // campo apontou como essenciais. As figuras do Relatório saem daqui.
+  //
+  // As datas são **relativas a hoje**, e não fixas: seed com data fixa
+  // envelhece e volta a mostrar painel vazio semanas depois.
+  await semearMovimento({
+    estabelecimentoId: arena.id,
+    quadraId: quadraArena.id,
+    clienteId: cliente.id,
+    donoId: dono.id,
+    timezone: arena.timezone,
+    precoHora: 80,
+  });
+
   console.log("Seed concluído.");
   console.log(`  Estabelecimentos: ${arena.slug}, ${vila.slug}`);
   console.log(`  Login cliente: ${cliente.email} / rally123`);
   console.log(`  Login dono:    ${dono.email} / rally123`);
+}
+
+/**
+ * Reservas, pagamentos, um mensalista e linhas de trilha.
+ *
+ * Roda uma vez: a marca é existir reserva da série no período. Repetir o
+ * seed não duplica o movimento nem esbarra na `reserva_sem_sobreposicao`,
+ * que recusaria a segunda tentativa no mesmo horário.
+ */
+async function semearMovimento(ctx: {
+  estabelecimentoId: string;
+  quadraId: string;
+  clienteId: string;
+  donoId: string;
+  timezone: string;
+  precoHora: number;
+}) {
+  const jaTem = await db.reserva.findFirst({
+    where: { estabelecimentoId: ctx.estabelecimentoId },
+    select: { id: true },
+  });
+  if (jaTem) return;
+
+  /** "YYYY-MM-DD" de N dias a partir de hoje, no fuso da arena. */
+  const dia = (desloc: number) => {
+    const d = new Date(Date.now() + desloc * 864e5);
+    return d.toISOString().slice(0, 10);
+  };
+  const quando = (desloc: number, hora: string) =>
+    horaLocalParaUtc(dia(desloc), hora, ctx.timezone);
+
+  // Uma semana com movimento de verdade: noite cheia nos dias úteis, manhã no
+  // fim de semana, e três dias à frente para a agenda não abrir vazia.
+  const AGENDA = [
+    { desloc: -6, hora: "19:00", pago: true },
+    { desloc: -5, hora: "20:00", pago: true },
+    { desloc: -4, hora: "19:00", pago: true },
+    { desloc: -3, hora: "21:00", pago: true },
+    { desloc: -2, hora: "09:00", pago: true },
+    { desloc: -1, hora: "20:00", pago: true },
+    { desloc: 0, hora: "19:00", pago: true },
+    { desloc: 0, hora: "20:00", pago: false },
+    { desloc: 1, hora: "19:00", pago: false },
+    { desloc: 2, hora: "20:00", pago: true },
+  ];
+
+  for (const item of AGENDA) {
+    const inicio = quando(item.desloc, item.hora);
+    const reserva = await db.reserva.create({
+      data: {
+        estabelecimentoId: ctx.estabelecimentoId,
+        quadraId: ctx.quadraId,
+        clienteId: ctx.clienteId,
+        inicio,
+        fim: new Date(inicio.getTime() + 60 * 60_000),
+        status: "CONFIRMADA",
+        origem: "APP",
+        preco: ctx.precoHora,
+      },
+      select: { id: true },
+    });
+    // Reserva sem pagamento entra no relatório como **Balcão**, e é por isso
+    // que duas ficam sem: a quebra por método precisa ter o caso.
+    if (item.pago) {
+      await db.pagamento.create({
+        data: {
+          reservaId: reserva.id,
+          valor: ctx.precoHora,
+          metodo: "PIX",
+          status: "PAGO",
+          pagoEm: new Date(inicio.getTime() - 2 * 864e5),
+        },
+      });
+    }
+  }
+
+  // ── Mensalista (RF-36, ADR-0014) ──────────────────────────────────────────
+  //
+  // Terça às 19h, com as ocorrências materializadas pelas próximas semanas.
+  // A tela de mensalistas mostra a folga do horizonte, e com a série vazia
+  // não haveria folga para mostrar.
+  const TERCA = 2;
+  const serie = await db.recorrencia.create({
+    data: {
+      estabelecimentoId: ctx.estabelecimentoId,
+      quadraId: ctx.quadraId,
+      clienteId: ctx.clienteId,
+      diaSemana: TERCA,
+      horaInicio: "18:00",
+      duracaoMinutos: 60,
+      vigenciaInicio: new Date(`${dia(0)}T00:00:00.000Z`),
+      preco: 70,
+      observacao: "paga no dia 5, time do Augusto",
+    },
+    select: { id: true },
+  });
+
+  let materializadaAte: Date | null = null;
+  for (let semana = 0; semana < 8; semana++) {
+    const d = new Date(Date.now() + semana * 7 * 864e5);
+    // Anda até a próxima terça a partir de hoje.
+    while (d.getUTCDay() !== TERCA) d.setUTCDate(d.getUTCDate() + 1);
+    const inicio = horaLocalParaUtc(
+      d.toISOString().slice(0, 10),
+      "18:00",
+      ctx.timezone,
+    );
+    if (inicio <= new Date()) continue;
+    try {
+      await db.reserva.create({
+        data: {
+          estabelecimentoId: ctx.estabelecimentoId,
+          quadraId: ctx.quadraId,
+          clienteId: ctx.clienteId,
+          inicio,
+          fim: new Date(inicio.getTime() + 60 * 60_000),
+          status: "CONFIRMADA",
+          origem: "BALCAO",
+          preco: 70,
+          recorrenciaId: serie.id,
+        },
+      });
+      materializadaAte = inicio;
+    } catch {
+      // Horário já ocupado nessa semana: a série pula e segue, como manda o
+      // ADR-0014. Aqui só não avança o horizonte.
+    }
+  }
+  if (materializadaAte) {
+    await db.recorrencia.update({
+      where: { id: serie.id },
+      data: { materializadaAte },
+    });
+  }
+
+  // ── Trilha de auditoria (RN-05) ───────────────────────────────────────────
+  //
+  // As linhas nascem do decorador `@Auditar` em uso real; aqui entram
+  // direto, porque a tela precisa de histórico para mostrar o que faz.
+  const TRILHA = [
+    { acao: "criar mensalista", entidade: "Reserva", diasAtras: 0 },
+    { acao: "liberar horário", entidade: "Reserva", diasAtras: 1 },
+    { acao: "pausar quadra", entidade: "Quadra", diasAtras: 2 },
+    { acao: "criar cupom", entidade: "Promocao", diasAtras: 3 },
+    { acao: "trocar papel", entidade: "Membership", diasAtras: 5 },
+  ];
+  for (const linha of TRILHA) {
+    await db.auditLog.create({
+      data: {
+        estabelecimentoId: ctx.estabelecimentoId,
+        autorId: ctx.donoId,
+        acao: linha.acao,
+        entidade: linha.entidade,
+        criadoEm: new Date(Date.now() - linha.diasAtras * 864e5),
+      },
+    });
+  }
 }
 
 /** Cria a quadra na primeira execução e atualiza os dados nas seguintes. */
