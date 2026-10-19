@@ -89,7 +89,7 @@ jobs:
       - run: pnpm --filter @rally/api test:cov
 
   telas:
-    name: As telas do painel abrem
+    name: As telas abrem, e os alvos sao medidos
     runs-on: ubuntu-latest
     # Existe porque seis telas do painel estiveram quebradas na `main` com a
     # suite inteira verde. Elas falhavam no runtime do Next -- Server
@@ -140,6 +140,15 @@ jobs:
       # cada uma, sem escrever imagem. A lista de telas e uma so, de proposito:
       # duas listas divergiriam, e a que nao fosse exercitada quebraria calada.
       - run: node tools/capturas.mjs --sem-salvar
+      # Mede o alvo de toque **renderizado** (RNF-08), no mesmo navegador e
+      # nos mesmos servidores -- um job proprio pagaria Postgres, build e
+      # servidores de novo para ver as mesmas telas.
+      #
+      # O portao em jsdom confere a **classe declarada** e diz de si mesmo
+      # que nao pode medir: toda altura computada ali volta `0px`. Este passo
+      # e a outra metade, e foi ele que achou um botao de 40,8 x 16,5 px numa
+      # tela que nenhum cenario montava.
+      - run: node tools/alvos-de-toque.mjs
 
   licenca:
     name: Declaração de licença

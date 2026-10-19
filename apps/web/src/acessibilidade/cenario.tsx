@@ -10,14 +10,22 @@ import { FormularioDeCupom } from "@/components/gestao/formulario-de-cupom";
 import { FormularioDeEntrada } from "@/components/gestao/formulario-de-entrada";
 import { FormularioDeRecuperacao } from "@/components/gestao/formulario-de-recuperacao";
 import { FormularioDeRedefinicao } from "@/components/gestao/formulario-de-redefinicao";
+import { AgendaDaArena } from "@/components/gestao/agenda";
+import { ConciliacaoDaArena } from "@/components/gestao/conciliacao";
+import { MensalistasDaArena } from "@/components/gestao/mensalistas";
+import { PainelDaArena } from "@/components/gestao/painel";
 import { QuadrasDaArena } from "@/components/gestao/quadras";
 import { RelatorioDaArena } from "@/components/gestao/relatorio";
 import { TrilhaDaArena } from "@/components/gestao/trilha";
 import { Filtros } from "@/components/quadras/filtros";
 import type {
+  AgendaDoDia,
+  Conciliacao,
   CupomDaGestao,
   EstabelecimentoGerido,
   MembroDaEquipe,
+  Mensalista,
+  Painel,
   QuadraDaGestao,
   RegistroDaTrilha,
   Relatorio,
@@ -170,6 +178,118 @@ const RELATORIO: Relatorio = {
   ],
 };
 
+const AGENDA: AgendaDoDia = {
+  data: "2026-09-10",
+  timezone: "America/Sao_Paulo",
+  quadras: [{ id: "q1", nome: "Quadra 1" }],
+  itens: [
+    {
+      id: "r1",
+      quadraId: "q1",
+      quadraNome: "Quadra 1",
+      inicio: "2026-09-10T22:00:00.000Z",
+      fim: "2026-09-10T23:00:00.000Z",
+      horaInicio: "19:00",
+      horaFim: "20:00",
+      status: "CONFIRMADA",
+      origem: "APP",
+      ehBloqueio: false,
+      preco: 80,
+      motivo: null,
+      cliente: { id: "u1", nome: "Augusto Boff" },
+    },
+    // Um bloqueio ao lado da reserva: as duas células desenham controles
+    // diferentes, e um cenário com só uma delas veria metade dos botões.
+    {
+      id: "b1",
+      quadraId: "q1",
+      quadraNome: "Quadra 1",
+      inicio: "2026-09-10T23:00:00.000Z",
+      fim: "2026-09-11T00:00:00.000Z",
+      horaInicio: "20:00",
+      horaFim: "21:00",
+      status: "BLOQUEIO",
+      origem: "BALCAO",
+      ehBloqueio: true,
+      preco: null,
+      motivo: "manutenção da rede",
+      cliente: null,
+    },
+  ],
+};
+
+const PAINEL: Painel = {
+  periodo: { de: "2026-09-04", ate: "2026-09-10", dias: 7 },
+  receita: { paga: 800, aReceber: 240, total: 1040, ticketMedio: 130 },
+  ocupacao: { percentual: 42.5, horasVendidas: 8, horasDisponiveis: 42 },
+  reservas: { vendidas: 8, canceladas: 1, bloqueios: 2, taxaCancelamento: 11.1 },
+  porQuadra: [
+    { quadraId: "q1", nome: "Quadra 1", reservas: 6, horasVendidas: 6, receita: 640, ocupacao: 42.5 },
+  ],
+  proximosJogos: [
+    {
+      id: "r1",
+      quadraNome: "Quadra 1",
+      clienteNome: "Augusto Boff",
+      inicio: "2026-09-10T22:00:00.000Z",
+      horaInicio: "19:00",
+      horaFim: "20:00",
+      preco: 80,
+      status: "CONFIRMADA",
+      pago: true,
+    },
+  ],
+};
+
+const CONCILIACAO: Conciliacao = {
+  conferidas: 12,
+  graves: 1,
+  divergencias: [
+    {
+      tipo: "PENDENTE_EXPIRADA",
+      descricao: "Pix expirado e horário ainda preso",
+      gravidade: "grave",
+      reservaId: "r9",
+      codigo: "RLY-0009",
+      quadra: "Quadra 1",
+      cliente: "Augusto Boff",
+      inicio: "2026-09-09T22:00:00.000Z",
+      statusReserva: "PENDENTE",
+      statusPagamento: "EXPIRADO",
+      valorReserva: 80,
+      valorPagamento: 80,
+    },
+  ],
+  porTipo: [
+    {
+      tipo: "PENDENTE_EXPIRADA",
+      quantidade: 1,
+      descricao: "Pix expirado e horário ainda preso",
+      gravidade: "grave",
+    },
+  ],
+};
+
+function mensalista(opcoes: Partial<Mensalista> = {}): Mensalista {
+  return {
+    id: "s1",
+    quadraId: "q1",
+    quadra: "Quadra 1",
+    clienteId: "u1",
+    cliente: "Augusto Boff",
+    diaSemana: 2,
+    horaInicio: "19:00",
+    duracaoMinutos: 60,
+    vigenciaInicio: "2026-09-01",
+    vigenciaFim: null,
+    preco: 90,
+    status: "ATIVA",
+    materializadaAte: "2026-11-10",
+    observacao: null,
+    ...opcoes,
+  };
+}
+
 /**
  * As telas percorridas pelos portões.
  *
@@ -193,6 +313,58 @@ export const CENARIOS: Cenario[] = [
   {
     nome: "buscar quadras (filtros)",
     montar: () => render(<Filtros busca="beach" modalidade="Beach Tennis" />),
+  },
+  {
+    // As quatro telas abaixo entraram em 19/10, depois que a medida no
+    // navegador achou um controle de 40,8 x 16,5 px na agenda que nenhum
+    // portao via: a agenda nao estava nesta lista, e a ancora do portao
+    // media **tamanho** (`total > 20`) em vez de **correspondencia**.
+    nome: "gestão · painel",
+    montar: () =>
+      render(
+        <PainelDaArena
+          painel={PAINEL}
+          dias={7}
+          periodos={[7, 30, 90]}
+          estabelecimentoId="e1"
+        />,
+      ),
+  },
+  {
+    nome: "gestão · agenda",
+    montar: () =>
+      render(
+        <AgendaDaArena
+          agenda={AGENDA}
+          dias={["2026-09-10", "2026-09-11"]}
+          estabelecimentoId="e1"
+          podeBloquear
+        />,
+      ),
+  },
+  {
+    nome: "gestão · mensalistas",
+    montar: () =>
+      render(
+        <MensalistasDaArena
+          mensalistas={[mensalista(), mensalista({ id: "s2", status: "ENCERRADA" })]}
+          quadras={[quadra()]}
+          estabelecimentoId="e1"
+          hoje="2026-09-10"
+          podeEditar
+        />,
+      ),
+  },
+  {
+    nome: "gestão · conciliação",
+    montar: () =>
+      render(
+        <ConciliacaoDaArena
+          conciliacao={CONCILIACAO}
+          estabelecimentoId="e1"
+          podeExpirar
+        />,
+      ),
   },
   {
     nome: "gestão · quadras",
