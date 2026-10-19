@@ -40,7 +40,17 @@ const LARGURA = 1280;
  */
 const BYTES_MINIMOS = 8 * 1024;
 
-/** `:id` é substituído pelo estabelecimento que o login alcançar. */
+/**
+ * As telas do sistema.
+ *
+ * `arquivo` ausente significa **tela que o portão abre e a figura não usa**:
+ * o Relatório ilustra sete, e o painel tem nove rotas. Deixar as outras fora
+ * desta lista seria deixá-las sem ninguém abrindo — foi assim que cupons,
+ * quadras, equipe e conciliação passaram semanas quebradas sem que nada
+ * reclamasse.
+ *
+ * `:id` é substituído pelo estabelecimento que o login alcançar.
+ */
 const TELAS = [
   { arquivo: "fig7-landing.png", rota: "/", altura: 1500, login: false, espera: "Do agendamento ao replay", descricao: "página inicial pública" },
   { arquivo: "fig8-entrar.png", rota: "/entrar", altura: 900, login: false, espera: "Entrar no painel", descricao: "entrada no painel de gestão" },
@@ -49,6 +59,14 @@ const TELAS = [
   { arquivo: "fig11-agenda.png", rota: "/gestao/:id/agenda", altura: 1300, login: true, espera: "Agenda", descricao: "agenda do dia, com bloqueio de horário" },
   { arquivo: "fig12-mensalistas.png", rota: "/gestao/:id/mensalistas", altura: 1200, login: true, espera: "Mensalistas", descricao: "mensalistas, com a folga do horizonte (RF-36)" },
   { arquivo: "fig13-trilha.png", rota: "/gestao/:id/auditoria", altura: 1200, login: true, espera: "Trilha de auditoria", descricao: "trilha de auditoria (RN-05)" },
+  // Sem figura no Relatório, mas dentro do portão: são rotas do painel, e
+  // quatro delas estavam entre as seis que não renderizavam.
+  { rota: "/gestao/:id/quadras", altura: 1200, login: true, espera: "Quadras", descricao: "cadastro de quadras e preços" },
+  { rota: "/gestao/:id/relatorios", altura: 1200, login: true, espera: "Relatórios", descricao: "relatório do período" },
+  { rota: "/gestao/:id/cupons", altura: 1100, login: true, espera: "Cupons", descricao: "promoções e cupons" },
+  { rota: "/gestao/:id/conciliacao", altura: 1100, login: true, espera: "Conciliação", descricao: "conciliação de pagamentos" },
+  { rota: "/gestao/:id/equipe", altura: 1100, login: true, espera: "Equipe", descricao: "usuários e permissões" },
+  { rota: "/gestao/privacidade", altura: 1100, login: true, espera: "Privacidade", descricao: "direitos do titular (LGPD)" },
 ];
 
 function argumento(nome, padrao) {
@@ -63,12 +81,22 @@ const saida = resolve(argumento("saida", "figuras"));
 const email = argumento("email", "dono@arena.com");
 const senha = argumento("senha", "rally123");
 const somenteSemLogin = process.argv.includes("--sem-login");
+// A API nao e desenhada aqui, mas o login depende dela. Na CI os dois
+// servidores sobem em paralelo e o portao corre logo atras: sem esperar,
+// falharia **as vezes** -- a pior frequencia possivel, rara o bastante para
+// virar "instabilidade" e ser reexecutada sem olhar.
+const api = (argumento("api", process.env.API_URL ?? "http://localhost:3333/api/v1"))
+  .replace(/\/$/, "");
+// **Modo portão:** abre cada tela e cobra o título, sem salvar arquivo. É o
+// mesmo percurso da captura, porque a lista de telas tem de ser uma só — e
+// serve à CI, que não quer as imagens e quer a garantia.
+const semSalvar = process.argv.includes("--sem-salvar");
 
 /** Espera a web responder: sem isto a captura sai em branco se o Next ainda compila. */
-async function dePe(tentativas = 20) {
+async function responde(url, tentativas = 30) {
   for (let i = 0; i < tentativas; i++) {
     try {
-      const r = await fetch(base, { signal: AbortSignal.timeout(3000) });
+      const r = await fetch(url, { signal: AbortSignal.timeout(3000) });
       if (r.status < 500) return true;
     } catch {
       // ainda subindo
@@ -78,8 +106,9 @@ async function dePe(tentativas = 20) {
   return false;
 }
 
+/** Abre a tela, cobra o titulo e -- quando ha arquivo -- fotografa. */
 async function capturar(pagina, tela, url, destino) {
-  await mkdir(dirname(destino), { recursive: true });
+  if (destino) await mkdir(dirname(destino), { recursive: true });
   await pagina.setViewportSize({ width: LARGURA, height: tela.altura });
   await pagina.goto(url, { waitUntil: "networkidle", timeout: 60_000 });
 
@@ -92,13 +121,18 @@ async function capturar(pagina, tela, url, destino) {
       .waitFor({ state: "visible", timeout: 15_000 });
   } catch {
     throw new Error(
-      `${tela.arquivo}: não achei o título "${tela.espera}" em ${pagina.url()}.\n` +
+      `${tela.rota}: não achei o título "${tela.espera}" em ${pagina.url()}.\n` +
         "A navegação terminou noutra tela, ou o título mudou e esta lista não acompanhou.",
     );
   }
 
   // As fontes entram depois do primeiro paint, e capturar antes delas troca a
   // tipografia da figura pela de fallback — diferença que só aparece no PDF.
+  // Sem arquivo a salvar o trabalho acaba aqui: o portao queria o titulo,
+  // e ele apareceu. E o que a CI roda, e por isso ela nao precisa de disco
+  // para escrever nem de fonte carregada.
+  if (!destino) return null;
+
   await pagina.evaluate(() => document.fonts.ready);
   try {
     await unlink(destino);
@@ -118,8 +152,16 @@ async function capturar(pagina, tela, url, destino) {
 }
 
 function anunciar(tela, rota, bytes) {
-  const kb = String((bytes / 1024).toFixed(0)).padStart(5);
-  console.log(`${tela.arquivo.padEnd(26)} ${kb} KB  ${rota}  — ${tela.descricao}`);
+  const nome = (tela.arquivo ?? "(sem figura)").padEnd(26);
+  const medida =
+    bytes === null ? "   abre" : `${String((bytes / 1024).toFixed(0)).padStart(5)} KB`;
+  console.log(`${nome} ${medida}  ${rota}  — ${tela.descricao}`);
+}
+
+/** O arquivo de saida da tela, ou `null` quando nao ha o que salvar. */
+function destinoDe(tela) {
+  if (semSalvar || !tela.arquivo) return null;
+  return join(saida, tela.arquivo);
 }
 
 /**
@@ -150,9 +192,20 @@ async function entrar(pagina) {
 
 const navegador = await chromium.launch();
 try {
-  if (!(await dePe())) {
+  if (!(await responde(base))) {
     console.error(
       `a web não respondeu em ${base}.\nSuba com: pnpm --filter @rally/web dev`,
+    );
+    process.exit(1);
+  }
+
+  // A API só é exigida quando há tela atrás de login: cobrá-la sempre faria
+  // `--sem-login` depender de um serviço que ele não usa.
+  const precisaDaApi = TELAS.some((t) => t.login) && !somenteSemLogin;
+  if (precisaDaApi && !(await responde(`${api}/health`))) {
+    console.error(
+      `a API não respondeu em ${api}/health.\n` +
+        "Suba com: pnpm --filter @rally/api dev — e confira a DATABASE_URL.",
     );
     process.exit(1);
   }
@@ -162,7 +215,7 @@ try {
   const publicas = await navegador.newContext({ deviceScaleFactor: 2 });
   const semSessao = await publicas.newPage();
   for (const tela of TELAS.filter((t) => !t.login)) {
-    const destino = join(saida, tela.arquivo);
+    const destino = destinoDe(tela);
     anunciar(tela, tela.rota, await capturar(semSessao, tela, base + tela.rota, destino));
   }
   await publicas.close();
@@ -170,7 +223,8 @@ try {
   const comLogin = TELAS.filter((t) => t.login);
   if (somenteSemLogin) {
     for (const tela of comLogin) {
-      console.log(`${tela.arquivo.padEnd(26)} PULADA — precisa de login`);
+      const nome = (tela.arquivo ?? "(sem figura)").padEnd(26);
+      console.log(`${nome} PULADA — ${tela.rota} precisa de login`);
     }
   } else if (comLogin.length) {
     // Sessão separada, e não a mesma de cima: com cookie, `/entrar` e
@@ -182,7 +236,7 @@ try {
 
     for (const tela of comLogin) {
       const rota = tela.rota.replace(":id", id);
-      const destino = join(saida, tela.arquivo);
+      const destino = destinoDe(tela);
       anunciar(tela, rota, await capturar(pagina, tela, base + rota, destino));
     }
     await privadas.close();
