@@ -2,6 +2,7 @@
 "use client";
 
 import { useId, useState, useTransition } from "react";
+import { ALVO_MINIMO } from "@/lib/estilos";
 
 import { intervaloLocal } from "@/lib/formato";
 import { moverReserva } from "@/lib/gestao/acoes";
@@ -65,8 +66,17 @@ export function MoverReserva({
       <button
         type="button"
         onClick={() => setAberto(true)}
-        className="mt-0.5 rounded-button px-1 text-[11px] text-gray transition
-          hover:bg-bg hover:text-ink"
+        // Media **40,8 × 16,5 px** no navegador, contra o piso de 44 do
+        // RNF-08. Escapava dos portões porque a agenda não estava na lista
+        // de cenários, e a âncora deles media tamanho da varredura em vez
+        // de correspondência com as telas.
+        //
+        // `inline-flex` com `justify-center` é o que faz o alvo crescer sem
+        // empurrar o texto: a altura vem do `min-h`, não do conteúdo, e o
+        // rótulo segue em 11 px no meio dele.
+        className={`mt-0.5 inline-flex ${ALVO_MINIMO} min-w-[44px] items-center
+          justify-center rounded-button px-3 text-[11px] text-gray transition
+          hover:bg-bg hover:text-ink`}
       >
         Mover
       </button>
