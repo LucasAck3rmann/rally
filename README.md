@@ -32,14 +32,23 @@ docs/        arquitetura, requisitos, ADRs e mais
 infra/       Terraform (AWS) + Docker
 ```
 
-## Começar (quando o código entrar)
+## Começar
+
 ```bash
-pnpm install
+corepack enable
 cp .env.example .env
-docker compose up                 # web :3000 · api :3333 · postgres · redis · localstack
-pnpm prisma migrate dev
-pnpm prisma db seed
+pnpm install
+docker compose up -d postgres
+pnpm --filter @rally/api exec prisma migrate deploy
+pnpm --filter @rally/api exec prisma db seed
 ```
+
+Depois, em dois terminais: `pnpm --filter @rally/api dev` e
+`pnpm --filter @rally/web dev`. O site sobe em <http://localhost:3000> e a API
+responde em <http://localhost:3333/api/v1/health>.
+
+O roteiro completo — incluindo o aplicativo Android num aparelho e o que
+mostrar em cada tela — está em **[docs/demonstracao.md](docs/demonstracao.md)**.
 
 ## Contribuindo
 Veja [CONTRIBUTING.md](CONTRIBUTING.md) e o [Código de Conduta](CODE_OF_CONDUCT.md).
