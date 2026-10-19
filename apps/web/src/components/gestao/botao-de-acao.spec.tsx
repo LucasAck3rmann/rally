@@ -133,6 +133,16 @@ describe("BotaoDeAcao", () => {
     fireEvent.click(botao());
     expect(await screen.findByRole("alert")).toBeInTheDocument();
 
+    // **Espera o botão reabilitar antes do segundo clique.** Ele fica
+    // desabilitado durante o envio, e o alerta pode aparecer no mesmo commit
+    // em que `isPending` ainda é `true`: o clique cairia num botão
+    // desabilitado e **desapareceria**, deixando o alerta na tela e o teste
+    // esperando para sempre. Sem isto ele reprovava uma vez em quatro quando a
+    // suíte roda inteira, que é a pior frequência possível: rara o bastante
+    // para ser chamada de instabilidade e descartada. Quem usa a tela não
+    // consegue clicar num botão desabilitado, e o teste também não deve.
+    await waitFor(() => expect(botao()).not.toBeDisabled());
+
     fireEvent.click(botao());
     await waitFor(() => expect(screen.queryByRole("alert")).not.toBeInTheDocument());
   });

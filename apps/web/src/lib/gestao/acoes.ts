@@ -254,7 +254,7 @@ export async function expirarPendentes(
 }
 
 /**
- * Cria a série de um mensalista (RF-35, ADR-0014).
+ * Cria a série de um mensalista (RF-36, ADR-0014).
  *
  * Devolve `puladas` junto do `ok`: as semanas que colidiram com reserva já
  * existente **não** fazem a criação falhar, e o gestor precisa saber quais

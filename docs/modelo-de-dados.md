@@ -365,7 +365,7 @@ model Reserva {
   @@index([recorrenciaId, inicio])
 }
 
-/// Serie semanal de um mensalista (ADR-0014, RF-35).
+/// Serie semanal de um mensalista (ADR-0014, RF-36).
 ///
 /// A regra fica aqui; as ocorrencias sao `Reserva` de verdade, materializadas
 /// por horizonte deslizante. Mensalista virtual nao teria linha no banco, e a
@@ -559,7 +559,7 @@ Em `apps/api/prisma/migrations/`, aplicadas e verificadas contra PostgreSQL real
 | `20261013180000_token_de_senha` | `TokenDeSenha` (RF-03). Guarda o **resumo** do token e não o token, pelo mesmo motivo de `senhaHash` |
 | `20261013190000_verificacao_de_email` | `TokenDeEmail` (RF-03). Tabela separada da anterior de propósito: validade diferente (7 dias contra 30 min) e consequência diferente — uma confirma um fato, a outra troca uma credencial |
 | `20261014100000_lembrete_de_jogo` | `Reserva.lembreteEnviadoEm` e um índice **parcial** `WHERE "lembreteEnviadoEm" IS NULL` (RF-17). Parcial porque o job pergunta sempre *quais faltam*: as linhas saem do índice quando o aviso sai, então ele não cresce com o histórico |
-| `20261017120000_mensalistas` | `Recorrencia` e a chave estrangeira anulável `Reserva.recorrenciaId` (ADR-0014, RF-35). A ocorrência de mensalista é **reserva de verdade**, e por isso cai sob a `reserva_sem_sobreposicao` como qualquer outra — série virtual não teria linha, e a restrição protege linha que existe. O índice `(recorrenciaId, inicio)` serve a encerrar as ocorrências futuras de uma série sem varrer a tabela |
+| `20261017120000_mensalistas` | `Recorrencia` e a chave estrangeira anulável `Reserva.recorrenciaId` (ADR-0014, RF-36). A ocorrência de mensalista é **reserva de verdade**, e por isso cai sob a `reserva_sem_sobreposicao` como qualquer outra — série virtual não teria linha, e a restrição protege linha que existe. O índice `(recorrenciaId, inicio)` serve a encerrar as ocorrências futuras de uma série sem varrer a tabela |
 
 ### Anti-overbooking (RN-01) — por que deixou de ser índice único
 

@@ -346,7 +346,7 @@ model Reserva {
   @@index([recorrenciaId, inicio])
 }
 
-/// Serie semanal de um mensalista (ADR-0014, RF-35).
+/// Serie semanal de um mensalista (ADR-0014, RF-36).
 ///
 /// A regra fica aqui; as ocorrencias sao `Reserva` de verdade, materializadas
 /// por horizonte deslizante. Mensalista virtual nao teria linha no banco, e a

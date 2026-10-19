@@ -21,7 +21,7 @@ import { CriarRecorrenciaDto, EditarRecorrenciaDto } from "./dto/recorrencia.dto
 import { RecorrenciasService } from "./recorrencias.service";
 
 /**
- * Mensalistas da arena (RF-35, ADR-0014).
+ * Mensalistas da arena (RF-36, ADR-0014).
  *
  * Ler é de toda a equipe com vínculo — o atendente precisa saber de quem é o
  * horário de terça às 19h. **Escrever é do admin**, como toda escrita de

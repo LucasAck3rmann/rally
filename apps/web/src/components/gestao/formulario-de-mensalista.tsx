@@ -33,7 +33,7 @@ type Relatorio = {
 };
 
 /**
- * Cadastro de mensalista no painel (RF-35, ADR-0014).
+ * Cadastro de mensalista no painel (RF-36, ADR-0014).
  *
  * **O que este formulário tem e o de cupom não é o relatório de colisão.** O
  * ADR-0014 recusou de propósito duas saídas mais simples: recusar a série
