@@ -108,5 +108,13 @@
 **Consequências:** (+) a ocorrência é reserva comum — entra na agenda, no relatório, na conciliação e sob a trava do banco, sem que nenhum desses caminhos precise conhecer mensalista. (−) horizonte é estado que envelhece, e a mitigação tem de ser **medida** e não intenção: a série guarda até quando foi materializada, o painel mostra a folga e um trabalho diário estende o horizonte — medida e manutenção são coisas diferentes, e por um dia só a medida existiu. (−) a série **não se altera**: trocar quadra, dia ou hora é encerrar e cadastrar outra, e nenhum DTO de edição aceita esses campos — o preço disso é um cadastro a mais, e o ganho é que nenhuma reserva pode discordar da série que a gerou.
 **Versão por extenso:** [ADR-0014 — Mensalistas como reservas materializadas](0014-mensalistas.md).
 
+## ADR-0015 — Playwright como condutor de navegador para as capturas
+**Status:** Aceito · **Data:** 2026-10-19
+**Contexto:** As figuras do sistema são capturas geradas por script, porque print manual não se reproduz. O script chamava o Chrome do sistema com `--headless --screenshot`, que **não manda cookie nem preenche formulário** — e por isso quatro telas de gestão ficaram como pendência, justamente as que a pesquisa apontou como essenciais.
+**Decisão (resumo):** as capturas passam ao **Playwright**, que faz o login e salva o PNG. O script antigo é **substituído, não complementado**: mantê-lo criaria dois lugares procurando o navegador, que é o que o próprio docstring dele mandava evitar.
+**Alternativas:** prints manuais (recusada — o projeto já decidiu isso para os gráficos); protocolo do DevTools na mão (recusada — viraria automação de navegador caseira, mantida por nós e exercitada por um script só); deixar as telas fora do Relatório (recusada — *furo declarado é furo que continua furo*); mover também a impressão do PDF (adiada — o pipeline ABNT está provado).
+**Consequências:** (+) a figura regerada em outra máquina sai do mesmo motor, porque a versão do navegador vem do `package.json`; (+) abre caminho para teste de ponta a ponta, que o projeto não tem — dito como consequência, não como feito. (−) uma dependência de desenvolvimento e um navegador baixado; (−) o projeto passa a ter **dois navegadores**, por motivos diferentes: o Chrome do sistema imprime o PDF, o Chromium do Playwright captura as telas.
+**Versão por extenso:** [ADR-0015 — Playwright como condutor de navegador para as capturas](0015-playwright-para-capturas.md).
+
 ---
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.
