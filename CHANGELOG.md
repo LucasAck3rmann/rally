@@ -73,6 +73,16 @@ e versionamento [Semantic Versioning](https://semver.org/lang/pt-BR/).
   todas as features); splash e login passaram a usar o emblema oficial da marca.
 
 ### Corrigido
+- **Build da web deixou de depender da rede (CI):** as três famílias de fonte
+  saíram do `next/font/google` para o `next/font/local`, com os `.woff2` versionados em
+  `apps/web/src/app/fonts`. O carregador do Google **baixa** os arquivos durante o build,
+  então uma resposta ruim do `fonts.googleapis.com` reprova o `pnpm build` inteiro — foi
+  o que derrubou a primeira tentativa da CI em 19/10, com
+  `TypeError: Cannot read properties of null (reading '1')` dentro do carregador: a URL
+  colhida do CSS do Google não terminava em extensão de fonte. Reexecutar resolveu, que
+  é a assinatura de dependência externa e não de defeito nosso. Os quatro arquivos são
+  **byte a byte** os mesmos que o carregador vinha baixando; Sora e Inter são variáveis e
+  cabem num arquivo por família, Space Mono vem em dois.
 - **Anti-overbooking (RN-01):** o índice único `(quadraId, inicio)` foi substituído pela
   constraint de exclusão `reserva_sem_sobreposicao` (`EXCLUDE USING gist` sobre `tsrange`, com
   predicado `status <> 'CANCELADA'`). O índice cobria só o instante de início, então

@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import type { Metadata, Viewport } from "next";
-import { Inter, Sora, Space_Mono } from "next/font/google";
+import localFont from "next/font/local";
 import { SmoothScroll } from "@/components/motion/smooth-scroll";
 import { cn } from "@/lib/cn";
 import "./globals.css";
@@ -8,23 +8,37 @@ import "./globals.css";
 // Três famílias, como manda o DESIGN.md: Sora no display, Inter no corpo e
 // Space Mono nos rótulos/números. Carregadas pelo next/font (self-host, sem
 // requisição a terceiros e sem layout shift).
-const display = Sora({
-  subsets: ["latin"],
-  weight: ["600", "700", "800"],
+//
+// Os arquivos ficam versionados em ./fonts, e não vêm do `next/font/google`:
+// aquele loader **baixa** o woff2 de cada família durante o build, de modo que
+// uma intermitência de rede reprova o build inteiro. Foi o que derrubou a
+// primeira tentativa da CI do #123, em `pnpm build`. O self-host sempre foi do
+// resultado; agora o processo também não fala com fonts.googleapis.com.
+//
+// Sora e Inter são fontes variáveis: o Google serve **um** woff2 por família
+// para todos os pesos, e o intervalo declarado abaixo é o que a interface usa.
+// Space Mono não é variável, então vem em dois arquivos estáticos.
+const display = localFont({
+  src: "./fonts/sora/sora-latin-variable.woff2",
+  weight: "600 800",
+  style: "normal",
   variable: "--font-display",
   display: "swap",
 });
 
-const corpo = Inter({
-  subsets: ["latin"],
-  weight: ["400", "500", "600", "700"],
+const corpo = localFont({
+  src: "./fonts/inter/inter-latin-variable.woff2",
+  weight: "400 700",
+  style: "normal",
   variable: "--font-body",
   display: "swap",
 });
 
-const mono = Space_Mono({
-  subsets: ["latin"],
-  weight: ["400", "700"],
+const mono = localFont({
+  src: [
+    { path: "./fonts/space-mono/space-mono-latin-400.woff2", weight: "400", style: "normal" },
+    { path: "./fonts/space-mono/space-mono-latin-700.woff2", weight: "700", style: "normal" },
+  ],
   variable: "--font-mono",
   display: "swap",
 });
