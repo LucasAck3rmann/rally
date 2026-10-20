@@ -6,6 +6,7 @@ import "package:google_fonts/google_fonts.dart";
 
 import "../../../core/theme/app_colors.dart";
 import "../../../core/widgets/rally_icon.dart";
+import "../../../core/config/servidor_store.dart";
 import "auth_controller.dart";
 
 class LoginPage extends ConsumerStatefulWidget {
@@ -19,18 +20,37 @@ class _LoginPageState extends ConsumerState<LoginPage> {
   final _formKey = GlobalKey<FormState>();
   final _email = TextEditingController();
   final _senha = TextEditingController();
+  final _servidor = TextEditingController();
   bool _obscure = true;
+
+  /// O campo de servidor fica recolhido: quem usa o aplicativo publicado nao
+  /// precisa dele, e um endereco de API no meio do login confundiria.
+  bool _mostrarServidor = false;
+
+  @override
+  void initState() {
+    super.initState();
+    // Mostra o que esta valendo, e nao um campo vazio: endereco em branco
+    // sugeriria que nao ha nenhum configurado.
+    ref.read(servidorStoreProvider).ler().then((valor) {
+      if (mounted) _servidor.text = valor;
+    });
+  }
 
   @override
   void dispose() {
     _email.dispose();
     _senha.dispose();
+    _servidor.dispose();
     super.dispose();
   }
 
   Future<void> _submit() async {
     if (!_formKey.currentState!.validate()) return;
     FocusScope.of(context).unfocus();
+    // Grava antes de tentar entrar: a propria chamada de login ja usa o
+    // endereco, e salvar depois faria a primeira tentativa ir para o antigo.
+    await ref.read(servidorStoreProvider).gravar(_servidor.text);
     await ref
         .read(authControllerProvider.notifier)
         .login(_email.text.trim(), _senha.text);
@@ -114,7 +134,32 @@ class _LoginPageState extends ConsumerState<LoginPage> {
                           ? "Mínimo de 6 caracteres"
                           : null,
                     ),
-                    const SizedBox(height: 22),
+                    const SizedBox(height: 6),
+                    Align(
+                      alignment: Alignment.centerLeft,
+                      child: TextButton(
+                        onPressed: () => setState(
+                          () => _mostrarServidor = !_mostrarServidor,
+                        ),
+                        child: Text(
+                          _mostrarServidor ? "Ocultar servidor" : "Servidor",
+                        ),
+                      ),
+                    ),
+                    if (_mostrarServidor) ...[
+                      TextFormField(
+                        controller: _servidor,
+                        keyboardType: TextInputType.url,
+                        autocorrect: false,
+                        decoration: const InputDecoration(
+                          labelText: "Endereco da API",
+                          helperText: "Ex.: 192.168.0.14 — a porta e o"
+                              " caminho sao completados",
+                        ),
+                      ),
+                      const SizedBox(height: 8),
+                    ],
+                    const SizedBox(height: 16),
                     FilledButton(
                       onPressed: loading ? null : _submit,
                       child: loading
