@@ -32,7 +32,7 @@ Três achados dessa aplicação ficam registrados, porque cada um deles custaria
 
 **A versão mais nova não é a versão certa.** O alerta do `uuid` é corrigido em 11.1.1, e `>=11.1.1` resolveu para **14.0.3** — que é ESM puro: `"type": "module"`, sem condição `require` no mapa de exportações. O `exceljs` é CommonJS e o carrega com `require('uuid').v4`. Verificado isolado no Node 22, **funcionou**, porque o Node passou a aceitar `require` de módulo ESM. Verificado sob o Jest, **não**: a suíte `relatorios.service.spec.ts` inteira parou de carregar, 0 testes executados. Por isso a faixa é `^11.1.1`, e não `>=11.1.1`: a **11.1.1 é a última linha que ainda publica build CJS**. O piso vem do alerta; o teto vem do que o consumidor consegue carregar.
 
-**Um alerta não tem correção publicada.** O `sprintf-js` é vulnerável em toda versão até 1.1.3 e não há versão corrigida. Ele chega pelo `jest` e não vai a produção. Fica **declarado aqui**, não escondido: alerta sem correção é alerta que continua aberto, e o projeto já decidiu que *furo declarado é furo que continua furo* — a diferença é que este não tem conserto disponível para ser recusado.
+**Um alerta não tem correção publicada.** O `sprintf-js` é vulnerável em toda versão até 1.1.3 e não há versão corrigida. Ele chega pela instrumentação de cobertura do `jest` e não vai a produção. Fica **declarado aqui**, não escondido, porque o projeto já decidiu que *furo declarado é furo que continua furo* — a diferença é que este não tem conserto disponível para ser recusado. A conferência dele é no lockfile, e não na lista de alertas, pelo motivo que a última consequência desta decisão registra.
 
 ## Alternativas consideradas
 
@@ -42,7 +42,7 @@ Três achados dessa aplicação ficam registrados, porque cada um deles custaria
 
 **Ignorar os alertas que não vão a produção.** Recusada. Dependência de desenvolvimento executa na máquina de quem mantém o projeto e na CI, que tem credencial do repositório. Não ir a produção reduz a gravidade; não a zera.
 
-**Esperar os PRs do Dependabot.** Eles atualizam dependência declarada, uma por vez, e **não alcançam versão transitiva fixada** por um pacote intermediário. Os dez PRs de junho abertos no repositório são prova de que esperar não resolve.
+**Esperar os PRs do Dependabot.** Eles atualizam dependência declarada, uma por vez, e **não alcançam versão transitiva fixada** por um pacote intermediário. Os catorze PRs de junho são prova de que esperar não resolve: quatro meses depois, estavam todos em conflito, com os logs da CI expirados e o diff apontando para um lockfile que não existia mais. Foram fechados em 22/10, para que o Dependabot os recrie contra a `main` atual, cada salto de major avaliado por si.
 
 ## Consequências
 
@@ -54,4 +54,6 @@ Três achados dessa aplicação ficam registrados, porque cada um deles custaria
 
 **(−)** O override é **invisível no manifesto de quem consome**. Quem lê `apps/web/package.json` não descobre ali que o `postcss` tem piso em 8.5.30. Por isso a faixa declarada do `postcss` naquele arquivo também subiu para `^8.5.30`: o manifesto deixa de anunciar faixa que inclui versão vulnerável, mesmo que o override já a impedisse.
 
-**(−)** O `sprintf-js` segue aberto até que haja correção publicada.
+**(−)** O `sprintf-js` **continua instalado**, e aqui o registro precisa de uma correção. Esta decisão previa que o alerta dele ficasse aberto por não haver correção publicada. Não foi o que aconteceu: ao mesclar, o GitHub o marcou como **corrigido** junto com os outros catorze, embora não exista versão corrigida e o `sprintf-js@1.0.3` siga no lockfile, alcançado por `@istanbuljs/load-nyc-config` → `js-yaml@3` → `argparse@1.0.10` — a instrumentação de cobertura, que é onde o alerta já dizia que ele estava.
+
+O que mudou foi a resolução da árvore, não o pacote. **Alerta fechado não é dependência removida**, e a lista de alertas é um relato sobre o repositório, não o conteúdo dele: a verificação que vale é o lockfile. Fica anotado para que a próxima leitura desta lista não confunda as duas coisas.
