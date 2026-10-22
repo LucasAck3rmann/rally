@@ -106,6 +106,46 @@ export function ehConflitoDeHorario(erro: unknown): boolean {
   );
 }
 
+/**
+ * Se o erro é **impasse** entre transações que disputam o mesmo horário
+ * (SQLSTATE `40P01`, `deadlock detected`).
+ *
+ * **Não é a mesma coisa que conflito de horário, e a diferença importa.** A
+ * violação da restrição de exclusão é prova de que o intervalo está ocupado.
+ * O impasse não prova nada sobre o intervalo: prova que esta transação perdeu
+ * a disputa e foi abortada pelo banco para desfazer um ciclo de espera.
+ *
+ * Quem espera pela `EXCLUDE USING gist` toma um `ShareLock` na transação que
+ * está inserindo, e com várias tentativas simultâneas pelo mesmo intervalo o
+ * PostgreSQL acha um ciclo entre as esperas e aborta uma delas com `40P01`
+ * em vez de `23P01`. Medido nesta máquina em 22/10/2026, com o portão de
+ * carga do RNF-03: em cerca de uma execução em cinco, uma das dezenove
+ * derrotas chegava como impasse.
+ *
+ * O efeito de não reconhecê-lo era o cliente receber **500 em vez de 409**
+ * por ter disputado um horário — e a falha aparecia no portão como
+ * `Expected: true, Received: false`, que não nomeia erro nenhum e por isso
+ * passava por instabilidade.
+ *
+ * **O discriminador é o SQLSTATE, não a frase.** A mensagem do servidor vem
+ * no idioma dele: aqui ela chega como *"impasse detectado"*. É a mesma lição
+ * que a suíte de integração do mensalista já registra sobre o `23P01`.
+ */
+export function ehImpasseDeHorario(erro: unknown): boolean {
+  return erro instanceof Error && /\b40P01\b/.test(erro.message);
+}
+
+/**
+ * A recusa que o cliente vê quando perdeu a disputa sem que se possa afirmar
+ * que o horário está tomado.
+ *
+ * Dizer "esse horário já tem reserva" num impasse seria afirmar o que não se
+ * mediu; dizer para tentar de novo é verdadeiro e acionável, porque a
+ * segunda tentativa encontra o intervalo decidido.
+ */
+export const HORARIO_DISPUTADO =
+  "Esse horário está sendo disputado neste instante. Tente de novo.";
+
 @Injectable()
 export class ReservasService {
   constructor(
@@ -252,6 +292,9 @@ export class ReservasService {
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
+      }
+      if (ehImpasseDeHorario(erro)) {
+        throw new ConflictException(HORARIO_DISPUTADO);
       }
       if (ehCupomEsgotado(erro)) {
         throw new ConflictException(
@@ -490,6 +533,9 @@ export class ReservasService {
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
+      }
+      if (ehImpasseDeHorario(erro)) {
+        throw new ConflictException(HORARIO_DISPUTADO);
       }
       throw erro;
     }

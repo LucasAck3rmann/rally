@@ -9,7 +9,11 @@ import { Prisma, ReservaOrigem, ReservaStatus } from "@prisma/client";
 
 import { horaLocalParaUtc, rotuloHoraLocal } from "../../common/timezone";
 import { PrismaService } from "../../prisma/prisma.service";
-import { ehConflitoDeHorario } from "../reservas/reservas.service";
+import {
+  ehConflitoDeHorario,
+  ehImpasseDeHorario,
+  HORARIO_DISPUTADO,
+} from "../reservas/reservas.service";
 import { CriarBloqueioDto } from "./dto/criar-bloqueio.dto";
 import { MoverReservaDto } from "./dto/mover-reserva.dto";
 
@@ -150,6 +154,11 @@ export class AgendaService {
           "Esse horário já tem reserva ou bloqueio. Cancele a reserva antes.",
         );
       }
+      // Impasse não prova que o horário esteja tomado, e mandar cancelar uma
+      // reserva que talvez não exista seria instrução errada.
+      if (ehImpasseDeHorario(erro)) {
+        throw new ConflictException(HORARIO_DISPUTADO);
+      }
       throw erro;
     }
   }
@@ -263,6 +272,9 @@ export class AgendaService {
         throw new ConflictException(
           "Esse horário já tem reserva ou bloqueio nessa quadra.",
         );
+      }
+      if (ehImpasseDeHorario(erro)) {
+        throw new ConflictException(HORARIO_DISPUTADO);
       }
       throw erro;
     }

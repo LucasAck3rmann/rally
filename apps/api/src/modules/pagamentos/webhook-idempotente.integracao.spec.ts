@@ -89,6 +89,13 @@ comBanco("webhook de pagamento é idempotente (integração)", () => {
     estabelecimentoId = quadra.estabelecimentoId;
     const cliente = await prisma.usuario.findFirstOrThrow();
     clienteId = cliente.id;
+
+    // **Limpeza na entrada, e não só na saída.** Execução interrompida não
+    // roda o `afterAll`, e os ids desta suíte são fixos: a volta seguinte
+    // esbarraria neles e falharia na criação, antes de verificar coisa
+    // alguma. O `gatewayId` sai junto porque é único.
+    await prisma.pagamento.deleteMany({ where: { id: { startsWith: PREFIXO } } });
+    await prisma.reserva.deleteMany({ where: { id: { startsWith: PREFIXO } } });
   });
 
   afterAll(async () => {
