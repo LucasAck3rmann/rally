@@ -116,5 +116,13 @@
 **Consequências:** (+) a figura regerada em outra máquina sai do mesmo motor, porque a versão do navegador vem do `package.json`; (+) abre caminho para teste de ponta a ponta, que o projeto não tem — dito como consequência, não como feito. (−) uma dependência de desenvolvimento e um navegador baixado; (−) o projeto passa a ter **dois navegadores**, por motivos diferentes: o Chrome do sistema imprime o PDF, o Chromium do Playwright captura as telas.
 **Versão por extenso:** [ADR-0015 — Playwright como condutor de navegador para as capturas](0015-playwright-para-capturas.md).
 
+## ADR-0016 — Overrides do pnpm para vulnerabilidade transitiva
+**Status:** Aceito · **Data:** 2026-10-22
+**Contexto:** 15 alertas de segurança abertos, **nenhum** em dependência que o projeto declara — todos entram transitivamente. O alcance de cada um foi estabelecido com `pnpm why -r`, e só **um** chega à API em execução: o `uuid`, pelo `exceljs`.
+**Decisão (resumo):** elevar as versões por **`pnpm.overrides` na raiz**, com faixa de piso, porque o pacote vulnerável não é declarado em manifesto nenhum. Mais uma dependência assumida de verdade: o `vite` passa a ser dependência de desenvolvimento do `apps/web`, já que **override não alcança peer auto-instalado** — o `pnpm install` terminava com sucesso, imprimia `unmet peer` como aviso e deixava a versão vulnerável no lockfile.
+**Alternativas:** atualizar a dependência direta que carrega cada uma (recusada — mover o `postcss` pela via do `next` seria atualizar o framework para corrigir dependência de build); `pnpm audit --fix` (escreveria o mesmo sem estabelecer alcance, e é o alcance que justifica o esforço desigual); ignorar o que não vai a produção (recusada — dependência de desenvolvimento roda na CI, que tem credencial); esperar os PRs do Dependabot (não alcançam versão transitiva fixada).
+**Consequências:** (+) 14 dos 15 fechados, e cada pacote colapsou para **uma única versão** no lockfile; (+) o único que alcança produção foi verificado pela suíte que escreve planilha — e foi ela que recusou o `uuid` 14, ESM puro, que o Node 22 carrega e o Jest não. (−) override é **piso que o projeto passa a manter**, e a lista tem de ser revisitada quando o pacote intermediário subir sozinho; (−) é invisível no manifesto de quem consome, mitigado subindo também a faixa declarada do `postcss`; (−) o `sprintf-js` segue aberto, **sem correção publicada**.
+**Versão por extenso:** [ADR-0016 — Overrides do pnpm para vulnerabilidade transitiva](0016-overrides-para-vulnerabilidade-transitiva.md).
+
 ---
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.
