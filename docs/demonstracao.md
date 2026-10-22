@@ -83,6 +83,12 @@ pnpm --filter @rally/web dev
 **Confira a API antes de abrir o painel.** Se o `db` não disser `up`, o painel
 abre vazio e o problema é o banco, não a tela.
 
+Os dois comandos acima também estão declarados em `.claude/launch.json`, com as
+portas, para quem sobe os servidores pelo editor. É a mesma dupla de processos
+que os portões de navegador exigem — o das telas, o do alvo de toque e o do
+contraste —, e por isso a configuração é versionada: um portão que só roda na
+máquina de quem o escreveu não é portão.
+
 ## 5. O aplicativo no celular
 
 O APK sai da integração contínua, porque nem toda máquina de desenvolvimento

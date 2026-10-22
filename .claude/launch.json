@@ -1,0 +1,17 @@
+{
+  "version": "0.0.1",
+  "configurations": [
+    {
+      "name": "api",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@rally/api", "dev"],
+      "port": 3333
+    },
+    {
+      "name": "web",
+      "runtimeExecutable": "pnpm",
+      "runtimeArgs": ["--filter", "@rally/web", "dev"],
+      "port": 3000
+    }
+  ]
+}
