@@ -53,6 +53,11 @@ comBanco("constraint promocao_usos_dentro_do_limite (integração)", () => {
   beforeAll(async () => {
     const quadra = await prisma.quadra.findFirstOrThrow();
     estabelecimentoId = quadra.estabelecimentoId;
+
+    // **Limpeza na entrada, e não só na saída.** Execução interrompida não
+    // roda o `afterEach`, e o `codigo` do cupom é único: a volta seguinte
+    // falharia na criação, sem chegar a verificar o limite de usos.
+    await prisma.promocao.deleteMany({ where: { id: { startsWith: PREFIXO } } });
   });
 
   afterEach(async () => {

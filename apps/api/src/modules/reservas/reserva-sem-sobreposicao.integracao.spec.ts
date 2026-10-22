@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { PrismaClient, Prisma, ReservaStatus } from "@prisma/client";
 
-import { ehConflitoDeHorario } from "./reservas.service";
+import { ehConflitoDeHorario, ehImpasseDeHorario } from "./reservas.service";
 
 /**
  * Prova a `EXCLUDE USING gist` contra um Postgres de verdade (RN-01).
@@ -17,6 +17,54 @@ const comBanco = process.env.DATABASE_URL ? describe : describe.skip;
 
 /** Prefixo dos ids criados aqui, para a limpeza não encostar no seed. */
 const PREFIXO = "teste-sobrep-";
+
+/**
+ * **Prazo de arquivo, porque aqui nada é teste de unidade.**
+ *
+ * O teste de carga faz vinte inserções simultâneas pelo mesmo intervalo, e a
+ * restrição de exclusão as serializa; com o banco disputado pelas outras
+ * suítes de integração em paralelo, o conjunto passa dos 5 s que o Jest dá
+ * por omissão. Foi visto falhar por tempo com a afirmação — "exatamente uma
+ * linha" — intacta, e **o `afterAll` estourou em cascata**, o que derruba a
+ * suíte inteira. Por isso o prazo vale para todo o arquivo, ganchos
+ * incluídos, e não só para o teste que mais demora.
+ *
+ * Portão que falha por relógio é reexecutado sem ninguém olhar, e este é o
+ * portão da garantia central do projeto. O prazo maior não enfraquece nada:
+ * a conta conferida no banco continua a mesma.
+ */
+jest.setTimeout(30_000);
+
+/**
+ * Descreve um erro em uma linha, para a asserção poder nomeá-lo.
+ *
+ * A natureza do erro é o que decide se o cliente vê 409 ou 500, e é
+ * justamente o que se perde quando a asserção compara só um booleano.
+ */
+/**
+ * O rótulo da derrota, ou a descrição do erro que não é uma derrota prevista.
+ *
+ * **Perder a disputa tem duas formas, e as duas viram 409.** A violação da
+ * restrição de exclusão prova que o intervalo está ocupado; o impasse
+ * (`40P01`) prova apenas que esta transação foi abortada para desfazer um
+ * ciclo de espera. Qualquer coisa fora dessas duas chega ao cliente como 500,
+ * e é isso que este portão existe para impedir.
+ */
+function derrota(erro: unknown): string {
+  if (ehConflitoDeHorario(erro)) return "derrota prevista";
+  if (ehImpasseDeHorario(erro)) return "derrota prevista";
+  return descrever(erro);
+}
+
+function descrever(erro: unknown): string {
+  if (!(erro instanceof Error)) return `não-erro: ${String(erro)}`;
+  const codigo = (erro as { code?: string }).code ?? "sem code";
+  // **A cauda, e não o começo.** O Prisma prefixa a mensagem com o trecho do
+  // código que fez a chamada — umas duzentas colunas de moldura antes de
+  // chegar ao que o banco disse. Cortar pelo começo descreveria a moldura.
+  const mensagem = erro.message.replace(/\s+/g, " ").slice(-260);
+  return `${erro.constructor.name} (${codigo}): …${mensagem}`;
+}
 
 comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
   const prisma = new PrismaClient();
@@ -53,6 +101,14 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     const quadra = await prisma.quadra.findFirstOrThrow();
     quadraId = quadra.id;
     estabelecimentoId = quadra.estabelecimentoId;
+
+    // **Limpeza na entrada, e não só na saída.** Execução interrompida não
+    // roda `afterEach`, e a sobra colide com o próprio passado: dois dos três
+    // testes criam 19h–20h na mesma quadra, de modo que uma linha esquecida
+    // faz o **primeiro** `create` ser recusado pela restrição de exclusão. O
+    // erro então acusa 23P01 numa inserção que deveria passar, e o portão da
+    // garantia central do projeto vira "instabilidade" reexecutada sem olhar.
+    await prisma.reserva.deleteMany({ where: { id: { startsWith: PREFIXO } } });
   });
 
   afterEach(async () => {
@@ -102,7 +158,7 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     // E o erro de quem perdeu precisa ser reconhecido como conflito de
     // horário — é isso que vira 409 em vez de 500 para o cliente.
     const motivo = (perdeu[0] as PromiseRejectedResult).reason;
-    expect(ehConflitoDeHorario(motivo)).toBe(true);
+    expect(derrota(motivo)).toBe("derrota prevista");
   });
 
   /**
@@ -128,12 +184,18 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     expect(ganharam).toHaveLength(1);
     expect(perderam).toHaveLength(TENTATIVAS - 1);
 
-    // Nenhuma derrota pode chegar ao cliente como 500. Todas precisam ser
-    // reconhecidas como conflito de horário, que é o que `criar()` converte em
-    // 409 — um único erro fora desse formato viraria erro de servidor na tela.
-    for (const derrota of perderam) {
-      const motivo = (derrota as PromiseRejectedResult).reason;
-      expect(ehConflitoDeHorario(motivo)).toBe(true);
+    // Nenhuma derrota pode chegar ao cliente como 500: todas precisam ser
+    // derrota prevista, que é o que os caminhos interativos convertem em 409.
+    //
+    // **Foi aqui que o impasse apareceu.** Em cerca de uma execução em cinco,
+    // uma das dezenove derrotas chegava como `40P01` — e a asserção anterior,
+    // que comparava um booleano, dizia só "Expected: true, Received: false".
+    // Sem nomear o erro, a falha passava por instabilidade e era
+    // reexecutada; a asserção agora carrega a descrição, de modo que a
+    // próxima surpresa chega nomeada.
+    for (const perdida of perderam) {
+      const motivo = (perdida as PromiseRejectedResult).reason;
+      expect(derrota(motivo)).toBe("derrota prevista");
     }
 
     // A prova final é no banco, não no resultado das promessas: é ele que
