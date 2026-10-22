@@ -20,9 +20,18 @@ vi.mock("@/app/recuperar-senha/acoes", () => ({
  * dizer combinação aprovada, porque uma cor só passa ou reprova contra o
  * fundo sobre o qual ela é de fato desenhada.
  *
- * Esta suíte mede os pares que a web **renderiza**, não a paleta inteira.
- * Par novo na interface entra na lista; é o único jeito de ela continuar
- * dizendo a verdade.
+ * Esta suíte mede os pares que a web **renderiza**, não a paleta inteira, e
+ * as duas listas abaixo são escritas à mão: par novo na interface só entra
+ * nelas se alguém lembrar de escrevê-lo.
+ *
+ * **Esse limite deixou de ser o fim da história.** O `tools/contraste.mjs`
+ * mede, no navegador, a cor de **todo** elemento que pinta texto nas treze
+ * telas, com o fundo que o `getComputedStyle` calcula — par novo entra na
+ * medição por existir, e não por ser lembrado. Esta suíte continua porque
+ * mede outra coisa: que a combinação **prevista pelo design system** fecha,
+ * em jsdom, sem servidor nem banco, no mesmo segundo em que roda o resto da
+ * suíte. Uma vê o mecanismo, a outra vê o resultado — o mesmo arranjo do
+ * alvo de toque.
  */
 
 type Par = { frente: string; fundo: string; uso: string };

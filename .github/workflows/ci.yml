@@ -106,7 +106,7 @@ jobs:
       - run: pnpm --filter @rally/api test:cov
 
   telas:
-    name: As telas abrem, e os alvos sao medidos
+    name: As telas abrem, e o alvo e o contraste sao medidos
     runs-on: ubuntu-latest
     # Existe porque seis telas do painel estiveram quebradas na `main` com a
     # suite inteira verde. Elas falhavam no runtime do Next -- Server
@@ -166,6 +166,17 @@ jobs:
       # e a outra metade, e foi ele que achou um botao de 40,8 x 16,5 px numa
       # tela que nenhum cenario montava.
       - run: node tools/alvos-de-toque.mjs
+      # Mede o contraste **desenhado** (RNF-08, WCAG 1.4.3), no mesmo
+      # navegador e nos mesmos servidores.
+      #
+      # O portao em jsdom percorre duas listas de pares escritas a mao e diz
+      # de si mesmo que par novo na interface so entra se alguem lembrar de
+      # escreve-lo. Este passo nao escolhe o recorte: mede todo elemento que
+      # pinta texto nas treze telas, com a cor e o fundo que o navegador
+      # calcula. Texto que a marcacao declara decorativo com `aria-hidden`
+      # fica de fora, porque a WCAG isenta decoracao -- e a isenca vem da
+      # marcacao, nao de uma lista mantida no medidor.
+      - run: node tools/contraste.mjs
 
   licenca:
     name: Declaração de licença
