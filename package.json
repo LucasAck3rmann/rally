@@ -34,5 +34,16 @@
     "turbo": "^2.11.5",
     "typescript": "^5.9.3",
     "typescript-eslint": "^8.71.0"
+  },
+  "pnpm": {
+    "overrides": {
+      "deepmerge-ts": ">=8.0.0",
+      "handlebars": ">=4.7.10",
+      "postcss": ">=8.5.30",
+      "postcss-selector-parser": ">=7.1.6",
+      "source-map-js": ">=1.2.2",
+      "uuid": "^11.1.1",
+      "vite": ">=8.3.3"
+    }
   }
 }
