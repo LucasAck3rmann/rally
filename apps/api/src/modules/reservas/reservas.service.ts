@@ -146,6 +146,36 @@ export function ehImpasseDeHorario(erro: unknown): boolean {
 export const HORARIO_DISPUTADO =
   "Esse horário está sendo disputado neste instante. Tente de novo.";
 
+/**
+ * Executa a escrita e, se o banco abortar por **impasse**, repete uma vez.
+ *
+ * **Repetir é seguro aqui por definição, e não por otimismo.** O `40P01` é o
+ * jeito de o PostgreSQL desfazer um ciclo de espera: ele escolhe uma
+ * transação e a aborta **inteira**. Nada daquela tentativa ficou no banco, de
+ * modo que a segunda começa do mesmo lugar que a primeira — não há escrita
+ * parcial para compensar, nem incremento de cupom a desfazer, porque o que se
+ * repete é a transação, e não uma parte dela.
+ *
+ * **Uma vez, e não até dar certo.** A primeira tentativa perdeu a disputa; na
+ * segunda o intervalo já está decidido, e o resultado é definitivo: ou a
+ * reserva nasce, ou a restrição de exclusão a recusa com `23P01` e o cliente
+ * recebe 409 com a mensagem que corresponde ao que de fato aconteceu. Repetir
+ * em laço trocaria uma recusa honesta por espera indefinida, e esconderia
+ * contenção sistêmica, que é informação que o projeto quer ver.
+ *
+ * O que isto corrige é a **nondeterminância da resposta**: sem a repetição, o
+ * mesmo cliente, na mesma disputa, recebia 409 ou a recusa por impasse
+ * conforme a transação que o banco escolhesse abortar.
+ */
+export async function semImpasse<T>(escrever: () => Promise<T>): Promise<T> {
+  try {
+    return await escrever();
+  } catch (erro) {
+    if (!ehImpasseDeHorario(erro)) throw erro;
+    return await escrever();
+  }
+}
+
 @Injectable()
 export class ReservasService {
   constructor(
@@ -257,38 +287,43 @@ export class ReservasService {
       // Transação porque o uso do cupom e a reserva têm de nascer juntos: um
       // contador adiantado sem reserva tiraria do ar um uso que ninguém
       // aproveitou, e uma reserva com cupom não contabilizado fura o limite.
-      reserva = await this.prisma.$transaction(async (tx) => {
-        if (cupom) {
-          // Quem garante o limite é a restrição `promocao_usos_dentro_do_limite`:
-          // entre a conferência acima e esta escrita cabe outra requisição
-          // usando o último uso.
-          await tx.promocao.update({
-            where: { id: cupom.id },
-            data: { usosFeitos: { increment: 1 } },
-          });
-        }
-        return tx.reserva.create({
-          data: {
-            estabelecimentoId: quadra.estabelecimentoId,
-            quadraId: quadra.id,
-            clienteId: usuarioId,
-            inicio,
-            fim,
-            preco: new Prisma.Decimal(slot.preco),
-            status: ReservaStatus.PENDENTE_PAGAMENTO,
-            origem: ReservaOrigem.APP,
-            promocaoId: cupom?.id,
-            pagamento: {
-              create: {
-                valor: new Prisma.Decimal(valor),
-                metodo,
-                status: PagamentoStatus.PENDENTE,
+      // O `semImpasse` repete a transação **inteira** quando o banco a
+      // aborta por `40P01`: é por ela ser a unidade de atomicidade que a
+      // repetição não deixa incremento de cupom pendurado.
+      reserva = await semImpasse(() =>
+        this.prisma.$transaction(async (tx) => {
+          if (cupom) {
+            // Quem garante o limite é a restrição `promocao_usos_dentro_do_limite`:
+            // entre a conferência acima e esta escrita cabe outra requisição
+            // usando o último uso.
+            await tx.promocao.update({
+              where: { id: cupom.id },
+              data: { usosFeitos: { increment: 1 } },
+            });
+          }
+          return tx.reserva.create({
+            data: {
+              estabelecimentoId: quadra.estabelecimentoId,
+              quadraId: quadra.id,
+              clienteId: usuarioId,
+              inicio,
+              fim,
+              preco: new Prisma.Decimal(slot.preco),
+              status: ReservaStatus.PENDENTE_PAGAMENTO,
+              origem: ReservaOrigem.APP,
+              promocaoId: cupom?.id,
+              pagamento: {
+                create: {
+                  valor: new Prisma.Decimal(valor),
+                  metodo,
+                  status: PagamentoStatus.PENDENTE,
+                },
               },
             },
-          },
-          select: { id: true },
-        });
-      });
+            select: { id: true },
+          });
+        }),
+      );
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
@@ -526,10 +561,12 @@ export class ReservasService {
     }
 
     try {
-      await this.prisma.reserva.update({
-        where: { id: reserva.id },
-        data: { inicio, fim, preco: new Prisma.Decimal(slot.preco) },
-      });
+      await semImpasse(() =>
+        this.prisma.reserva.update({
+          where: { id: reserva.id },
+          data: { inicio, fim, preco: new Prisma.Decimal(slot.preco) },
+        }),
+      );
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
         throw new ConflictException("Esse horário acabou de ser reservado.");
