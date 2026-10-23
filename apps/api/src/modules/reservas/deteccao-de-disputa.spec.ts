@@ -1,7 +1,11 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { Prisma } from "@prisma/client";
 
-import { ehConflitoDeHorario, ehImpasseDeHorario } from "./reservas.service";
+import {
+  ehConflitoDeHorario,
+  ehImpasseDeHorario,
+  semImpasse,
+} from "./reservas.service";
 
 /**
  * As duas formas de perder a disputa por um horário, e por que elas não são a
@@ -119,5 +123,59 @@ describe("ehImpasseDeHorario — a transação perdeu a disputa", () => {
     expect(
       ehImpasseDeHorario(new Error('gatewayId: "cob40P01x" não encontrado')),
     ).toBe(false);
+  });
+});
+
+describe("semImpasse — a segunda tentativa decide a disputa", () => {
+  it("repete uma vez e entrega o resultado da segunda", async () => {
+    let chamadas = 0;
+    const escrever = jest.fn(async () => {
+      chamadas++;
+      if (chamadas === 1) throw comoOPrismaEntrega(IMPASSE_PT);
+      return "reserva-criada";
+    });
+
+    await expect(semImpasse(escrever)).resolves.toBe("reserva-criada");
+    expect(escrever).toHaveBeenCalledTimes(2);
+  });
+
+  /**
+   * **A violação da restrição não se repete, e a diferença é de significado.**
+   * Ela prova que o intervalo está ocupado: tentar de novo encontraria a mesma
+   * linha e gastaria uma ida ao banco para chegar à mesma recusa. Repetir só
+   * faz sentido quando a primeira tentativa não decidiu nada.
+   */
+  it("não repete violação da restrição de exclusão", async () => {
+    const erro = comoOPrismaEntrega(VIOLACAO_EXCLUSAO);
+    const escrever = jest.fn(async () => {
+      throw erro;
+    });
+
+    await expect(semImpasse(escrever)).rejects.toBe(erro);
+    expect(escrever).toHaveBeenCalledTimes(1);
+  });
+
+  it("não repete erro alheio", async () => {
+    const erro = new Error("connection terminated");
+    const escrever = jest.fn(async () => {
+      throw erro;
+    });
+
+    await expect(semImpasse(escrever)).rejects.toBe(erro);
+    expect(escrever).toHaveBeenCalledTimes(1);
+  });
+
+  /**
+   * Uma vez, e não até dar certo: impasse na segunda volta propaga. Sem este
+   * teste, trocar o `try` por um laço passaria despercebido, e contenção
+   * sistêmica viraria espera indefinida em vez de recusa visível.
+   */
+  it("impasse na segunda volta propaga, sem terceira tentativa", async () => {
+    const escrever = jest.fn(async () => {
+      throw comoOPrismaEntrega(IMPASSE_EN);
+    });
+
+    await expect(semImpasse(escrever)).rejects.toThrow(/40P01/);
+    expect(escrever).toHaveBeenCalledTimes(2);
   });
 });

@@ -13,6 +13,7 @@ import {
   ehConflitoDeHorario,
   ehImpasseDeHorario,
   HORARIO_DISPUTADO,
+  semImpasse,
 } from "../reservas/reservas.service";
 import { CriarBloqueioDto } from "./dto/criar-bloqueio.dto";
 import { MoverReservaDto } from "./dto/mover-reserva.dto";
@@ -130,21 +131,23 @@ export class AgendaService {
     });
 
     try {
-      const criado = await this.prisma.reserva.create({
-        data: {
-          estabelecimentoId,
-          quadraId: dto.quadraId,
-          inicio,
-          fim,
-          status: ReservaStatus.BLOQUEIO,
-          origem: ReservaOrigem.BALCAO,
-          // Preço zero e sem `Pagamento`: é o que a RN-09 exige, e é o que
-          // mantém o bloqueio fora de qualquer relatório de receita.
-          preco: new Prisma.Decimal(0),
-          motivoCancelamento: dto.motivo,
-        },
-        select: ITEM_DA_AGENDA,
-      });
+      const criado = await semImpasse(() =>
+        this.prisma.reserva.create({
+          data: {
+            estabelecimentoId,
+            quadraId: dto.quadraId,
+            inicio,
+            fim,
+            status: ReservaStatus.BLOQUEIO,
+            origem: ReservaOrigem.BALCAO,
+            // Preço zero e sem `Pagamento`: é o que a RN-09 exige, e é o que
+            // mantém o bloqueio fora de qualquer relatório de receita.
+            preco: new Prisma.Decimal(0),
+            motivoCancelamento: dto.motivo,
+          },
+          select: ITEM_DA_AGENDA,
+        }),
+      );
       return this.paraDto(criado, estabelecimento?.timezone ?? "UTC");
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
@@ -261,11 +264,13 @@ export class AgendaService {
     });
 
     try {
-      const movida = await this.prisma.reserva.update({
-        where: { id: reserva.id },
-        data: { quadraId, inicio, fim },
-        select: ITEM_DA_AGENDA,
-      });
+      const movida = await semImpasse(() =>
+        this.prisma.reserva.update({
+          where: { id: reserva.id },
+          data: { quadraId, inicio, fim },
+          select: ITEM_DA_AGENDA,
+        }),
+      );
       return this.paraDto(movida, estabelecimento?.timezone ?? "UTC");
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
