@@ -106,7 +106,7 @@ jobs:
       - run: pnpm --filter @rally/api test:cov
 
   telas:
-    name: As telas abrem, e alvo, contraste e nome sao medidos
+    name: As telas abrem, e a acessibilidade e medida no navegador
     runs-on: ubuntu-latest
     # Existe porque seis telas do painel estiveram quebradas na `main` com a
     # suite inteira verde. Elas falhavam no runtime do Next -- Server
@@ -192,6 +192,19 @@ jobs:
       # instancia. A exigencia de rotulo associado e o que sobra de verdade
       # nos dois.
       - run: node tools/nome-acessivel.mjs
+      # Percorre as telas pelo **teclado** (RNF-08, WCAG 2.1.1, 2.4.3 e
+      # 2.4.7). O portao em jsdom confere a declaracao do CSS e diz de si
+      # mesmo que nao verifica se a ordem de foco acompanha a ordem visual,
+      # porque jsdom nao tem motor de layout. Aqui ha pixel e ha `Tab` de
+      # verdade -- e a diferenca nao e cosmetica, porque o `:focus-visible`,
+      # que pinta o contorno, distingue foco de teclado de foco dado por
+      # programa.
+      #
+      # Tres medidas: todo controle visivel e alcancado pelo `Tab`; o
+      # indicador e **pintado** e nao apenas declarado (contorno transparente
+      # muda o estilo e nao aparece); e nenhum movimento de foco vai para
+      # cima e para a esquerda ao mesmo tempo.
+      - run: node tools/foco.mjs
 
   licenca:
     name: Declaração de licença
