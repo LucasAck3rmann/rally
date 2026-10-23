@@ -61,6 +61,10 @@ path = [
   "**.dockerignore",
   "LICENSE",
   ".github/CODEOWNERS",
+  # Os ganchos do husky: configuracao de infra, sem extensao e sem cabecalho,
+  # pela mesma regra que vale para o Dockerfile e o CODEOWNERS.
+  ".husky/pre-commit",
+  ".husky/commit-msg",
   "apps/api/Dockerfile",
   "apps/web/Dockerfile",
   "apps/web/next-env.d.ts",
