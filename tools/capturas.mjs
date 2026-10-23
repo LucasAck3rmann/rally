@@ -28,7 +28,7 @@ import { mkdir, stat, unlink } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
 
-import { TELAS, LARGURA, argumento, abrir, entrar, responde } from "./telas.mjs";
+import { TELAS, LARGURA, argumento, abrir, contextoAutenticado, responde } from "./telas.mjs";
 
 const BYTES_MINIMOS = 8 * 1024;
 
@@ -140,10 +140,10 @@ try {
   } else if (comLogin.length) {
     // Sessão separada, e não a mesma de cima: com cookie, `/entrar` e
     // `/recuperar-senha` redirecionam para o painel.
-    const privadas = await navegador.newContext({ deviceScaleFactor: 2 });
-    const pagina = await privadas.newPage();
-    const id = await entrar(pagina, base, email, senha);
-    console.log(`\nautenticado como ${email}, estabelecimento ${id}\n`);
+    const { contexto: privadas, pagina, id, reaproveitada } =
+      await contextoAutenticado(navegador, base, email, senha, { deviceScaleFactor: 2 });
+    const quem = reaproveitada ? "sessão reaproveitada" : `autenticado como ${email}`;
+    console.log(`\n${quem}, estabelecimento ${id}\n`);
 
     for (const tela of comLogin) {
       const rota = tela.rota.replace(":id", id);

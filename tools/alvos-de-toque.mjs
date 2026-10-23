@@ -30,7 +30,7 @@
  */
 import { chromium } from "playwright";
 
-import { TELAS, argumento, abrir, entrar, responde } from "./telas.mjs";
+import { TELAS, argumento, abrir, contextoAutenticado, responde } from "./telas.mjs";
 
 /**
  * O piso vem do RNF-08 e da seção 5.2 do Relatório, não da WCAG.
@@ -68,9 +68,9 @@ try {
   // critério. Dobrar a densidade não muda o alvo que o dedo encontra.
   const publicas = await navegador.newContext();
   const semSessao = await publicas.newPage();
-  const privadas = await navegador.newContext();
-  const comSessao = await privadas.newPage();
-  const id = await entrar(comSessao, base, email, senha);
+  // Uma sessao para todos os portoes: o login da API aceita dez por minuto,
+  // e a conta nao pode crescer a cada medida nova.
+  const { pagina: comSessao, id } = await contextoAutenticado(navegador, base, email, senha);
 
   for (const tela of TELAS) {
     const pagina = tela.login ? comSessao : semSessao;

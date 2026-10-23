@@ -35,7 +35,7 @@
  */
 import { chromium } from "playwright";
 
-import { TELAS, argumento, abrir, entrar, responde } from "./telas.mjs";
+import { TELAS, argumento, abrir, contextoAutenticado, responde } from "./telas.mjs";
 
 /**
  * Os pisos são os da WCAG 2.2 AA, critério 1.4.3.
@@ -239,9 +239,9 @@ try {
 
   const publicas = await navegador.newContext();
   const semSessao = await publicas.newPage();
-  const privadas = await navegador.newContext();
-  const comSessao = await privadas.newPage();
-  const id = await entrar(comSessao, base, email, senha);
+  // Uma sessao para todos os portoes: o login da API aceita dez por minuto,
+  // e a conta nao pode crescer a cada medida nova.
+  const { pagina: comSessao, id } = await contextoAutenticado(navegador, base, email, senha);
 
   for (const tela of TELAS) {
     const pagina = tela.login ? comSessao : semSessao;
