@@ -31,6 +31,10 @@ export class AuthController {
   ) {}
 
   @Post("login")
+  // **Este prazo é citado por extenso na tela.** A ação de entrar da web
+  // traduz o 429 em "Aguarde um minuto e tente de novo", porque mandar
+  // "tente de novo" é justamente o que não resolve. Mudar o `ttl` aqui sem
+  // mudar a frase lá faria a tela prometer uma espera que não é a real.
   @Throttle({ login: { ttl: 60_000, limit: 10 } })
   login(@Body() dto: LoginDto) {
     return this.auth.login(dto);

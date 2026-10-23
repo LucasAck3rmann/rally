@@ -200,6 +200,20 @@ describe("redefinir", () => {
     );
   });
 
+  it("limite de tentativas não repassa a mensagem do framework", async () => {
+    // O repasse acima é útil porque a API fala do token. A recusa do
+    // limitador não: ela vem do framework, em inglês, e mostrá-la a quem
+    // está redefinindo a senha troca uma instrução por um nome de exceção.
+    vi.mocked(fetch).mockResolvedValue(
+      resposta({ message: "ThrottlerException: Too Many Requests" }, 429),
+    );
+
+    const estado = await redefinir({}, formulario(VALIDO));
+
+    expect(estado.erro).toMatch(/muitas tentativas/i);
+    expect(estado.erro).not.toMatch(/throttler|too many/i);
+  });
+
   it("mensagem em lista usa a primeira, que é a do validador", async () => {
     vi.mocked(fetch).mockResolvedValue(
       resposta({ message: ["A senha é obrigatória.", "e outra"] }, 400),

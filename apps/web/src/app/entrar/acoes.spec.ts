@@ -126,6 +126,39 @@ describe("entrar", () => {
     expect(redirect).not.toHaveBeenCalled();
   });
 
+  it("limite de tentativas tem mensagem própria, e manda esperar", async () => {
+    // **Achado de uma medição, não hipótese.** Ao rodar quatro portões de
+    // navegador em sequência, cada um fazendo login, o balde de dez por
+    // minuto esvaziou e a tela respondeu "E-mail ou senha incorretos." — a
+    // pessoa que bate no limitador era mandada a desconfiar da senha, e o
+    // próximo passo natural dela é redefinir uma senha que estava certa.
+    //
+    // Dizer o que houve não entrega nada: o limite é por rota, não por conta.
+    // A recuperação de senha já tratava o 429 assim desde que foi escrita.
+    vi.mocked(fetch).mockResolvedValue(resposta({ message: "Too Many Requests" }, 429));
+
+    const estado = await entrar({}, formulario({ email: "a@b.com", senha: "x" }));
+
+    expect(estado.erro).toMatch(/muitas tentativas/i);
+    expect(estado.erro).toMatch(/aguarde|espere/i);
+    expect(estado.erro).not.toMatch(/incorretos/i);
+    expect(gravarToken).not.toHaveBeenCalled();
+    expect(redirect).not.toHaveBeenCalled();
+  });
+
+  it("falha do servidor não culpa a senha", async () => {
+    // 500 não tem nada a ver com credencial, e mandar a pessoa conferir a
+    // senha é mandá-la consertar o que não está quebrado.
+    for (const status of [500, 502, 503]) {
+      vi.mocked(fetch).mockResolvedValue(resposta({ message: "boom" }, status));
+
+      const estado = await entrar({}, formulario({ email: "a@b.com", senha: "x" }));
+
+      expect(estado.erro).toMatch(/falhou ao responder/i);
+      expect(estado.erro).not.toMatch(/incorretos/i);
+    }
+  });
+
   it("API fora do ar tem mensagem própria, diferente de credencial errada", async () => {
     // Confundir as duas faria a pessoa tentar outra senha quando o problema é
     // o servidor.

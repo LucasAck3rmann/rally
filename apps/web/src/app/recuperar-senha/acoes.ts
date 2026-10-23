@@ -87,6 +87,13 @@ export async function redefinir(
     return { erro: "A API do Rally não respondeu. Tente de novo." };
   }
 
+  // 429 aqui também, e antes do repasse: a recusa do limitador vem com a
+  // mensagem do framework, em inglês, e repassá-la mostraria
+  // "ThrottlerException: Too Many Requests" a quem está redefinindo a senha.
+  // O balde desta rota é o mesmo do login, de um minuto.
+  if (resposta.status === 429) {
+    return { erro: "Muitas tentativas. Aguarde um minuto e tente de novo." };
+  }
   if (!resposta.ok) {
     // A API distingue inválido, já usado e vencido, e a mensagem dela é a
     // que diz o que fazer. Trocar por um texto genérico aqui apagaria
