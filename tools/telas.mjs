@@ -1,4 +1,8 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { existsSync } from "node:fs";
+import { tmpdir } from "node:os";
+import { join } from "node:path";
+
 /**
  * As telas do sistema, e o percurso até elas.
  *
@@ -113,6 +117,55 @@ export async function entrar(pagina, base, email, senha) {
     );
   }
   return achado[1];
+}
+
+/**
+ * Onde a sessão compartilhada entre as ferramentas é guardada.
+ *
+ * **Fora do repositório, de propósito.** O arquivo guarda o cookie de sessão,
+ * e cookie de sessão não entra em histórico nem por acidente — por isso ele
+ * mora no diretório temporário do sistema, e não numa pasta de trabalho onde
+ * um `git add` distraído o alcançaria. A sessão é de um servidor local, com
+ * as credenciais de demonstração do `seed.ts`, e na CI morre com o job.
+ */
+const SESSAO = join(tmpdir(), "rally-sessao-dos-portoes.json");
+
+/**
+ * Devolve um contexto já autenticado, reaproveitando a sessão quando dá.
+ *
+ * **Por que compartilhar.** O login da API aceita dez tentativas por minuto,
+ * e cada ferramenta que fazia o percurso gastava uma. Com quatro portões o
+ * número já era quatro, e cada medida nova estreitava a folga de um limite
+ * que existe para proteger a aplicação, não para ser contornado. Logar uma
+ * vez e reusar o cookie mantém a proteção intacta e tira o acoplamento: a
+ * conta de logins deixa de crescer com a quantidade de medidas.
+ *
+ * **A sessão reaproveitada é conferida, não presumida.** Cookie vencido ou de
+ * outro servidor levaria a ferramenta a medir a tela de entrada achando que
+ * mede o painel — exatamente o defeito que o `espera` de cada tela existe
+ * para impedir. Por isso o contexto recuperado navega até `/gestao` e só vale
+ * se chegar a `/gestao/:id`; se não chegar, ele é descartado e o login é
+ * refeito do zero.
+ */
+export async function contextoAutenticado(navegador, base, email, senha, opcoes = {}) {
+  if (existsSync(SESSAO)) {
+    const contexto = await navegador.newContext({ ...opcoes, storageState: SESSAO });
+    const pagina = await contexto.newPage();
+    try {
+      await pagina.goto(`${base}/gestao`, { waitUntil: "networkidle", timeout: 20_000 });
+      const achado = new URL(pagina.url()).pathname.match(/^\/gestao\/([^/]+)/);
+      if (achado) return { contexto, pagina, id: achado[1], reaproveitada: true };
+    } catch {
+      // sessão inutilizável; o descarte abaixo trata
+    }
+    await contexto.close();
+  }
+
+  const contexto = await navegador.newContext(opcoes);
+  const pagina = await contexto.newPage();
+  const id = await entrar(pagina, base, email, senha);
+  await contexto.storageState({ path: SESSAO });
+  return { contexto, pagina, id, reaproveitada: false };
 }
 
 /**
