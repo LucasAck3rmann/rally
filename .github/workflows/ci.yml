@@ -14,7 +14,7 @@ jobs:
       # Sem `version` aqui: a partir do action-setup v6, declarar a versão nos
       # dois lugares é erro. A fonte única é `packageManager` no package.json.
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm lint
@@ -61,7 +61,7 @@ jobs:
       # desconhecidas" liberado, e **nao serve para a Play Store**. Publicar
       # pede keystore proprio, que e outra decisao.
       - run: flutter build apk --release
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: rally-android
           path: apps/mobile/build/app/outputs/flutter-apk/app-release.apk
@@ -89,7 +89,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       # Rodar as migrações num banco limpo é o que valida o SQL escrito à mão
@@ -139,7 +139,7 @@ jobs:
     steps:
       - uses: actions/checkout@v7
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
       - run: pnpm --filter @rally/api exec prisma migrate deploy
