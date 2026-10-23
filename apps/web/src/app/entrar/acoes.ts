@@ -39,6 +39,19 @@ export async function entrar(
     return { erro: "A API do Rally não respondeu. Tente de novo." };
   }
 
+  // 429 é o limite de tentativas da API — dez por minuto nesta rota —, e
+  // chamá-lo de credencial errada manda a pessoa para o caminho errado: ela
+  // tenta de novo, erra de novo e acaba redefinindo uma senha que estava
+  // certa. Dizer o que de fato aconteceu não entrega nada, porque o limite é
+  // por rota e não por conta. A recuperação de senha já tratava o 429 assim;
+  // esta rota era a que faltava.
+  if (resposta.status === 429) {
+    return { erro: "Muitas tentativas. Aguarde um minuto e tente de novo." };
+  }
+  // 5xx é falha do servidor, e a pessoa não tem o que corrigir na senha.
+  if (resposta.status >= 500) {
+    return { erro: "A API do Rally falhou ao responder. Tente de novo." };
+  }
   if (!resposta.ok) {
     // Mensagem única para e-mail inexistente e senha errada: dizer qual dos
     // dois falhou entrega a quem tenta adivinhar que o e-mail existe.

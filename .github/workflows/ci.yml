@@ -106,7 +106,7 @@ jobs:
       - run: pnpm --filter @rally/api test:cov
 
   telas:
-    name: As telas abrem, e o alvo e o contraste sao medidos
+    name: As telas abrem, e alvo, contraste e nome sao medidos
     runs-on: ubuntu-latest
     # Existe porque seis telas do painel estiveram quebradas na `main` com a
     # suite inteira verde. Elas falhavam no runtime do Next -- Server
@@ -177,6 +177,21 @@ jobs:
       # fica de fora, porque a WCAG isenta decoracao -- e a isenca vem da
       # marcacao, nao de uma lista mantida no medidor.
       - run: node tools/contraste.mjs
+      # Cobra nome acessivel de todo controle das telas de verdade (RNF-08,
+      # WCAG 4.1.2 e 2.4.6), lendo a arvore de acessibilidade do navegador.
+      #
+      # O portao em jsdom monta os cenarios com prop fabricada; este abre as
+      # treze telas com os dados do seed, e por isso alcanca o controle por
+      # linha -- a agenda tem 42 controles aqui contra os 16 que o medidor de
+      # alvo conta nela, porque este recorte inclui link, que precisa de nome
+      # pelo 2.4.4 e e excetuado da medida de alvo pelo 2.5.8.
+      #
+      # Os dois portoes nao se substituem, e isso foi medido: com o `label`
+      # de um campo removido e o `placeholder` mantido, o de jsdom reprova e
+      # este nao, porque o Chromium aceita `placeholder` como nome de ultima
+      # instancia. A exigencia de rotulo associado e o que sobra de verdade
+      # nos dois.
+      - run: node tools/nome-acessivel.mjs
 
   licenca:
     name: Declaração de licença

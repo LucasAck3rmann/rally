@@ -2,10 +2,11 @@
 /**
  * As telas do sistema, e o percurso até elas.
  *
- * **Uma lista só, e por isso ela mora aqui.** Três consumidores já a usam —
+ * **Uma lista só, e por isso ela mora aqui.** Quatro consumidores já a usam —
  * `capturas.mjs`, que fotografa as que o Relatório ilustra,
- * `alvos-de-toque.mjs`, que mede o controle renderizado em todas, e
- * `contraste.mjs`, que mede a cor de todo texto desenhado nelas. Listas
+ * `alvos-de-toque.mjs`, que mede o controle renderizado em todas,
+ * `contraste.mjs`, que mede a cor de todo texto desenhado nelas, e
+ * `nome-acessivel.mjs`, que cobra nome de todo controle delas. Listas
  * separadas divergiriam, e a que não fosse exercitada quebraria calada; é o
  * mesmo argumento que o script de captura sempre fez a respeito do
  * navegador, aplicado à lista de rotas.
@@ -68,15 +69,41 @@ export async function responde(url, tentativas = 30) {
  * funcionando quando o seed mudar de identificador.
  *
  * As credenciais vêm do `prisma/seed.ts`, que é onde são declaradas.
+ *
+ * **A falha diz por quê.** O login da API é limitado a dez tentativas por
+ * minuto (`@Throttle` no `auth.controller.ts`), e cada ferramenta que usa
+ * este percurso gasta uma. Quando o balde esvazia, o formulário recebe a
+ * recusa e **não navega**: o `waitForURL` estoura, e o erro que sai de
+ * fábrica fala de navegação, não de limitador. Perder meia hora atrás de um
+ * "timeout de navegação" que era 429 é fácil, e aconteceu — por isso a recusa
+ * que a tela mostra entra na mensagem.
  */
 export async function entrar(pagina, base, email, senha) {
   await pagina.goto(`${base}/entrar`, { waitUntil: "networkidle" });
   await pagina.fill('input[name="email"]', email);
   await pagina.fill('input[name="senha"]', senha);
-  await Promise.all([
-    pagina.waitForURL(/\/gestao\//, { timeout: 30_000 }),
-    pagina.click('button[type="submit"]'),
-  ]);
+  try {
+    await Promise.all([
+      pagina.waitForURL(/\/gestao\//, { timeout: 30_000 }),
+      pagina.click('button[type="submit"]'),
+    ]);
+  } catch (erro) {
+    const recusa = await pagina
+      .locator('[role="alert"]')
+      .first()
+      .textContent({ timeout: 2_000 })
+      .catch(() => null);
+    throw new Error(
+      `o login não saiu de ${pagina.url()}.\n` +
+        (recusa
+          ? `A tela respondeu: "${recusa.trim()}"\n` +
+            "Se foi excesso de tentativas, é o limitador: o login aceita dez " +
+            "por minuto, e cada ferramenta que faz este percurso gasta uma. " +
+            "Espere um minuto e repita.\n"
+          : "A tela não mostrou recusa; confira se a API responde e se o seed rodou.\n") +
+        `Causa original: ${erro.message.split("\n")[0]}`,
+    );
+  }
 
   const achado = new URL(pagina.url()).pathname.match(/^\/gestao\/([^/]+)/);
   if (!achado) {

@@ -26,6 +26,17 @@ vi.mock("@/app/recuperar-senha/acoes", () => ({
  * `aria-label`, `aria-labelledby` ou o `<label>` associado — nessa ordem de
  * precedência, e não o `placeholder`, que desaparece quando a pessoa começa a
  * digitar.
+ *
+ * **A outra metade mede a tela, e nesta exigência é mais frouxa.** O
+ * `tools/nome-acessivel.mjs` lê a árvore de acessibilidade do navegador nas
+ * treze telas reais, com os dados do seed, e alcança o controle por linha —
+ * que cenário com prop fabricada não tem. Medido: com o `<label>` do campo de
+ * e-mail removido e o `placeholder` mantido, **esta suíte reprova e aquela
+ * não**, porque o Chromium aceita o `placeholder` como nome de última
+ * instância e esta implementação não. Nenhuma das duas está errada. Por isso
+ * as duas ficam: aquela alcança o controle que só existe com dado, esta
+ * alcança o controle que só existe com o formulário aberto — e é esta que
+ * sustenta a frase do parágrafo acima.
  */
 
 const CONTROLES = [
