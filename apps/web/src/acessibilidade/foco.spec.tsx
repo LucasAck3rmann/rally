@@ -36,6 +36,15 @@ vi.mock("@/app/recuperar-senha/acoes", () => ({
  * de posição na tela, o jsdom não tem motor de layout, e um teste que
  * fingisse medir isso passaria provando nada — mesmo limite, declarado, do
  * portão de alvo de toque.
+ *
+ * **A outra metade percorre as telas pelo teclado.** O `tools/foco.mjs` dá
+ * `Tab` nas treze telas e mede onde há pixel: se todo controle é alcançado,
+ * se o indicador é **pintado** e não só declarado, e se algum movimento vai
+ * para cima e para a esquerda ao mesmo tempo — a lacuna que o parágrafo
+ * acima declara. As duas ficam porque medem coisas diferentes: esta prende o
+ * **mecanismo** no mesmo segundo em que roda o resto da suíte, sem servidor
+ * nem banco; aquela prende o **resultado**, e paga servidor e navegador por
+ * isso.
  */
 
 /** Controles que recebem foco. Link entra aqui: ele é parada de teclado. */

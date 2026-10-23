@@ -6,14 +6,14 @@ import { join } from "node:path";
 /**
  * As telas do sistema, e o percurso até elas.
  *
- * **Uma lista só, e por isso ela mora aqui.** Quatro consumidores já a usam —
+ * **Uma lista só, e por isso ela mora aqui.** Cinco consumidores já a usam —
  * `capturas.mjs`, que fotografa as que o Relatório ilustra,
  * `alvos-de-toque.mjs`, que mede o controle renderizado em todas,
- * `contraste.mjs`, que mede a cor de todo texto desenhado nelas, e
- * `nome-acessivel.mjs`, que cobra nome de todo controle delas. Listas
- * separadas divergiriam, e a que não fosse exercitada quebraria calada; é o
- * mesmo argumento que o script de captura sempre fez a respeito do
- * navegador, aplicado à lista de rotas.
+ * `contraste.mjs`, que mede a cor de todo texto desenhado nelas,
+ * `nome-acessivel.mjs`, que cobra nome de todo controle delas, e `foco.mjs`,
+ * que as percorre pelo teclado. Listas separadas divergiriam, e a que não
+ * fosse exercitada quebraria calada; é o mesmo argumento que o script de
+ * captura sempre fez a respeito do navegador, aplicado à lista de rotas.
  *
  * `arquivo` ausente significa **tela que o portão abre e a figura não usa**:
  * o Relatório ilustra sete, e o painel tem nove rotas. Deixar as outras fora

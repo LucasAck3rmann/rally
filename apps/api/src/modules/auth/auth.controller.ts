@@ -1,8 +1,9 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { Body, Controller, Get, Post, UseGuards } from "@nestjs/common";
-import { Throttle, ThrottlerGuard } from "@nestjs/throttler";
+import { SkipThrottle, Throttle, ThrottlerGuard } from "@nestjs/throttler";
 
 import { AuthService } from "./auth.service";
+import { LIMITES } from "./limites";
 import { CurrentUser } from "./decorators/current-user.decorator";
 import { LoginDto } from "./dto/login.dto";
 import { RegisterDto } from "./dto/register.dto";
@@ -20,7 +21,39 @@ import { JwtPayload } from "./types/jwt-payload";
  * balde que a conta. Sem o guard no nivel da classe, o `@Throttle` de cada
  * metodo nao faria nada — e o decorador silencioso seria pior do que a
  * ausencia dele, porque pareceria protecao.
+ *
+ * **Rota sem declaracao nao fica sem limite: fica com todos.** Quando um
+ * metodo nao traz `@Throttle`, o guard aplica os baldes do modulo, e o mais
+ * apertado deles passa a valer. Foi o que aconteceu com o `GET /me`: uma
+ * leitura da propria conta, atras do `JwtAuthGuard`, ficou presa ao balde de
+ * **dez por minuto** desenhado para senha errada repetida. Medido nesta
+ * maquina: a decima primeira leitura respondia 429 com `Retry-After-login`.
+ *
+ * O efeito aparecia longe daqui. A tela de privacidade da web chama `/me` a
+ * cada carregamento, e as Server Actions saem todas do mesmo endereco — de
+ * modo que **dez carregamentos por minuto, somando todos os usuarios**,
+ * derrubavam a tela com erro de servidor. Por isso cada rota aqui declara
+ * `@Throttle` **ou** `@SkipThrottle`, e o `limites.spec.ts` cobra isso: o
+ * silencio e que era perigoso.
  */
+/**
+ * Isenta **todos** os baldes configurados, pelo nome.
+ *
+ * `@SkipThrottle()` sem argumento isenta apenas o balde chamado `default`, e
+ * aqui nao existe nenhum com esse nome — os quatro tem nome proprio. Escrito
+ * assim, o decorador parecia remover o limite e nao removia nada: medido, a
+ * decima primeira leitura continuava respondendo 429 com o decorador no
+ * lugar. E o inverso exato do que o docstring acima adverte sobre o
+ * `@Throttle` sem o guard: decorador silencioso que parece protecao; este
+ * parecia isencao.
+ *
+ * Os nomes saem do `LIMITES`, e nao de uma lista escrita a mao: balde novo
+ * no modulo entra aqui sozinho, em vez de deixar esta isencao pela metade.
+ */
+const SEM_LIMITE = Object.fromEntries(
+  LIMITES.throttlers.map((t) => [t.name, true]),
+);
+
 @Controller("auth")
 @UseGuards(ThrottlerGuard)
 export class AuthController {
@@ -78,6 +111,21 @@ export class AuthController {
     return this.verificacao.confirmar(dto.token);
   }
 
+  /**
+   * A conta de quem esta pedindo.
+   *
+   * **Sem balde, e a ausencia e declarada.** Nao ha o que adivinhar aqui: a
+   * rota exige token valido e devolve os dados de quem o apresentou. Nao e
+   * tentativa de autenticacao nem amplificador de e-mail, que sao os dois
+   * riscos que os baldes deste controlador existem para conter — e o resto
+   * da API ja segue sem limite por decisao registrada no `app.module.ts`.
+   *
+   * O `@SkipThrottle` nao e descuido disfarcado de decisao: sem ele, esta
+   * leitura herdava o balde de senha errada e derrubava a tela de
+   * privacidade da web a cada dez carregamentos por minuto, somados todos os
+   * usuarios.
+   */
+  @SkipThrottle(SEM_LIMITE)
   @UseGuards(JwtAuthGuard)
   @Get("me")
   me(@CurrentUser() user: JwtPayload) {
