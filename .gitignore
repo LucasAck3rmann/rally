@@ -41,3 +41,6 @@ Thumbs.db
 .idea/
 .vscode/*
 !.vscode/extensions.json
+
+# Gerado pelo husky no `prepare`; só os ganchos de verdade são versionados.
+.husky/_/

@@ -206,6 +206,35 @@ jobs:
       # cima e para a esquerda ao mesmo tempo.
       - run: node tools/foco.mjs
 
+  commits:
+    name: Mensagens de commit
+    # So em pull request: num push para a `main` nao ha faixa de comparacao
+    # obvia, e conferir o historico ja mesclado nao conserta nada.
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    # Existe porque o `@commitlint/cli` e o `config-conventional` estavam
+    # instalados desde o comeco, com `commitlint.config.js` no lugar, e **nada
+    # os chamava** -- nem gancho local nem CI. A convencao existia no papel.
+    #
+    # O gancho `commit-msg` entrou junto, e e conveniencia: `--no-verify` o
+    # pula, e quem edita pela web do GitHub nem passa por ele. A garantia e
+    # esta aqui.
+    steps:
+      # `fetch-depth: 0` porque a verificacao precisa dos commits do PR, e o
+      # checkout raso traz so a ponta.
+      - uses: actions/checkout@v7
+        with: { fetch-depth: 0 }
+      - uses: pnpm/action-setup@v6
+      - uses: actions/setup-node@v7
+        with: { node-version: 22, cache: pnpm }
+      - run: pnpm install --frozen-lockfile
+      - name: Confere as mensagens do PR
+        run: >-
+          npx commitlint
+          --from ${{ github.event.pull_request.base.sha }}
+          --to ${{ github.event.pull_request.head.sha }}
+          --verbose
+
   licenca:
     name: Declaração de licença
     runs-on: ubuntu-latest
