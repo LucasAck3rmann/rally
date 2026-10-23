@@ -54,12 +54,29 @@ module.exports = {
   // Os pisos sobem mantendo a mesma margem de um ponto. **A margem é a regra,
   // não o número:** piso colado na medida quebra na primeira linha nova que
   // alguém não cobrir e ensina a baixar o piso em vez de escrever o teste.
+  //
+  // **Medido em 23/10: 95,21/86,09/84,08/95,13.** Desta vez a margem foi o que
+  // apontou o caminho, e não a medida: o piso de ramos estava a **0,62 ponto**
+  // da medição, abaixo do ponto de folga que esta decisão exige. Ou seja, a
+  // cobertura de ramos havia **caído** desde 14/10, e o aperto da margem foi
+  // quem contou.
+  //
+  // O que estava descoberto não era difuso: `promocoes.service.ts` e
+  // `replays.service.ts` tinham **0% de ramos**, sete decisões cada, serviço
+  // inteiro sem nenhum caminho percorrido. Os dois decidem o que o cliente vê
+  // — qual cupom entra na Home e quais clipes aparecem no filtro —, e nenhuma
+  // dessas decisões era exercitada. Cobri-los devolveu os 14 ramos e levou a
+  // medida de 83,62 para 86,09.
+  //
+  // A lição a guardar é sobre o instrumento: **a margem avisou antes de o piso
+  // quebrar.** Piso colado teria passado a regressão em silêncio até alguém
+  // reprovar por uma linha nova qualquer.
   coverageThreshold: {
     global: {
-      statements: 93,
-      lines: 93,
-      branches: 83,
-      functions: 81,
+      statements: 94,
+      lines: 94,
+      branches: 85,
+      functions: 83,
     },
   },
 };
