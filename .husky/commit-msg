@@ -1,0 +1,11 @@
+#!/usr/bin/env sh
+# Cobra a mensagem contra o `config-conventional` (ver `commitlint.config`).
+#
+# O `@commitlint/cli` e o `@commitlint/config-conventional` estão instalados
+# desde o começo, e não havia gancho nenhum chamando-os: a convenção existia
+# no papel e nada a verificava, nem aqui nem na CI.
+#
+# Gancho local é conveniência, não garantia — `--no-verify` o pula, e quem
+# edita pela web do GitHub nem passa por ele. Por isso a CI também confere,
+# no job `commits`, e é lá que a regra se sustenta.
+npx commitlint --edit "$1"

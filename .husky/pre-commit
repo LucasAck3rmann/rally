@@ -1,0 +1,15 @@
+#!/usr/bin/env sh
+# Formata e corrige o que está prestes a entrar (ver `lint-staged` no
+# `package.json` da raiz).
+#
+# **Este arquivo faltava, e a ausência era silenciosa.** O husky aponta o
+# `core.hooksPath` para `.husky/_`, e o wrapper de lá faz
+# `[ ! -f "$s" ] && exit 0`: sem o gancho, o commit segue sem aviso. O
+# `package.json` declarava `lint-staged` desde o começo e ele nunca rodou —
+# por isso 83 arquivos da API estavam fora do padrão do próprio Prettier do
+# projeto.
+#
+# Roda só no que está em stage, de modo que a convergência é gradual: cada
+# arquivo entra no padrão quando alguém o toca, sem um commit que reescreva
+# a autoria de meio repositório.
+npx lint-staged
