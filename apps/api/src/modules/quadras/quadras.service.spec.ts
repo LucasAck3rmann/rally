@@ -1,4 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { NotFoundException } from "@nestjs/common";
+
 import { PrismaService } from "../../prisma/prisma.service";
 import { QuadrasService } from "./quadras.service";
 import { ConciliacaoService } from "../conciliacao/conciliacao.service";
@@ -122,5 +124,201 @@ describe("QuadrasService.disponibilidade", () => {
     const { slots } = await servico(quadra).disponibilidade("q1", DIA);
     expect(slots).toHaveLength(8);
     expect(slots[0].preco).toBe(40);
+  });
+
+  /**
+   * **O outro lado da condição do dia.** O teste acima usa faixa com
+   * `diaSemana` nulo, que vale todo dia e encerra o `||` no primeiro operando
+   * — o segundo nunca era avaliado. Faixa presa a um dia é o caso que o
+   * gestor de fato cadastra ("sábado é mais caro"), e sem este par trocar o
+   * `||` por `&&` passaria sem reprovar nada.
+   */
+  it("faixa presa a um dia vale naquele dia, e só nele", async () => {
+    const TERCA = 2;
+    const QUARTA = 3;
+
+    const naTerca = quadraBase({
+      faixasPreco: [{ diaSemana: TERCA, horaInicio: "10:00", horaFim: "12:00", precoHora: 150 }],
+    });
+    const deTerca = await servico(naTerca).disponibilidade("q1", DIA);
+    const precoNaTerca = Object.fromEntries(deTerca.slots.map((s) => [s.hora, s.preco]));
+    expect(precoNaTerca["09:00"]).toBe(80);
+    expect(precoNaTerca["10:00"]).toBe(150);
+
+    // A mesma faixa, cadastrada para quarta, não pode valer numa terça.
+    const naQuarta = quadraBase({
+      faixasPreco: [{ diaSemana: QUARTA, horaInicio: "10:00", horaFim: "12:00", precoHora: 150 }],
+    });
+    const deQuarta = await servico(naQuarta).disponibilidade("q1", DIA);
+    const precoNaQuarta = Object.fromEntries(deQuarta.slots.map((s) => [s.hora, s.preco]));
+    expect(precoNaQuarta["10:00"]).toBe(80);
+  });
+
+  it("quadra inexistente não devolve grade vazia: recusa", async () => {
+    // Grade vazia diria "não abre hoje", que é outra coisa, e a tela trataria
+    // o erro como dia fechado.
+    await expect(servico(null).disponibilidade("sumiu", DIA)).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+});
+
+/** Uma quadra como o `select` da vitrine a entrega, antes do achatamento. */
+function quadraDaVitrine(extras: Record<string, unknown> = {}) {
+  return {
+    id: "q1",
+    nome: "Quadra 1",
+    precoHora: 80,
+    fotos: ["q1.jpg"],
+    capacidade: 4,
+    modalidades: [{ nome: "Beach tennis" }],
+    estabelecimento: {
+      id: "e1",
+      nome: "Arena Central",
+      slug: "arena-central",
+      bairro: "Centro",
+      cidade: "Sapiranga",
+      uf: "RS",
+      nota: 4.5,
+      avaliacoes: 12,
+      descontoPixPct: 10,
+    },
+    ...extras,
+  };
+}
+
+function servicoDeVitrine(quadras: unknown[], emJogo: { quadraId: string }[] = []) {
+  const findMany = jest.fn().mockResolvedValue(quadras);
+  const reservas = jest.fn().mockResolvedValue(emJogo);
+  const prisma = {
+    quadra: { findMany },
+    reserva: { findMany: reservas },
+  } as unknown as PrismaService;
+  const conciliacao = {
+    expirarPendentes: jest.fn().mockResolvedValue(0),
+  } as unknown as ConciliacaoService;
+
+  return { servico: new QuadrasService(prisma, conciliacao), findMany, reservas };
+}
+
+/**
+ * A vitrine da Home do cliente (RF-05).
+ *
+ * **Este método não tinha teste nenhum** — sete funções sem execução e seis
+ * ramos descobertos, numa tela que é a primeira que o jogador vê. O que ele
+ * decide é o que aparece: quais quadras, filtradas por quê, e quais estão com
+ * jogo acontecendo agora.
+ */
+describe("QuadrasService.listar — a vitrine da Home", () => {
+  it("só mostra quadra ativa de estabelecimento ativo, ordenada e com teto", async () => {
+    const { servico, findMany } = servicoDeVitrine([]);
+
+    await servico.listar({});
+
+    const consulta = findMany.mock.calls[0][0];
+    expect(consulta.where.ativo).toBe(true);
+    expect(consulta.where.estabelecimento).toEqual({ ativo: true });
+    // Sem filtro, nada de `modalidades` nem `OR` sobra na consulta.
+    expect(consulta.where.modalidades).toBeUndefined();
+    expect(consulta.where.OR).toBeUndefined();
+    expect(consulta.orderBy).toEqual([{ estabelecimento: { nome: "asc" } }, { nome: "asc" }]);
+    expect(consulta.take).toBe(50);
+  });
+
+  it("o filtro de modalidade entra na consulta", async () => {
+    const { servico, findMany } = servicoDeVitrine([]);
+
+    await servico.listar({ modalidade: "Futevôlei" });
+
+    expect(findMany.mock.calls[0][0].where.modalidades).toEqual({
+      some: { nome: "Futevôlei" },
+    });
+  });
+
+  /**
+   * A busca procura em três lugares, e o bairro é um deles: quem digita
+   * "Centro" está procurando onde jogar, não o nome de uma quadra.
+   */
+  it("a busca cobre nome da quadra, nome do estabelecimento e bairro", async () => {
+    const { servico, findMany } = servicoDeVitrine([]);
+
+    await servico.listar({ busca: "centro" });
+
+    const ou = findMany.mock.calls[0][0].where.OR;
+    expect(ou).toHaveLength(3);
+    expect(ou[0]).toEqual({ nome: { contains: "centro", mode: "insensitive" } });
+    expect(ou[1].estabelecimento.nome.contains).toBe("centro");
+    expect(ou[2].estabelecimento.bairro.contains).toBe("centro");
+  });
+
+  it("busca só com espaço não vira filtro nenhum", async () => {
+    // O `trim()` existe para isso, e sem teste ele some numa refatoração:
+    // uma busca vazia filtrando por `""` casaria com tudo e pareceria certo.
+    const { servico, findMany } = servicoDeVitrine([]);
+
+    await servico.listar({ busca: "   " });
+
+    expect(findMany.mock.calls[0][0].where.OR).toBeUndefined();
+  });
+
+  it("o selo “ao vivo” marca só a quadra com jogo neste momento", async () => {
+    const { servico, reservas } = servicoDeVitrine(
+      [quadraDaVitrine({ id: "q1" }), quadraDaVitrine({ id: "q2" })],
+      [{ quadraId: "q2" }],
+    );
+
+    const lista = await servico.listar({});
+
+    expect(lista.map((q) => [q.id, q.aoVivo])).toEqual([
+      ["q1", false],
+      ["q2", true],
+    ]);
+    // O "agora" é o instante da chamada, e não o dia: a consulta pega a
+    // reserva que começou antes e ainda não acabou.
+    const where = reservas.mock.calls[0][0].where;
+    expect(where.inicio.lte).toBeInstanceOf(Date);
+    expect(where.fim.gt).toBeInstanceOf(Date);
+  });
+
+  it("achata o formato do Prisma no contrato que o app consome", async () => {
+    const { servico } = servicoDeVitrine([quadraDaVitrine()]);
+
+    const [q] = await servico.listar({});
+
+    expect(q.precoHora).toBe(80);
+    expect(q.modalidades).toEqual(["Beach tennis"]);
+    expect(q.estabelecimento.nota).toBe(4.5);
+    expect(q.estabelecimento.descontoPixPct).toBe(10);
+  });
+
+  it("estabelecimento sem nota devolve nulo, e não zero", async () => {
+    // Zero diria "avaliaram e é péssima"; nulo diz "ainda não avaliaram".
+    const { servico } = servicoDeVitrine([
+      quadraDaVitrine({
+        estabelecimento: { ...quadraDaVitrine().estabelecimento, nota: null },
+      }),
+    ]);
+
+    expect((await servico.listar({}))[0].estabelecimento.nota).toBeNull();
+  });
+});
+
+describe("QuadrasService.detalhe", () => {
+  it("quadra inexistente ou desativada é recusada", async () => {
+    await expect(servico(null).detalhe("sumiu")).rejects.toBeInstanceOf(NotFoundException);
+  });
+
+  it("devolve descrição e comodidades junto do resumo", async () => {
+    const quadra = {
+      ...quadraDaVitrine(),
+      descricao: "Areia nova, rede oficial.",
+      comodidades: ["Vestiário", "Estacionamento"],
+    };
+
+    const detalhe = await servico(quadra).detalhe("q1");
+
+    expect(detalhe.nome).toBe("Quadra 1");
+    expect(detalhe.descricao).toBe("Areia nova, rede oficial.");
+    expect(detalhe.comodidades).toEqual(["Vestiário", "Estacionamento"]);
   });
 });
