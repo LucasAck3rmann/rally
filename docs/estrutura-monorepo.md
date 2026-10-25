@@ -3,6 +3,7 @@
 > Esqueleto **pronto para levar pro Cursor/Claude Code**: a árvore de pastas + arquivos-base (Docker, commitlint, CI, Turborepo). Copie cada bloco para o caminho indicado. Reflete [Arquitetura e Stack](arquitetura.md) (AWS-first) e [Decisões de Arquitetura (ADRs)](adr/README.md). O `CLAUDE.md` e o `DESIGN.md` da raiz já estão em [CLAUDE.md (modelo para o repo de código)](../CLAUDE.md) e [DESIGN.md (raiz do repo)](../DESIGN.md).
 
 ## 1. Árvore de pastas
+
 ```text
 rally/
 ├─ apps/
@@ -67,28 +68,32 @@ rally/
 ```
 
 ## 2. `pnpm-workspace.yaml`
+
 ```yaml
 packages:
   - "apps/*"
   - "packages/*"
 ```
+
 > `apps/mobile` (Flutter) não entra no workspace pnpm — é gerenciado pelo `pub` do Dart, mas vive no mesmo repositório.
 
 ## 3. `turbo.json`
+
 ```json
 {
   "$schema": "https://turbo.build/schema.json",
   "tasks": {
-    "build":     { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
-    "lint":      {},
+    "build": { "dependsOn": ["^build"], "outputs": ["dist/**", ".next/**"] },
+    "lint": {},
     "typecheck": { "dependsOn": ["^build"] },
-    "test":      { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
-    "dev":       { "cache": false, "persistent": true }
+    "test": { "dependsOn": ["^build"], "outputs": ["coverage/**"] },
+    "dev": { "cache": false, "persistent": true }
   }
 }
 ```
 
 ## 4. `docker-compose.yml` (dev — paridade com AWS via LocalStack)
+
 ```yaml
 services:
   postgres:
@@ -108,7 +113,7 @@ services:
     image: redis:7
     ports: ["6379:6379"]
 
-  localstack:                     # emula S3 + SES da AWS no dev
+  localstack: # emula S3 + SES da AWS no dev
     image: localstack/localstack:3
     environment:
       SERVICES: s3,ses
@@ -119,7 +124,7 @@ services:
     env_file: .env
     depends_on:
       postgres: { condition: service_healthy }
-      redis:    { condition: service_started }
+      redis: { condition: service_started }
     ports: ["3333:3333"]
     volumes: ["./apps/api:/app/apps/api", "/app/node_modules"]
     command: pnpm --filter @rally/api dev
@@ -137,6 +142,7 @@ volumes:
 ```
 
 ## 5. `.env.example`
+
 ```dotenv
 # App
 NODE_ENV=development
@@ -166,11 +172,13 @@ WHATSAPP_TOKEN=
 ## 6. Padronização de commits
 
 ### `commitlint.config.js`
+
 ```js
 module.exports = { extends: ["@commitlint/config-conventional"] };
 ```
 
 ### `.husky/commit-msg`
+
 ```bash
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
@@ -178,6 +186,7 @@ npx --no -- commitlint --edit "$1"
 ```
 
 ### `.husky/pre-commit`
+
 ```bash
 #!/usr/bin/env sh
 . "$(dirname -- "$0")/_/husky.sh"
@@ -185,6 +194,7 @@ npx lint-staged
 ```
 
 ### Trecho do `package.json` (raiz)
+
 ```json
 {
   "name": "rally",
@@ -212,9 +222,11 @@ npx lint-staged
   }
 }
 ```
+
 > Tipos de commit: `feat`, `fix`, `chore`, `docs`, `refactor`, `test`, `perf`, `build`, `ci`. Ex.: `feat(reservas): trava de concorrência no slot`.
 
 ## 7. CI — `.github/workflows/ci.yml`
+
 ```yaml
 name: CI
 on:
@@ -247,6 +259,7 @@ jobs:
 ```
 
 ## 8. `Dockerfile` da API (multi-stage, exemplo)
+
 ```dockerfile
 # base
 FROM node:22-alpine AS base
@@ -274,11 +287,12 @@ CMD ["node", "dist/main.js"]
 ```
 
 ## 9. Ordem de scaffold (no Cursor)
+
 1. `pnpm dlx create-turbo@latest` → ajustar para a árvore acima.
 2. `apps/api`: `nest new` dentro do workspace + Prisma (`pnpm dlx prisma init`).
 3. `apps/web`: `create-next-app` (TS, Tailwind, App Router).
 4. `apps/mobile`: `flutter create` com a estrutura clean.
-5. `packages/shared|ui|tokens|config`.
+5. `packages/tokens|ui|config`.
 6. Husky + commitlint + lint-staged + Prettier/ESLint (configs em `packages/config`).
 7. `docker-compose up` e validar `web↔api↔postgres↔redis↔localstack`.
 8. `infra/terraform`: VPC, RDS, ElastiCache, ECS, S3, CloudFront (incremental).

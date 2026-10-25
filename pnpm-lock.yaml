@@ -223,12 +223,6 @@ importers:
 
   packages/config: {}
 
-  packages/shared:
-    dependencies:
-      zod:
-        specifier: ^4.6.6
-        version: 4.6.6
-
   packages/tokens: {}
 
 packages:
