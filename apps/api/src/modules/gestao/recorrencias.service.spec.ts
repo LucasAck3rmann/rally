@@ -3,10 +3,7 @@ import { BadRequestException, NotFoundException } from "@nestjs/common";
 import { Prisma, RecorrenciaStatus, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
-import {
-  RecorrenciasService,
-  SEMANAS_DE_HORIZONTE,
-} from "./recorrencias.service";
+import { RecorrenciasService, SEMANAS_DE_HORIZONTE } from "./recorrencias.service";
 
 /** Terça-feira, 20 de outubro de 2026. */
 const AGORA = new Date("2026-10-20T12:00:00.000Z");
@@ -73,12 +70,8 @@ function servico(
       // `"serie" in opcoes` e nao `?? serieBase()`: o `??` transforma o `null`
       // deliberado do teste na serie padrao, e o caso "nao achou" nunca seria
       // exercitado. Mesmo defeito do `user: undefined` de 14/10.
-      findUnique: jest
-        .fn()
-        .mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
-      findFirst: jest
-        .fn()
-        .mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
+      findUnique: jest.fn().mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
+      findFirst: jest.fn().mockResolvedValue("serie" in opcoes ? opcoes.serie : serieBase()),
       findMany: acharSeries,
       create: criarSerie,
       update: atualizarSerie,
@@ -86,9 +79,7 @@ function servico(
     quadra: {
       findFirst: jest
         .fn()
-        .mockResolvedValue(
-          opcoes.quadra === undefined ? { id: "q1" } : opcoes.quadra,
-        ),
+        .mockResolvedValue(opcoes.quadra === undefined ? { id: "q1" } : opcoes.quadra),
     },
     usuario: { findUnique: acharUsuario },
     reserva: { create: criarReserva, updateMany: cancelarMuitas },
@@ -125,9 +116,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       for (const c of criadas) expect(c.inicio.getUTCDay()).toBe(TERCA);
       // E espaçadas de exatamente sete dias.
       for (let i = 1; i < criadas.length; i++) {
-        const dias =
-          (criadas[i].inicio.getTime() - criadas[i - 1].inicio.getTime()) /
-          86_400_000;
+        const dias = (criadas[i].inicio.getTime() - criadas[i - 1].inicio.getTime()) / 86_400_000;
         expect(dias).toBe(7);
       }
     });
@@ -190,9 +179,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       await s.materializar("s1", tercaDeNoite);
 
       expect(criadas.every((c) => c.inicio > tercaDeNoite)).toBe(true);
-      expect(
-        criadas.map((c) => c.inicio.toISOString().slice(0, 10)),
-      ).not.toContain("2026-10-20");
+      expect(criadas.map((c) => c.inicio.toISOString().slice(0, 10))).not.toContain("2026-10-20");
     });
 
     it("não refaz o que já estava materializado", async () => {
@@ -240,9 +227,9 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
         },
       } as unknown as PrismaService;
 
-      await expect(
-        new RecorrenciasService(prisma).materializar("s1", AGORA),
-      ).rejects.toThrow("conexão caiu");
+      await expect(new RecorrenciasService(prisma).materializar("s1", AGORA)).rejects.toThrow(
+        "conexão caiu",
+      );
     });
   });
 
@@ -380,13 +367,8 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // estenderia — e a série ficaria parada sem ninguém saber por quê.
       const esperado = new Date(AGORA);
       esperado.setUTCDate(esperado.getUTCDate() + SEMANAS_DE_HORIZONTE * 7);
-      expect(onde.OR).toEqual([
-        { materializadaAte: null },
-        { materializadaAte: { lt: esperado } },
-      ]);
-      expect(onde.AND).toEqual([
-        { OR: [{ vigenciaFim: null }, { vigenciaFim: { gte: AGORA } }] },
-      ]);
+      expect(onde.OR).toEqual([{ materializadaAte: null }, { materializadaAte: { lt: esperado } }]);
+      expect(onde.AND).toEqual([{ OR: [{ vigenciaFim: null }, { vigenciaFim: { gte: AGORA } }] }]);
     });
 
     it("sem série pendente, não chama o materializar nenhuma vez", async () => {
@@ -421,9 +403,139 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
     it("recusa série de outro estabelecimento", async () => {
       const { servico: s } = servico({ serie: null });
 
-      await expect(s.encerrar("e1", "s1", AGORA)).rejects.toThrow(
-        NotFoundException,
+      await expect(s.encerrar("e1", "s1", AGORA)).rejects.toThrow(NotFoundException);
+    });
+
+    it("sem o instante, usa o relógio — é como o controlador chama", async () => {
+      // O `agora` existe para o teste poder fixar o tempo; em produção
+      // ninguém o passa, e esse caminho não era percorrido.
+      const { servico: s, cancelarMuitas } = servico();
+
+      await s.encerrar("e1", "s1");
+
+      expect(cancelarMuitas.mock.calls[0][0].where.inicio.gte).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("os caminhos que o relógio e o id decidem", () => {
+    it("materializar série inexistente é 404, e não zero ocorrências", async () => {
+      // Zero ocorrências diria "não havia o que criar", que é o retorno de
+      // uma série encerrada. São duas respostas para duas situações.
+      const { servico: s } = servico({ serie: null });
+
+      await expect(s.materializar("sumiu", AGORA)).rejects.toThrow(NotFoundException);
+    });
+
+    it("estenderHorizonte sem o instante usa o relógio", async () => {
+      // O trabalho diário o chama sem argumento; o `agora` existe para o
+      // teste fixar o tempo, e esse caminho não era percorrido.
+      const { servico: s, prisma } = servico();
+
+      const r = await s.estenderHorizonte();
+
+      expect(r.series).toBeGreaterThan(0);
+      const where = (prisma.recorrencia.findMany as jest.Mock).mock.calls[0][0].where;
+      expect(where.OR[1].materializadaAte.lt).toBeInstanceOf(Date);
+    });
+  });
+
+  describe("listar", () => {
+    it("traz só as séries do estabelecimento da rota", async () => {
+      // O painel de mensalistas é por arena. Sem o recorte, o id na URL
+      // mostraria a carteira de clientes de outra.
+      const { servico: s, acharSeries } = servico();
+
+      await s.listar("e1");
+
+      expect(acharSeries.mock.calls[0][0].where).toEqual({ estabelecimentoId: "e1" });
+    });
+
+    it("ordena por situação, depois por dia e hora", async () => {
+      // Ativa antes de encerrada, e dentro disso na ordem da semana: é como
+      // a tela lê, e ordenar no banco evita a lista mudar de ordem sozinha.
+      const { servico: s, acharSeries } = servico();
+
+      await s.listar("e1");
+
+      expect(acharSeries.mock.calls[0][0].orderBy).toEqual([
+        { status: "asc" },
+        { diaSemana: "asc" },
+        { horaInicio: "asc" },
+      ]);
+    });
+
+    it("devolve no contrato da tela, com o preço em número", async () => {
+      const { servico: s } = servico();
+
+      const [serie] = await s.listar("e1");
+
+      expect(serie.id).toBe("s1");
+      expect(serie.preco).toBe(90);
+      expect(serie.quadra).toBe("Quadra 1");
+    });
+  });
+
+  describe("editar", () => {
+    it("série de outro estabelecimento não é editável", async () => {
+      const { servico: s } = servico({ serie: null });
+
+      await expect(s.editar("e1", "s1", { preco: 100 })).rejects.toThrow(NotFoundException);
+    });
+
+    /**
+     * **O que não foi enviado não é tocado.** O `editar` monta o `data` com
+     * três condicionais, e cada uma tem dois lados: campo presente e campo
+     * ausente. Sem este par, um `??` no lugar do `!== undefined` passaria —
+     * e aí mandar `observacao: ""` apagaria a observação achando que era
+     * "não enviou".
+     */
+    it("muda só o que veio no pedido", async () => {
+      const { servico: s, atualizarSerie } = servico();
+
+      await s.editar("e1", "s1", { preco: 120 });
+
+      const { data } = atualizarSerie.mock.calls[0][0];
+      expect(Number(data.preco)).toBe(120);
+      expect("vigenciaFim" in data).toBe(false);
+      expect("observacao" in data).toBe(false);
+    });
+
+    it("os três campos juntos entram juntos", async () => {
+      const { servico: s, atualizarSerie } = servico();
+
+      await s.editar("e1", "s1", {
+        preco: 150,
+        vigenciaFim: "2026-12-31",
+        observacao: "paga no dia 5",
+      });
+
+      const { data } = atualizarSerie.mock.calls[0][0];
+      expect(Number(data.preco)).toBe(150);
+      expect(data.vigenciaFim).toEqual(new Date("2026-12-31T00:00:00.000Z"));
+      expect(data.observacao).toBe("paga no dia 5");
+    });
+
+    /**
+     * A vigência é **data**, não instante: o serviço corta a hora para que
+     * "31/12" não vire "31/12 às 21h" conforme o fuso de quem enviou.
+     */
+    it("aceita data com hora, e guarda só o dia", async () => {
+      const { servico: s, atualizarSerie } = servico();
+
+      await s.editar("e1", "s1", { vigenciaFim: "2026-12-31T18:30:00.000Z" });
+
+      expect(atualizarSerie.mock.calls[0][0].data.vigenciaFim).toEqual(
+        new Date("2026-12-31T00:00:00.000Z"),
       );
+    });
+
+    it("data impossível é recusada com o nome do campo", async () => {
+      const { servico: s, atualizarSerie } = servico();
+
+      await expect(s.editar("e1", "s1", { vigenciaFim: "31/12/2026" })).rejects.toThrow(
+        /vigenciaFim/,
+      );
+      expect(atualizarSerie).not.toHaveBeenCalled();
     });
   });
 });

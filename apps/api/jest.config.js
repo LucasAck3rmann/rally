@@ -89,12 +89,23 @@ module.exports = {
   // Instruções e linhas **não sobem desta vez**: a margem delas já é de mais
   // de um ponto e meio, e apertar sem necessidade é o que a nota acima
   // adverte. Sobem ramos e funções, que foi onde o trabalho entrou.
+  //
+  // **Medido ao fim da lista, em 25/10: 97,29/93,33/88,32/97,22.** Entraram o
+  // `recorrencias.service.ts` — `listar` e `editar` sem teste, mais os
+  // argumentos padrão que só a produção usa — e três arquivos pequenos que
+  // estavam em 0%: o controlador da trilha, o provedor Pix de
+  // desenvolvimento e o serviço de auditoria.
+  //
+  // **O serviço de auditoria rendeu um defeito**, e não só cobertura: o teto
+  // `Math.min(Math.max(limite, 1), 500)` deixava `NaN` passar inteiro, de
+  // modo que `?limite=abc` mandava `take: NaN` ao Prisma. Teto protege
+  // contra número grande, não contra não-número.
   coverageThreshold: {
     global: {
-      statements: 95,
-      lines: 95,
-      branches: 89,
-      functions: 86,
+      statements: 96,
+      lines: 96,
+      branches: 92,
+      functions: 87,
     },
   },
 };
