@@ -71,12 +71,20 @@ module.exports = {
   // A lição a guardar é sobre o instrumento: **a margem avisou antes de o piso
   // quebrar.** Piso colado teria passado a regressão em silêncio até alguém
   // reprovar por uma linha nova qualquer.
+  //
+  // **Medido em 25/10: 96,14/88,20/86,20/96,07.** Seguindo a mesma lista de
+  // ramos descobertos, de onde saíram os dois serviços acima: a vitrine da
+  // Home (`quadras.service.listar`) não tinha teste nenhum — sete funções sem
+  // execução, numa tela que é a primeira que o jogador vê —, e o `login` só
+  // exercitava a recusa por e-mail inexistente, deixando sem percorrer os
+  // outros dois caminhos da mesma condição: conta sem senha e senha errada.
+  // Ambos os arquivos ficaram em **zero ramos descobertos**.
   coverageThreshold: {
     global: {
-      statements: 94,
-      lines: 94,
-      branches: 85,
-      functions: 83,
+      statements: 95,
+      lines: 95,
+      branches: 87,
+      functions: 85,
     },
   },
 };
