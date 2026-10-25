@@ -73,14 +73,11 @@ precedence = "aggregate"
 SPDX-FileCopyrightText = "2026 Rally"
 SPDX-License-Identifier = "AGPL-3.0-or-later"
 
-# Os pacotes publicáveis são Apache-2.0, não AGPL — ver a tabela da seção 2 de
-# docs/codigo-aberto.md. Isso alcança também o package.json de cada um, que
-# não pode levar comentário.
+# O pacote publicável é Apache-2.0, não AGPL — ver a tabela da seção 2 de
+# docs/codigo-aberto.md. Isso alcança também o package.json dele, que não
+# pode levar comentário.
 [[annotations]]
-path = [
-  "packages/shared/**",
-  "packages/tokens/**",
-]
+path = ["packages/tokens/**"]
 precedence = "override"
 SPDX-FileCopyrightText = "2026 Rally"
 SPDX-License-Identifier = "Apache-2.0"
@@ -141,7 +138,7 @@ SPDX-License-Identifier = "OFL-1.1"
 #
 # Este bloco é o último de propósito: como a última anotação que casa é a que
 # vale, a regra "todo .md é CC-BY-SA-4.0" não tem exceção — inclusive dentro de
-# packages/shared e packages/tokens, que no bloco acima são Apache-2.0.
+# packages/tokens, que no bloco acima é Apache-2.0.
 [[annotations]]
 path = "**.md"
 precedence = "override"
