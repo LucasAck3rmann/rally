@@ -80,10 +80,16 @@ export class AuditoriaService {
    * não é registro de auditoria.
    */
   async listar(estabelecimentoId: string, limite = 100) {
+    // **`NaN` atravessa o teto inteiro.** O controlador converte o parâmetro
+    // da URL com `Number(...)`, e `Number("abc")` é `NaN`; daí
+    // `Math.max(NaN, 1)` é `NaN` e `Math.min(NaN, 500)` também, de modo que
+    // `?limite=abc` mandava `take: NaN` ao Prisma em vez de cair no padrão.
+    // O teto protege contra número grande, não contra não-número.
+    const pedido = Number.isFinite(limite) ? limite : 100;
     return this.prisma.auditLog.findMany({
       where: { estabelecimentoId },
       orderBy: { criadoEm: "desc" },
-      take: Math.min(Math.max(limite, 1), 500),
+      take: Math.min(Math.max(pedido, 1), 500),
       select: {
         id: true,
         acao: true,
