@@ -79,12 +79,22 @@ module.exports = {
   // exercitava a recusa por e-mail inexistente, deixando sem percorrer os
   // outros dois caminhos da mesma condição: conta sem senha e senha errada.
   // Ambos os arquivos ficaram em **zero ramos descobertos**.
+  //
+  // **Medido ainda em 25/10, depois do maior da lista: 96,80/90,31/87,00/96,77.**
+  // O `reservas.service.ts` tinha doze ramos descobertos — as quatro portas
+  // que o pedido atravessa antes de virar reserva, as duas leituras do
+  // cliente (`minhas` e `detalhe`, nenhuma chamada por teste algum) e os
+  // ramos de impasse do `remarcar`. Ficou em zero.
+  //
+  // Instruções e linhas **não sobem desta vez**: a margem delas já é de mais
+  // de um ponto e meio, e apertar sem necessidade é o que a nota acima
+  // adverte. Sobem ramos e funções, que foi onde o trabalho entrou.
   coverageThreshold: {
     global: {
       statements: 95,
       lines: 95,
-      branches: 87,
-      functions: 85,
+      branches: 89,
+      functions: 86,
     },
   },
 };

@@ -1,15 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  PagamentoMetodo,
-  PagamentoStatus,
-  Prisma,
-  ReservaStatus,
-} from "@prisma/client";
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
+import { PagamentoMetodo, PagamentoStatus, Prisma, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
@@ -82,11 +73,7 @@ function servico(reserva: unknown) {
     ),
   } as unknown as PrismaService;
 
-  const servico = new ReservasService(
-    prisma,
-    {} as QuadrasService,
-    {} as PagamentosService,
-  );
+  const servico = new ReservasService(prisma, {} as QuadrasService, {} as PagamentosService);
   return { servico, atualizaReserva, atualizaPagamento };
 }
 
@@ -100,9 +87,7 @@ describe("ReservasService.cancelar (RF-09 / RN-02)", () => {
   });
 
   it("cancela dentro do prazo e encerra a cobrança em aberto", async () => {
-    const { servico: s, atualizaReserva, atualizaPagamento } = servico(
-      reservaBase(),
-    );
+    const { servico: s, atualizaReserva, atualizaPagamento } = servico(reservaBase());
 
     const saida = await s.cancelar("r1", "u1", "  mudei de ideia  ");
 
@@ -163,25 +148,19 @@ describe("ReservasService.cancelar (RF-09 / RN-02)", () => {
   });
 
   it("recusa cancelar duas vezes", async () => {
-    const { servico: s } = servico(
-      reservaBase({ status: ReservaStatus.CANCELADA }),
-    );
+    const { servico: s } = servico(reservaBase({ status: ReservaStatus.CANCELADA }));
 
     await expect(s.cancelar("r1", "u1")).rejects.toThrow(ConflictException);
   });
 
   it("recusa cancelar uma reserva já concluída", async () => {
-    const { servico: s } = servico(
-      reservaBase({ status: ReservaStatus.CONCLUIDA }),
-    );
+    const { servico: s } = servico(reservaBase({ status: ReservaStatus.CONCLUIDA }));
 
     await expect(s.cancelar("r1", "u1")).rejects.toThrow(ConflictException);
   });
 
   it("recusa cancelar depois que o horário começou", async () => {
-    const { servico: s } = servico(
-      reservaBase({ inicio: new Date(AGORA.getTime() - HORA) }),
-    );
+    const { servico: s } = servico(reservaBase({ inicio: new Date(AGORA.getTime() - HORA) }));
 
     await expect(s.cancelar("r1", "u1")).rejects.toThrow(ConflictException);
   });
@@ -235,14 +214,8 @@ function slotLivre(preco = 80, disponivel = true) {
   };
 }
 
-function servicoRemarcar(
-  reserva: unknown,
-  slots: unknown[],
-  erroNoUpdate?: unknown,
-) {
-  const atualizaReserva = erroNoUpdate
-    ? jest.fn().mockRejectedValue(erroNoUpdate)
-    : jest.fn();
+function servicoRemarcar(reserva: unknown, slots: unknown[], erroNoUpdate?: unknown) {
+  const atualizaReserva = erroNoUpdate ? jest.fn().mockRejectedValue(erroNoUpdate) : jest.fn();
   const atualizaPagamento = jest.fn();
   const criarCobrancaPix = jest.fn().mockResolvedValue({
     gatewayId: "g2",
@@ -253,10 +226,7 @@ function servicoRemarcar(
 
   const prisma = {
     reserva: {
-      findFirst: jest
-        .fn()
-        .mockResolvedValueOnce(reserva)
-        .mockResolvedValue(detalheCompleto()),
+      findFirst: jest.fn().mockResolvedValueOnce(reserva).mockResolvedValue(detalheCompleto()),
       update: atualizaReserva,
     },
     pagamento: { update: atualizaPagamento },
@@ -284,10 +254,7 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
   });
 
   it("move a reserva para o novo horário", async () => {
-    const { servico: s, atualizaReserva } = servicoRemarcar(
-      reservaParaRemarcar(),
-      [slotLivre()],
-    );
+    const { servico: s, atualizaReserva } = servicoRemarcar(reservaParaRemarcar(), [slotLivre()]);
 
     await s.remarcar("r1", "u1", pedido());
 
@@ -308,9 +275,7 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
       [slotLivre()],
     );
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(ConflictException);
     expect(atualizaReserva).not.toHaveBeenCalled();
   });
 
@@ -318,33 +283,30 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
     const reserva = reservaParaRemarcar();
     const { servico: s } = servicoRemarcar(reserva, [slotLivre()]);
 
-    await expect(
-      s.remarcar("r1", "u1", pedido(reserva.inicio, reserva.fim)),
-    ).rejects.toThrow(BadRequestException);
+    await expect(s.remarcar("r1", "u1", pedido(reserva.inicio, reserva.fim))).rejects.toThrow(
+      BadRequestException,
+    );
   });
 
   it("recusa um horário que não está na grade", async () => {
     const { servico: s } = servicoRemarcar(reservaParaRemarcar(), []);
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(BadRequestException);
   });
 
   it("recusa um horário ocupado", async () => {
-    const { servico: s } = servicoRemarcar(reservaParaRemarcar(), [
-      slotLivre(80, false),
-    ]);
+    const { servico: s } = servicoRemarcar(reservaParaRemarcar(), [slotLivre(80, false)]);
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(ConflictException);
   });
 
   it("reemite a cobrança Pix quando o preço do novo horário muda", async () => {
     // O valor vai dentro do BR Code: manter a cobrança antiga cobraria errado.
-    const { servico: s, criarCobrancaPix, atualizaPagamento } =
-      servicoRemarcar(reservaParaRemarcar(), [slotLivre(100)]);
+    const {
+      servico: s,
+      criarCobrancaPix,
+      atualizaPagamento,
+    } = servicoRemarcar(reservaParaRemarcar(), [slotLivre(100)]);
 
     await s.remarcar("r1", "u1", pedido());
 
@@ -359,8 +321,11 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
   });
 
   it("não mexe na cobrança quando o preço é o mesmo", async () => {
-    const { servico: s, criarCobrancaPix, atualizaPagamento } =
-      servicoRemarcar(reservaParaRemarcar(), [slotLivre(80)]);
+    const {
+      servico: s,
+      criarCobrancaPix,
+      atualizaPagamento,
+    } = servicoRemarcar(reservaParaRemarcar(), [slotLivre(80)]);
 
     await s.remarcar("r1", "u1", pedido());
 
@@ -382,9 +347,7 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
       [slotLivre(100)],
     );
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(ConflictException);
   });
 
   it("recusa remarcar uma reserva cancelada", async () => {
@@ -393,23 +356,173 @@ describe("ReservasService.remarcar (RF-09 / RN-02)", () => {
       [slotLivre()],
     );
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      ConflictException,
-    );
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(ConflictException);
   });
 
   it("traduz a colisão do banco em conflito de horário", async () => {
     const colisao = new Error(
       'conflicting key value violates exclusion constraint "reserva_sem_sobreposicao"',
     );
-    const { servico: s } = servicoRemarcar(
-      reservaParaRemarcar(),
-      [slotLivre()],
-      colisao,
-    );
+    const { servico: s } = servicoRemarcar(reservaParaRemarcar(), [slotLivre()], colisao);
 
-    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(
-      ConflictException,
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(ConflictException);
+  });
+
+  it("o impasse do banco também vira conflito, com a mensagem da disputa", async () => {
+    // O conflito acima prova que o intervalo está tomado; o impasse prova só
+    // que esta transação perdeu a disputa. São dois ramos e duas mensagens.
+    const impasse = new Prisma.PrismaClientUnknownRequestError(
+      'PostgresError { code: "40P01", message: "impasse detectado" }',
+      { clientVersion: "6.19.3" },
     );
+    const { servico: s } = servicoRemarcar(reservaParaRemarcar(), [slotLivre()], impasse);
+
+    await expect(s.remarcar("r1", "u1", pedido())).rejects.toThrow(/disputado/i);
+  });
+
+  it("fim antes do início é recusado antes de qualquer consulta", async () => {
+    const { servico: s } = servicoRemarcar(reservaParaRemarcar(), [slotLivre()]);
+    const invertido = {
+      ...pedido(),
+      inicio: pedido().fim,
+      fim: pedido().inicio,
+    };
+
+    await expect(s.remarcar("r1", "u1", invertido)).rejects.toBeInstanceOf(BadRequestException);
+  });
+
+  it("reserva de outra pessoa não é remarcável: ela não existe para quem pede", async () => {
+    const { servico: s } = servicoRemarcar(null, [slotLivre()]);
+    await expect(s.remarcar("r-de-outro", "u1", pedido())).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
+  });
+
+  /**
+   * O desconto do Pix só vale para quem paga por Pix. No cartão, o preço do
+   * novo horário entra inteiro — e era o lado da condição que nenhum teste
+   * percorria, porque todas as fixtures pagavam por Pix.
+   */
+  it("no cartão, o novo horário não ganha o desconto do Pix", async () => {
+    const noCartao = reservaParaRemarcar({
+      pagamento: {
+        id: "p1",
+        status: PagamentoStatus.PENDENTE,
+        metodo: PagamentoMetodo.CARTAO,
+        valor: new Prisma.Decimal(80),
+      },
+    });
+    const { servico: s, atualizaPagamento } = servicoRemarcar(noCartao, [slotLivre(120)]);
+
+    await s.remarcar("r1", "u1", pedido());
+
+    // 120 cheios, e não 114 (120 menos os 5% do Pix).
+    expect(Number(atualizaPagamento.mock.calls[0][0].data.valor)).toBe(120);
+  });
+});
+
+/** Um serviço só de leitura: `minhas` e `detalhe` não escrevem nada. */
+function servicoDeLeitura(resultado: unknown, modo: "lista" | "um" = "lista") {
+  const findMany = jest.fn().mockResolvedValue(resultado);
+  const findFirst = jest.fn().mockResolvedValue(resultado);
+  const prisma = {
+    reserva: { findMany, findFirst },
+  } as unknown as PrismaService;
+
+  return {
+    servico: new ReservasService(prisma, {} as QuadrasService, {} as PagamentosService),
+    consulta: modo === "lista" ? findMany : findFirst,
+  };
+}
+
+/**
+ * As duas leituras do cliente — "Minhas reservas" e o detalhe de uma delas.
+ *
+ * **Nenhuma das duas era chamada por teste algum**, e as duas carregam uma
+ * garantia que não se vê no retorno: o recorte da consulta. É ele que
+ * impede a tela de mostrar bloqueio de quadra como se fosse reserva, e que
+ * impede alguém de ler a reserva de outra pessoa trocando o id na URL.
+ */
+describe("ReservasService — as leituras do cliente", () => {
+  it("“Minhas reservas” não mostra bloqueio de quadra", async () => {
+    // `BLOQUEIO` é a linha que o gestor cria para fechar um horário. Ela
+    // mora na mesma tabela e não é reserva de ninguém.
+    const { servico: s, consulta } = servicoDeLeitura([]);
+
+    await s.minhas("u1");
+
+    const { where, orderBy, take } = consulta.mock.calls[0][0];
+    expect(where.clienteId).toBe("u1");
+    expect(where.status).toEqual({ not: ReservaStatus.BLOQUEIO });
+    expect(orderBy).toEqual({ inicio: "desc" });
+    expect(take).toBe(50);
+  });
+
+  it("a lista sai no contrato que o aplicativo consome", async () => {
+    const comModalidades = {
+      ...detalheCompleto(),
+      quadra: {
+        ...detalheCompleto().quadra,
+        // A modalidade chega do Prisma como objeto e sai como nome: é o que
+        // o cartão da tela mostra, e a lista vazia das outras fixtures
+        // deixava essa conversão sem ninguém percorrer.
+        modalidades: [{ nome: "Beach tennis" }, { nome: "Futevôlei" }],
+      },
+    };
+    const { servico: s } = servicoDeLeitura([comModalidades]);
+
+    const [r] = await s.minhas("u1");
+
+    expect(r.id).toBe("r1");
+    expect(r.preco).toBe(80);
+    expect(r.quadra.nome).toBe("Quadra 1");
+    expect(r.quadra.modalidades).toEqual(["Beach tennis", "Futevôlei"]);
+  });
+
+  it("reserva sem cobrança devolve pagamento nulo, e não um objeto vazio", async () => {
+    // A tela decide o que mostrar olhando esse campo; um objeto sem valor
+    // faria aparecer "a pagar" para uma reserva que nunca teve cobrança.
+    const { servico: s } = servicoDeLeitura([detalheCompleto()]);
+    expect((await s.minhas("u1"))[0].pagamento).toBeNull();
+  });
+
+  it("a cobrança, quando existe, sai com o valor em número", async () => {
+    const comPagamento = {
+      ...detalheCompleto(),
+      pagamento: {
+        id: "p1",
+        status: PagamentoStatus.PENDENTE,
+        metodo: PagamentoMetodo.PIX,
+        valor: new Prisma.Decimal(72.5),
+      },
+    };
+    const { servico: s } = servicoDeLeitura([comPagamento]);
+
+    expect((await s.minhas("u1"))[0].pagamento?.valor).toBe(72.5);
+  });
+
+  /**
+   * **O isolamento entre clientes mora na consulta.** O `where` casa id *e*
+   * dono; trocar o id na URL não alcança a reserva de outra pessoa, e o que
+   * ela recebe é 404 — a mesma resposta de um id que não existe, que é o que
+   * evita confirmar "essa reserva existe, mas não é sua".
+   */
+  it("o detalhe de outra pessoa não existe para quem pede", async () => {
+    const { servico: s, consulta } = servicoDeLeitura(null, "um");
+
+    await expect(s.detalhe("r-de-outro", "u1")).rejects.toBeInstanceOf(NotFoundException);
+    expect(consulta.mock.calls[0][0].where).toEqual({
+      id: "r-de-outro",
+      clienteId: "u1",
+    });
+  });
+
+  it("o detalhe da própria reserva volta no contrato", async () => {
+    const { servico: s } = servicoDeLeitura(detalheCompleto(), "um");
+
+    const r = await s.detalhe("r1", "u1");
+
+    expect(r.id).toBe("r1");
+    expect(r.status).toBe(ReservaStatus.CANCELADA);
   });
 });
