@@ -31,8 +31,10 @@ enum PapelGestao {
   /// `mantenedor` fica fora porque é papel de plataforma: o
   /// `PAPEIS_DE_GESTAO` da API não o inclui e o `PapelGuard` o recusa em
   /// toda rota de arena. `desconhecido` fica fora porque não é papel — é a
-  /// ausência de um. A lista mora aqui, e não na tela, para que o portão
-  /// `enums_espelham_a_api_test.dart` possa cobrá-la contra o esquema.
+  /// ausência de um. A lista mora aqui, e não na tela, e o portão
+  /// `enums_espelham_a_api_test.dart` a confere contra o `schema.prisma` —
+  /// papel novo no `Role` da API reprova ali, no lugar onde se decide se ele
+  /// entra no menu.
   static const List<PapelGestao> atribuiveis = [atendente, financeiro, admin];
 
   static PapelGestao doTexto(String valor) => switch (valor) {
@@ -144,7 +146,21 @@ class FaixaPreco {
   final String horaFim;
   final double precoHora;
 
-  String get diaRotulo => switch (diaSemana) {
+  /// Os dias que o formulário oferece: a semana inteira mais cada dia.
+  ///
+  /// `0` a `6` porque é o que o `FaixaPrecoDto` da API aceita (`@Min(0)` e
+  /// `@Max(6)`), e `null` porque no banco a coluna é `Int?` e `null` ali
+  /// significa exatamente "todos os dias".
+  static const List<int?> diasOferecidos = [null, 0, 1, 2, 3, 4, 5, 6];
+
+  /// O rótulo de um dia no formato da API — `null` é "todos os dias".
+  ///
+  /// **Mora aqui, e não na tela.** O menu do formulário de quadra tinha a
+  /// mesma lista de oito rótulos escrita à mão, e o `diaRotulo` — que existe
+  /// para isto — não tinha consumidor nenhum: eram duas fontes para a mesma
+  /// regra, e a que ninguém exercitava era a de dentro. É a razão de
+  /// `PapelGestao.atribuiveis` morar no enum, e a do ADR-0017.
+  static String rotuloDoDia(int? dia) => switch (dia) {
         null => "Todos os dias",
         0 => "Domingo",
         1 => "Segunda",
@@ -152,8 +168,12 @@ class FaixaPreco {
         3 => "Quarta",
         4 => "Quinta",
         5 => "Sexta",
+        // O 6 cai aqui, e o caso final é obrigatório porque o tipo é `int?`.
+        // Valor fora de 0–6 não chega da API, que o valida na borda.
         _ => "Sábado",
       };
+
+  String get diaRotulo => rotuloDoDia(diaSemana);
 
   FaixaPreco copiarCom({
     Object? diaSemana = _naoInformado,

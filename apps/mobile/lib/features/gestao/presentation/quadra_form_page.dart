@@ -536,15 +536,15 @@ class _LinhaFaixa extends StatelessWidget {
                     labelText: "Dia",
                     isDense: true,
                   ),
-                  items: const [
-                    DropdownMenuItem(value: null, child: Text("Todos os dias")),
-                    DropdownMenuItem(value: 0, child: Text("Domingo")),
-                    DropdownMenuItem(value: 1, child: Text("Segunda")),
-                    DropdownMenuItem(value: 2, child: Text("Terça")),
-                    DropdownMenuItem(value: 3, child: Text("Quarta")),
-                    DropdownMenuItem(value: 4, child: Text("Quinta")),
-                    DropdownMenuItem(value: 5, child: Text("Sexta")),
-                    DropdownMenuItem(value: 6, child: Text("Sábado")),
+                  // Os rótulos vêm do domínio: eram uma segunda cópia da
+                  // mesma lista, e o `FaixaPreco.rotuloDoDia`, que existe
+                  // para isto, não tinha consumidor nenhum.
+                  items: [
+                    for (final dia in FaixaPreco.diasOferecidos)
+                      DropdownMenuItem(
+                        value: dia,
+                        child: Text(FaixaPreco.rotuloDoDia(dia)),
+                      ),
                   ],
                   onChanged: (dia) => aoMudar(faixa.copiarCom(diaSemana: dia)),
                 ),
