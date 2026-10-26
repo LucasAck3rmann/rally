@@ -15,7 +15,7 @@ dependencies:
   go_router: ^14.2.0 # navegação + guard de auth
   dio: ^5.5.0 # cliente HTTP (chamadas à API)
   flutter_secure_storage: ^9.2.2 # token em armazenamento seguro
-  google_fonts: ^6.2.1 # Sora / Inter / Space Mono
+  google_fonts: ^9.0.0 # Sora / Inter / Space Mono
   flutter_svg: ^2.0.10 # ícones de linha exportados do Figma
   qr_flutter: ^4.1.0 # QR do Pix desenhado a partir do copia e cola
   intl: ^0.20.3 # datas e moeda em pt-BR (exigido pelo flutter_localizations)
