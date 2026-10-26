@@ -120,7 +120,9 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
         origem: ReservaOrigem.BALCAO,
       },
     });
-    await prisma.recorrencia.deleteMany({ where: { id: { startsWith: PREFIXO } } });
+    await prisma.recorrencia.deleteMany({
+      where: { id: { startsWith: PREFIXO } },
+    });
   }
 
   /** Terça-feira, 5 de março de 2030 — longe do que o seed cria. */
@@ -229,13 +231,16 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
       },
     });
 
-    const r = await servico.materializar(serieId, AGORA);
+    const r = await servico.materializar(estabelecimentoId, serieId, AGORA);
 
     // **Pulou, não estourou.** Se `ehConflitoDeHorario` deixasse de
     // reconhecer a exceção real, este `await` rejeitaria e o ADR-0014 não
     // teria o comportamento que declarou.
     expect(r.puladas).toEqual([
-      { data: PRIMEIRA_TERCA, motivo: "o horário já estava ocupado nessa semana" },
+      {
+        data: PRIMEIRA_TERCA,
+        motivo: "o horário já estava ocupado nessa semana",
+      },
     ]);
     expect(r.criadas).toBeGreaterThan(0);
 
@@ -270,7 +275,7 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
       },
     });
 
-    await servico.materializar(serieId, AGORA);
+    await servico.materializar(estabelecimentoId, serieId, AGORA);
 
     const serie = await prisma.recorrencia.findFirstOrThrow({
       where: { id: serieId },
@@ -284,14 +289,16 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
     // A segunda volta encontra tudo materializado. Se ela recriasse, cada
     // tentativa esbarraria na própria série e o relatório de colisão viraria
     // ruído — além de o trabalho diário crescer sem limite.
-    const primeira = await servico.materializar(serieId, AGORA);
-    const segunda = await servico.materializar(serieId, AGORA);
+    const primeira = await servico.materializar(estabelecimentoId, serieId, AGORA);
+    const segunda = await servico.materializar(estabelecimentoId, serieId, AGORA);
 
     expect(primeira.criadas).toBeGreaterThan(0);
     expect(segunda.criadas).toBe(0);
     expect(segunda.puladas).toEqual([]);
 
-    const total = await prisma.reserva.count({ where: { recorrenciaId: serieId } });
+    const total = await prisma.reserva.count({
+      where: { recorrenciaId: serieId },
+    });
     expect(total).toBe(primeira.criadas);
   });
 
@@ -302,7 +309,9 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
 
     expect(r.series).toBeGreaterThan(0);
     expect(r.falhas).toBe(0);
-    const total = await prisma.reserva.count({ where: { recorrenciaId: serieId } });
+    const total = await prisma.reserva.count({
+      where: { recorrenciaId: serieId },
+    });
     expect(total).toBeGreaterThan(0);
   });
 
@@ -314,7 +323,9 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
 
     await servico.estenderHorizonte(AGORA);
 
-    const total = await prisma.reserva.count({ where: { recorrenciaId: serieId } });
+    const total = await prisma.reserva.count({
+      where: { recorrenciaId: serieId },
+    });
     expect(total).toBe(0);
   });
 });

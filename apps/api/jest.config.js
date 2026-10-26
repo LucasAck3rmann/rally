@@ -100,12 +100,28 @@ module.exports = {
   // `Math.min(Math.max(limite, 1), 500)` deixava `NaN` passar inteiro, de
   // modo que `?limite=abc` mandava `take: NaN` ao Prisma. Teto protege
   // contra número grande, não contra não-número.
+  //
+  // **Medido em 26/10: 98,27/93,34/93,91/98,31.** O salto é todo de funções,
+  // de 88,42% — e desta vez a cobertura foi consequência de uma pergunta de
+  // segurança, e não o objetivo.
+  //
+  // A pergunta era por que as **funções** eram a medida mais fraca, e a
+  // resposta foi que 33 das 44 descobertas eram **manipuladores de
+  // controlador**: nenhum teste os chamava, porque as suítes de serviço
+  // chamam o serviço direto. O manipulador é onde rota, guarda, DTO e serviço
+  // se encontram, e a varredura de metadado escrita para cobri-los achou o
+  // `RecorrenciasController.materializar` **sem o `estabelecimentoId`** — a
+  // única rota da gestão que endereçava recurso por id sem dizer de qual
+  // arena, de modo que a escrita caía na agenda de outra.
+  //
+  // Ramos **não sobem**: 93,34 contra piso 92 é 1,34 ponto, que é a margem
+  // mínima. Instruções, linhas e funções sobem.
   coverageThreshold: {
     global: {
-      statements: 96,
-      lines: 96,
+      statements: 97,
+      lines: 97,
       branches: 92,
-      functions: 87,
+      functions: 92,
     },
   },
 };
