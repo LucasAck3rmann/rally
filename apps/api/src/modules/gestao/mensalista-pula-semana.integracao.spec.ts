@@ -277,9 +277,7 @@ comBanco("mensalista pula a semana ocupada (integração)", () => {
       select: { materializadaAte: true },
     });
     expect(serie.materializadaAte).not.toBeNull();
-    expect(serie.materializadaAte!.toISOString().slice(0, 10)).not.toBe(
-      PRIMEIRA_TERCA,
-    );
+    expect(serie.materializadaAte!.toISOString().slice(0, 10)).not.toBe(PRIMEIRA_TERCA);
   });
 
   it("rodar de novo não duplica ocorrência", async () => {

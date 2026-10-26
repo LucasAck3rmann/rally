@@ -1,16 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  Prisma,
-  RecorrenciaStatus,
-  ReservaOrigem,
-  ReservaStatus,
-} from "@prisma/client";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Prisma, RecorrenciaStatus, ReservaOrigem, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { horaLocalParaUtc } from "../../common/timezone";
@@ -195,9 +185,7 @@ export class RecorrenciasService {
       });
     }
     if (puladas.length) {
-      this.log.warn(
-        `Série ${serie.id}: ${puladas.length} semana(s) pulada(s) por conflito.`,
-      );
+      this.log.warn(`Série ${serie.id}: ${puladas.length} semana(s) pulada(s) por conflito.`);
     }
     return { criadas, puladas };
   }
@@ -255,11 +243,7 @@ export class RecorrenciasService {
     return { series: pendentes.length, criadas, puladas, falhas };
   }
 
-  async editar(
-    estabelecimentoId: string,
-    id: string,
-    dto: EditarRecorrenciaDto,
-  ) {
+  async editar(estabelecimentoId: string, id: string, dto: EditarRecorrenciaDto) {
     const serie = await this.achar(estabelecimentoId, id);
     const atualizada = await this.prisma.recorrencia.update({
       where: { id: serie.id },
@@ -324,9 +308,7 @@ export class RecorrenciasService {
     if (Number.isNaN(d.getTime())) {
       throw new BadRequestException(`${campo} inválida.`);
     }
-    return new Date(
-      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
-    );
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   }
 
   /**
@@ -351,9 +333,7 @@ export class RecorrenciasService {
       .filter((d): d is Date => d !== null)
       .reduce((a, b) => (a > b ? a : b));
 
-    const d = new Date(
-      Date.UTC(piso.getUTCFullYear(), piso.getUTCMonth(), piso.getUTCDate()),
-    );
+    const d = new Date(Date.UTC(piso.getUTCFullYear(), piso.getUTCMonth(), piso.getUTCDate()));
     // Anda até o próximo dia da semana pedido. O `+ 1` evita repetir o dia
     // que já foi materializado, quando `materializadaAte` cai nele.
     if (serie.materializadaAte && d <= serie.materializadaAte) {

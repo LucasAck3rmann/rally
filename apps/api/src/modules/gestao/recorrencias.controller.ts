@@ -42,10 +42,7 @@ export class RecorrenciasController {
   @Post()
   @Auditar({ acao: "criar mensalista", entidade: "Recorrencia" })
   @Papeis(Role.ADMIN)
-  criar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Body() dto: CriarRecorrenciaDto,
-  ) {
+  criar(@Param("estabelecimentoId") estabelecimentoId: string, @Body() dto: CriarRecorrenciaDto) {
     return this.recorrencias.criar(estabelecimentoId, dto);
   }
 
@@ -82,10 +79,7 @@ export class RecorrenciasController {
   @Delete(":id")
   @Auditar({ acao: "encerrar mensalista", entidade: "Recorrencia", parametro: "id" })
   @Papeis(Role.ADMIN)
-  encerrar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Param("id") id: string,
-  ) {
+  encerrar(@Param("estabelecimentoId") estabelecimentoId: string, @Param("id") id: string) {
     return this.recorrencias.encerrar(estabelecimentoId, id);
   }
 }
