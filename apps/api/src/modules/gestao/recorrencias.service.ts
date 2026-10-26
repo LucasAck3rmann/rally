@@ -1,16 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  Injectable,
-  Logger,
-  NotFoundException,
-} from "@nestjs/common";
-import {
-  Prisma,
-  RecorrenciaStatus,
-  ReservaOrigem,
-  ReservaStatus,
-} from "@prisma/client";
+import { BadRequestException, Injectable, Logger, NotFoundException } from "@nestjs/common";
+import { Prisma, RecorrenciaStatus, ReservaOrigem, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { horaLocalParaUtc } from "../../common/timezone";
@@ -114,12 +104,36 @@ export class RecorrenciasService {
       select: DA_SERIE,
     });
 
-    const resultado = await this.materializar(serie.id);
+    const resultado = await this.materializarSerie(serie.id);
     return { ...this.paraDto(serie), ...resultado };
   }
 
   /**
+   * Materializa uma série **do estabelecimento da rota**.
+   *
+   * O escopo é a razão de este método existir separado do trabalho em si. A
+   * rota recebia só o id da série e chamava direto quem materializa, de modo
+   * que um admin da arena A podia materializar a série da arena B passando o
+   * id dela: o `PapelGuard` confere o papel **dentro do estabelecimento da
+   * URL** e aprovava, porque o papel em A é real — e a escrita caía na
+   * agenda de B.
+   *
+   * É a mesma regra que o `criar` enuncia acima, sobre a quadra. O `achar`
+   * recusa com "Série não encontrada", igual ao id inexistente: série de
+   * outra arena não deve nem confirmar que existe.
+   */
+  async materializar(estabelecimentoId: string, id: string, agora = new Date()) {
+    const serie = await this.achar(estabelecimentoId, id);
+    return this.materializarSerie(serie.id, agora);
+  }
+
+  /**
    * Cria as ocorrências que faltam, até o horizonte.
+   *
+   * **Não confere estabelecimento**, de propósito: quem chama já o conferiu
+   * (o `materializar`), acabou de criar a série (o `criar`) ou varre todas as
+   * arenas por natureza (o `estenderHorizonte`, do trabalho agendado). É
+   * privado por isso — foi público uma vez, e a rota o alcançou sem escopo.
    *
    * **Colisão pula a semana e reporta.** Recusar a série inteira
    * transformaria um conflito de uma semana em bloqueio de meses, e o gestor
@@ -127,7 +141,7 @@ export class RecorrenciasService {
    * existir hoje, no WhatsApp. Deslocar a reserva conflitante moveria o
    * horário de um cliente para acomodar outro sem que nenhum soubesse.
    */
-  async materializar(recorrenciaId: string, agora = new Date()) {
+  private async materializarSerie(recorrenciaId: string, agora = new Date()) {
     const serie = await this.prisma.recorrencia.findUnique({
       where: { id: recorrenciaId },
       select: { ...DA_SERIE, estabelecimento: { select: { timezone: true } } },
@@ -195,9 +209,7 @@ export class RecorrenciasService {
       });
     }
     if (puladas.length) {
-      this.log.warn(
-        `Série ${serie.id}: ${puladas.length} semana(s) pulada(s) por conflito.`,
-      );
+      this.log.warn(`Série ${serie.id}: ${puladas.length} semana(s) pulada(s) por conflito.`);
     }
     return { criadas, puladas };
   }
@@ -243,7 +255,7 @@ export class RecorrenciasService {
     let falhas = 0;
     for (const { id } of pendentes) {
       try {
-        const feito = await this.materializar(id, agora);
+        const feito = await this.materializarSerie(id, agora);
         criadas += feito.criadas;
         puladas += feito.puladas.length;
       } catch (erro) {
@@ -255,11 +267,7 @@ export class RecorrenciasService {
     return { series: pendentes.length, criadas, puladas, falhas };
   }
 
-  async editar(
-    estabelecimentoId: string,
-    id: string,
-    dto: EditarRecorrenciaDto,
-  ) {
+  async editar(estabelecimentoId: string, id: string, dto: EditarRecorrenciaDto) {
     const serie = await this.achar(estabelecimentoId, id);
     const atualizada = await this.prisma.recorrencia.update({
       where: { id: serie.id },
@@ -290,7 +298,9 @@ export class RecorrenciasService {
       where: {
         recorrenciaId: serie.id,
         inicio: { gte: agora },
-        status: { in: [ReservaStatus.CONFIRMADA, ReservaStatus.PENDENTE_PAGAMENTO] },
+        status: {
+          in: [ReservaStatus.CONFIRMADA, ReservaStatus.PENDENTE_PAGAMENTO],
+        },
       },
       data: {
         status: ReservaStatus.CANCELADA,
@@ -324,9 +334,7 @@ export class RecorrenciasService {
     if (Number.isNaN(d.getTime())) {
       throw new BadRequestException(`${campo} inválida.`);
     }
-    return new Date(
-      Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()),
-    );
+    return new Date(Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate()));
   }
 
   /**
@@ -351,9 +359,7 @@ export class RecorrenciasService {
       .filter((d): d is Date => d !== null)
       .reduce((a, b) => (a > b ? a : b));
 
-    const d = new Date(
-      Date.UTC(piso.getUTCFullYear(), piso.getUTCMonth(), piso.getUTCDate()),
-    );
+    const d = new Date(Date.UTC(piso.getUTCFullYear(), piso.getUTCMonth(), piso.getUTCDate()));
     // Anda até o próximo dia da semana pedido. O `+ 1` evita repetir o dia
     // que já foi materializado, quando `materializadaAte` cai nele.
     if (serie.materializadaAte && d <= serie.materializadaAte) {

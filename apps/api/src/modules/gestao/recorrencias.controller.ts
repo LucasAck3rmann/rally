@@ -42,15 +42,16 @@ export class RecorrenciasController {
   @Post()
   @Auditar({ acao: "criar mensalista", entidade: "Recorrencia" })
   @Papeis(Role.ADMIN)
-  criar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Body() dto: CriarRecorrenciaDto,
-  ) {
+  criar(@Param("estabelecimentoId") estabelecimentoId: string, @Body() dto: CriarRecorrenciaDto) {
     return this.recorrencias.criar(estabelecimentoId, dto);
   }
 
   @Patch(":id")
-  @Auditar({ acao: "editar mensalista", entidade: "Recorrencia", parametro: "id" })
+  @Auditar({
+    acao: "editar mensalista",
+    entidade: "Recorrencia",
+    parametro: "id",
+  })
   @Papeis(Role.ADMIN)
   editar(
     @Param("estabelecimentoId") estabelecimentoId: string,
@@ -67,6 +68,10 @@ export class RecorrenciasController {
    * série cujo horizonte parou de avançar — o `materializadaAte` da listagem
    * mostra que parou, e este botão resolve sem esperar o próximo ciclo do
    * trabalho agendado.
+   *
+   * **Leva o `estabelecimentoId` como as irmãs.** Sem ele, esta rota era a
+   * única da gestão que endereçava um recurso por id sem dizer de qual arena:
+   * o `PapelGuard` aprovava pelo papel em A e a escrita caía na agenda de B.
    */
   @Post(":id/materializar")
   @Auditar({
@@ -75,17 +80,18 @@ export class RecorrenciasController {
     parametro: "id",
   })
   @Papeis(Role.ADMIN)
-  materializar(@Param("id") id: string) {
-    return this.recorrencias.materializar(id);
+  materializar(@Param("estabelecimentoId") estabelecimentoId: string, @Param("id") id: string) {
+    return this.recorrencias.materializar(estabelecimentoId, id);
   }
 
   @Delete(":id")
-  @Auditar({ acao: "encerrar mensalista", entidade: "Recorrencia", parametro: "id" })
+  @Auditar({
+    acao: "encerrar mensalista",
+    entidade: "Recorrencia",
+    parametro: "id",
+  })
   @Papeis(Role.ADMIN)
-  encerrar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Param("id") id: string,
-  ) {
+  encerrar(@Param("estabelecimentoId") estabelecimentoId: string, @Param("id") id: string) {
     return this.recorrencias.encerrar(estabelecimentoId, id);
   }
 }

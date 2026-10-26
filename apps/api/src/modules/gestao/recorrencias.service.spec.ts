@@ -103,7 +103,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
     it("cria uma ocorrência por semana até o horizonte", async () => {
       const { servico: s, criadas } = servico();
 
-      const r = await s.materializar("s1", AGORA);
+      const r = await s.materializar("e1", "s1", AGORA);
 
       // Nove, e nao oito: o horizonte de 8 semanas a partir de uma terca
       // **inclui as duas pontas**. O numero de ocorrencias depende de onde
@@ -126,7 +126,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // a expiração automática de Pix liberaria o horário do mensalista.
       const { servico: s, criadas } = servico();
 
-      await s.materializar("s1", AGORA);
+      await s.materializar("e1", "s1", AGORA);
 
       expect(criadas[0].status).toBe(ReservaStatus.CONFIRMADA);
     });
@@ -134,7 +134,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
     it("congela o preço da série em cada reserva (RN-12)", async () => {
       const { servico: s, criadas } = servico();
 
-      await s.materializar("s1", AGORA);
+      await s.materializar("e1", "s1", AGORA);
 
       expect(Number(criadas[0].preco)).toBe(90);
     });
@@ -144,7 +144,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // bloqueio de meses, e o gestor resolveria fora do sistema.
       const { servico: s } = servico({ conflitamEm: ["2026-10-27"] });
 
-      const r = await s.materializar("s1", AGORA);
+      const r = await s.materializar("e1", "s1", AGORA);
 
       expect(r.criadas).toBe(SEMANAS_DE_HORIZONTE);
       expect(r.puladas).toEqual([
@@ -160,7 +160,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       const ultima = "2026-12-15"; // a última terça dentro do horizonte
       const { servico: s, atualizarSerie } = servico({ conflitamEm: [ultima] });
 
-      await s.materializar("s1", AGORA);
+      await s.materializar("e1", "s1", AGORA);
 
       const gravado = atualizarSerie.mock.calls[0][0].data.materializadaAte;
       expect(gravado.toISOString().slice(0, 10)).not.toBe(ultima);
@@ -176,7 +176,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       const tercaDeNoite = new Date("2026-10-20T23:00:00.000Z"); // 20h em SP
       const { servico: s, criadas } = servico();
 
-      await s.materializar("s1", tercaDeNoite);
+      await s.materializar("e1", "s1", tercaDeNoite);
 
       expect(criadas.every((c) => c.inicio > tercaDeNoite)).toBe(true);
       expect(criadas.map((c) => c.inicio.toISOString().slice(0, 10))).not.toContain("2026-10-20");
@@ -187,7 +187,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
         serie: serieBase({ materializadaAte: new Date("2026-11-03T22:00:00.000Z") }),
       });
 
-      await s.materializar("s1", AGORA);
+      await s.materializar("e1", "s1", AGORA);
 
       for (const c of criadas) {
         expect(c.inicio.toISOString().slice(0, 10) > "2026-11-03").toBe(true);
@@ -199,7 +199,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
         serie: serieBase({ vigenciaFim: new Date("2026-11-10T00:00:00.000Z") }),
       });
 
-      const r = await s.materializar("s1", AGORA);
+      const r = await s.materializar("e1", "s1", AGORA);
 
       // 20/10, 27/10, 03/11 e 10/11 — quatro terças até o fim da vigência.
       // A de 20/10 entra porque as 19h locais ainda não passaram às 12h UTC.
@@ -211,7 +211,7 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
         serie: serieBase({ status: RecorrenciaStatus.ENCERRADA }),
       });
 
-      const r = await s.materializar("s1", AGORA);
+      const r = await s.materializar("e1", "s1", AGORA);
 
       expect(r).toEqual({ criadas: 0, puladas: [] });
       expect(criarReserva).not.toHaveBeenCalled();
@@ -221,13 +221,18 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // Engolir qualquer erro aqui faria uma falha de banco parecer "semana
       // ocupada", e o gestor procuraria uma reserva que não existe.
       const prisma = {
-        recorrencia: { findUnique: jest.fn().mockResolvedValue(serieBase()) },
+        recorrencia: {
+          // Os dois: o `achar` confere a arena com `findFirst`, e o trabalho
+          // em si relê a série com `findUnique` para levar o fuso junto.
+          findFirst: jest.fn().mockResolvedValue(serieBase()),
+          findUnique: jest.fn().mockResolvedValue(serieBase()),
+        },
         reserva: {
           create: jest.fn().mockRejectedValue(new Error("conexão caiu")),
         },
       } as unknown as PrismaService;
 
-      await expect(new RecorrenciasService(prisma).materializar("s1", AGORA)).rejects.toThrow(
+      await expect(new RecorrenciasService(prisma).materializar("e1", "s1", AGORA)).rejects.toThrow(
         "conexão caiu",
       );
     });
@@ -329,8 +334,14 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // semanas depois como horário livre que tem dono.
       const { servico: s, acharSeries } = servico();
       acharSeries.mockResolvedValueOnce([{ id: "s1" }, { id: "s2" }, { id: "s3" }]);
+      // Espia o **trabalho**, e nao o `materializar` publico: o publico
+      // confere a arena antes, e o trabalho agendado varre todas as arenas
+      // por natureza, de modo que nao e por ele que o job passa.
+      const trabalho = s as unknown as {
+        materializarSerie: (id: string, agora?: Date) => Promise<unknown>;
+      };
       const materializar = jest
-        .spyOn(s, "materializar")
+        .spyOn(trabalho, "materializarSerie")
         .mockResolvedValueOnce({ criadas: 9, puladas: [] })
         .mockRejectedValueOnce(new Error("quadra removida"))
         .mockResolvedValueOnce({
@@ -374,7 +385,10 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
     it("sem série pendente, não chama o materializar nenhuma vez", async () => {
       const { servico: s, acharSeries } = servico();
       acharSeries.mockResolvedValueOnce([]);
-      const materializar = jest.spyOn(s, "materializar");
+      const materializar = jest.spyOn(
+        s as unknown as { materializarSerie: (id: string) => Promise<unknown> },
+        "materializarSerie",
+      );
 
       const r = await s.estenderHorizonte(AGORA);
 
@@ -423,7 +437,66 @@ describe("RecorrenciasService — mensalistas (ADR-0014)", () => {
       // uma série encerrada. São duas respostas para duas situações.
       const { servico: s } = servico({ serie: null });
 
-      await expect(s.materializar("sumiu", AGORA)).rejects.toThrow(NotFoundException);
+      await expect(s.materializar("e1", "sumiu", AGORA)).rejects.toThrow(NotFoundException);
+    });
+
+    it("materializar procura a série **dentro** do estabelecimento da rota", async () => {
+      // O defeito que esta asserção fixa: a rota recebia só o id da série e o
+      // serviço fazia `findUnique({ where: { id } })`, sem arena. Um admin da
+      // arena A materializava a série da arena B passando o id dela — o
+      // `PapelGuard` aprova pelo papel em A, que é real, e as reservas caíam
+      // na agenda de B.
+      //
+      // A asserção é sobre a **consulta**, e não sobre o retorno: um teste
+      // que só checasse o 404 passaria com um `findUnique` sem escopo, porque
+      // o id inexistente devolve nulo de qualquer jeito.
+      const { servico: s, prisma } = servico();
+
+      await s.materializar("e1", "s1", AGORA);
+
+      const procura = (prisma.recorrencia.findFirst as jest.Mock).mock.calls[0][0];
+      expect(procura.where).toEqual({ id: "s1", estabelecimentoId: "e1" });
+    });
+
+    it("materializar sem o instante usa o relógio — é como o controlador chama", async () => {
+      // O `agora` existe para o teste fixar o tempo. A rota não o passa, de
+      // modo que o padrão é o caminho de produção, e não o excepcional.
+      const { servico: s, criadas } = servico();
+
+      const r = await s.materializar("e1", "s1");
+
+      expect(r.criadas).toBeGreaterThan(0);
+      expect(criadas[0].inicio.getTime()).toBeGreaterThan(Date.now());
+    });
+
+    it("série que some entre a conferência e o trabalho é 404, e não estouro", async () => {
+      // **Por que a guarda de dentro não é redundante.** O `materializar`
+      // confere a arena com `findFirst`, e o trabalho relê a série com
+      // `findUnique` para levar o fuso junto. São duas consultas, e entre elas
+      // a série pode ser apagada — pelo encerramento em outra sessão, ou pela
+      // exclusão de conta do cliente.
+      //
+      // Depois que o escopo passou a ser conferido antes, esta é a **única**
+      // forma de alcançar aquele `throw`: sem este teste ele pareceria código
+      // morto, e alguém o tiraria.
+      const { servico: s, prisma } = servico();
+      (prisma.recorrencia.findUnique as jest.Mock).mockResolvedValue(null);
+
+      await expect(s.materializar("e1", "s1", AGORA)).rejects.toThrow(
+        new NotFoundException("Série não encontrada."),
+      );
+    });
+
+    it("série de outra arena é 404, e não confirma que existe", async () => {
+      // "Não encontrada", igual ao id inexistente: distinguir as duas
+      // respostas contaria a quem perguntou que aquela série existe em
+      // **alguma** arena, que é informação a que ele não tem direito.
+      const { servico: s, prisma } = servico();
+      (prisma.recorrencia.findFirst as jest.Mock).mockResolvedValue(null);
+
+      await expect(s.materializar("arena-alheia", "s1", AGORA)).rejects.toThrow(
+        new NotFoundException("Série não encontrada."),
+      );
     });
 
     it("estenderHorizonte sem o instante usa o relógio", async () => {
