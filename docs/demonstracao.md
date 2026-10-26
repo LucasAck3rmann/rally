@@ -104,6 +104,13 @@ tem o SDK do Android:
 > `build.gradle.kts` declara. Instala em aparelho e **não serve para a Play
 > Store**.
 
+> ⚠️ **O artefato expira em 30 dias** — é o `retention-days` do passo que o
+> sobe, no `ci.yml`. Para apresentação ou teste marcado com antecedência não
+> basta saber que a integração contínua gera o APK: ou se **baixa e guarda** o
+> arquivo antes, ou se **reexecuta** a integração na semana do compromisso.
+> Esta máquina não tem o SDK do Android, então recompilar localmente não é
+> saída quando o artefato já expirou.
+
 ### Apontar o aplicativo para o computador
 
 O padrão de compilação é `10.0.2.2`, que é o apelido do computador **dentro do
