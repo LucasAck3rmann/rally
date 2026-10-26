@@ -69,9 +69,7 @@ describe("entrar", () => {
     const [url, opcoes] = vi.mocked(fetch).mock.calls[0];
     expect(String(url)).not.toContain("segredo");
     expect(opcoes?.method).toBe("POST");
-    expect(opcoes?.body).toBe(
-      JSON.stringify({ email: "a@b.com", senha: "segredo" }),
-    );
+    expect(opcoes?.body).toBe(JSON.stringify({ email: "a@b.com", senha: "segredo" }));
     expect(opcoes?.cache).toBe("no-store");
   });
 

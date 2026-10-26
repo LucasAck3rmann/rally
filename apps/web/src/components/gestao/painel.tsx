@@ -31,9 +31,7 @@ export function PainelDaArena({
     <div className="p-6 md:p-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-            Painel
-          </h1>
+          <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Painel</h1>
           <p className="mt-1 text-[14px] text-gray">Como está indo a arena</p>
         </div>
         <nav aria-label="Período" className="flex gap-2">
@@ -57,8 +55,7 @@ export function PainelDaArena({
 
       {semMovimento ? (
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-          Nenhum movimento no período. Quando entrarem reservas, os números
-          aparecem aqui.
+          Nenhum movimento no período. Quando entrarem reservas, os números aparecem aqui.
         </p>
       ) : (
         <>
@@ -130,9 +127,7 @@ export function PainelDaArena({
                             // justamente ela que o dono precisa ver.
                             "Nenhuma reserva no período"
                           : `${q.reservas} reserva${q.reservas > 1 ? "s" : ""}${
-                              q.ocupacao === null
-                                ? ""
-                                : ` · ${numero(q.ocupacao)}% de ocupação`
+                              q.ocupacao === null ? "" : ` · ${numero(q.ocupacao)}% de ocupação`
                             }`}
                       </p>
                     </div>
@@ -153,9 +148,7 @@ export function PainelDaArena({
             </section>
 
             <section>
-              <h2 className="font-display text-[19px] font-bold text-ink">
-                Próximos jogos
-              </h2>
+              <h2 className="font-display text-[19px] font-bold text-ink">Próximos jogos</h2>
               <ul className="mt-4 space-y-2.5">
                 {painel.proximosJogos.map((j) => (
                   <li
@@ -183,9 +176,7 @@ export function PainelDaArena({
                   </li>
                 ))}
                 {painel.proximosJogos.length === 0 ? (
-                  <li className="text-[13px] text-gray">
-                    Nada agendado daqui para frente.
-                  </li>
+                  <li className="text-[13px] text-gray">Nada agendado daqui para frente.</li>
                 ) : null}
               </ul>
             </section>
@@ -229,21 +220,11 @@ function ParDoCard({ rotulo, valor }: { rotulo: string; valor: string }) {
   );
 }
 
-function Metrica({
-  valor,
-  rotulo,
-  apoio,
-}: {
-  valor: string;
-  rotulo: string;
-  apoio?: string;
-}) {
+function Metrica({ valor, rotulo, apoio }: { valor: string; rotulo: string; apoio?: string }) {
   return (
     <div className="rounded-card border border-line bg-white px-4 py-4">
       <p className="font-display text-[24px] font-bold leading-none text-ink">{valor}</p>
-      <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gray">
-        {rotulo}
-      </p>
+      <p className="mt-2 font-mono text-[9px] uppercase tracking-[0.2em] text-gray">{rotulo}</p>
       {apoio ? <p className="mt-1 text-[11px] text-gray">{apoio}</p> : null}
     </div>
   );

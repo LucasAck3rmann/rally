@@ -35,16 +35,11 @@ export default async function Entrar({
         <h1 className="font-display text-[32px] font-bold leading-tight text-ink">
           Entrar no painel
         </h1>
-        <p className="mt-2 text-[15px] text-gray">
-          Use a mesma conta do aplicativo.
-        </p>
+        <p className="mt-2 text-[15px] text-gray">Use a mesma conta do aplicativo.</p>
         {senha === "redefinida" ? (
           // Quem acabou de redefinir chega aqui sem saber se deu certo; o
           // aviso fecha o ciclo em vez de deixar a dúvida.
-          <p
-            role="status"
-            className="mt-5 rounded-button bg-sand px-4 py-3 text-[14px] text-ink"
-          >
+          <p role="status" className="mt-5 rounded-button bg-sand px-4 py-3 text-[14px] text-ink">
             Senha redefinida. Entre com a nova.
           </p>
         ) : null}

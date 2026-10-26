@@ -53,9 +53,7 @@ const FOCALIZAVEIS =
 
 function luminancia(hex: string): number {
   const canais = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const [r, g, b] = canais.map((c) =>
-    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4,
-  );
+  const [r, g, b] = canais.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
@@ -120,10 +118,7 @@ function listar(achados: Achado[]): string {
  * o portão existia e a lista que o alimentava estava desatualizada.
  */
 function contornoDeclarado(): { cor: string; largura: number } {
-  const css = readFileSync(
-    join(process.cwd(), "src/app/globals.css"),
-    "utf-8",
-  );
+  const css = readFileSync(join(process.cwd(), "src/app/globals.css"), "utf-8");
   const regra = /:focus-visible\s*\{[^}]*\}/.exec(css)?.[0] ?? "";
   const linha = /outline:\s*(\d+)px\s+solid\s+theme\(colors\.([\w-]+)\)/.exec(regra);
   if (!linha) throw new Error(`regra :focus-visible não reconhecida em:\n${regra}`);
@@ -147,10 +142,7 @@ describe("foco visível e ordem de foco (RNF-08)", () => {
     // **O defeito que originou este arquivo.** Oito declarações usavam
     // `outline-none` e trocavam um indicador de 7,31:1 por um de 2,82:1.
     // Quem precisar de um visual próprio soma ao contorno, não o substitui.
-    expect(
-      semContorno,
-      `controles sem contorno de foco:\n${listar(semContorno)}`,
-    ).toEqual([]);
+    expect(semContorno, `controles sem contorno de foco:\n${listar(semContorno)}`).toEqual([]);
   });
 
   it("o contorno declarado no CSS tem contraste suficiente (1.4.11)", () => {
@@ -188,9 +180,6 @@ describe("foco visível e ordem de foco (RNF-08)", () => {
   });
 
   it("nenhum controle fica fora da navegação por teclado (2.1.1)", () => {
-    expect(
-      foraDoTeclado,
-      `controles retirados do teclado:\n${listar(foraDoTeclado)}`,
-    ).toEqual([]);
+    expect(foraDoTeclado, `controles retirados do teclado:\n${listar(foraDoTeclado)}`).toEqual([]);
   });
 });

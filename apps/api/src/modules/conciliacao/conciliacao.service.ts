@@ -97,9 +97,7 @@ export class ConciliacaoService {
     const agora = new Date();
     const alvo = await this.prisma.reserva.findMany({
       where: {
-        ...(filtro.estabelecimentoId
-          ? { estabelecimentoId: filtro.estabelecimentoId }
-          : {}),
+        ...(filtro.estabelecimentoId ? { estabelecimentoId: filtro.estabelecimentoId } : {}),
         ...(filtro.quadraId ? { quadraId: filtro.quadraId } : {}),
         status: ReservaStatus.PENDENTE_PAGAMENTO,
         pagamento: {
@@ -146,10 +144,7 @@ export type TipoDeDivergencia =
 
 type Gravidade = "grave" | "atencao";
 
-const DESCRICOES: Record<
-  TipoDeDivergencia,
-  { descricao: string; gravidade: Gravidade }
-> = {
+const DESCRICOES: Record<TipoDeDivergencia, { descricao: string; gravidade: Gravidade }> = {
   PENDENTE_EXPIRADA: {
     // Custa faturamento todo dia que passa: o horário está preso e ninguém
     // pode comprá-lo.
@@ -226,10 +221,7 @@ function classificar(r: ReservaConciliada, agora: Date): TipoDeDivergencia[] {
     tipos.push("PENDENTE_EXPIRADA");
   }
 
-  if (
-    r.status === ReservaStatus.PENDENTE_PAGAMENTO &&
-    p.status === PagamentoStatus.PAGO
-  ) {
+  if (r.status === ReservaStatus.PENDENTE_PAGAMENTO && p.status === PagamentoStatus.PAGO) {
     tipos.push("PAGA_NAO_CONFIRMADA");
   }
 

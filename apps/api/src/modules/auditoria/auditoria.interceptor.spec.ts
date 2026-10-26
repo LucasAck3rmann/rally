@@ -138,9 +138,7 @@ describe("AuditoriaInterceptor (RN-05)", () => {
     // Ação de sistema (um job, por exemplo) ainda precisa aparecer na trilha.
     const { interceptor, create } = montar({ acao: "expirar", entidade: "Pagamento" });
 
-    interceptor
-      .intercept(contexto({ semSessao: true }), { handle: () => of({}) })
-      .subscribe();
+    interceptor.intercept(contexto({ semSessao: true }), { handle: () => of({}) }).subscribe();
     await assentar();
 
     expect(create.mock.calls[0][0].data.autorId).toBeNull();
@@ -185,9 +183,7 @@ describe("AuditoriaInterceptor (RN-05)", () => {
     // aparecer, e inventar um seria pior que não registrar.
     const { interceptor, create } = montar(ACAO);
 
-    interceptor
-      .intercept(contexto({ params: {} }), { handle: () => of({}) })
-      .subscribe();
+    interceptor.intercept(contexto({ params: {} }), { handle: () => of({}) }).subscribe();
     await assentar();
 
     expect(create).not.toHaveBeenCalled();
@@ -205,9 +201,7 @@ describe("AuditoriaInterceptor (RN-05)", () => {
   it("não intercepta o que não é HTTP", async () => {
     const { interceptor, create } = montar(ACAO);
 
-    interceptor
-      .intercept(contexto({ tipo: "rpc" }), { handle: () => of({}) })
-      .subscribe();
+    interceptor.intercept(contexto({ tipo: "rpc" }), { handle: () => of({}) }).subscribe();
     await assentar();
 
     expect(create).not.toHaveBeenCalled();

@@ -72,8 +72,7 @@ export class SenhaService {
 
     return {
       ok: true,
-      mensagem:
-        "Se houver conta com esse e-mail, o link de redefinição foi enviado.",
+      mensagem: "Se houver conta com esse e-mail, o link de redefinição foi enviado.",
     };
   }
 
@@ -113,8 +112,7 @@ export class SenhaService {
         },
       });
 
-      const base =
-        this.config.get<string>("APP_URL") ?? "http://localhost:3000";
+      const base = this.config.get<string>("APP_URL") ?? "http://localhost:3000";
       const link = `${base}/redefinir-senha?token=${token}`;
 
       await this.email.enviar({

@@ -78,9 +78,7 @@ export function FormularioDeMensalista({
   // sempre abaixo da tabela; escrever na caixa por cima do que a pessoa
   // digitou seria o defeito do `?? padrao` que apagou um `null` deliberado no
   // serviço. A tabela aparece ao lado do campo e quem decide é o gestor.
-  const sugestao = quadra
-    ? (quadra.precoHora * Number(duracao || "0")) / 60
-    : null;
+  const sugestao = quadra ? (quadra.precoHora * Number(duracao || "0")) / 60 : null;
 
   function enviar(evento: React.FormEvent) {
     evento.preventDefault();
@@ -112,8 +110,7 @@ export function FormularioDeMensalista({
     });
   }
 
-  const rotulo =
-    "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray";
+  const rotulo = "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray";
   const campo =
     "w-full rounded-button border border-line px-3 py-2 text-[14px] text-ink " +
     "focus:border-coral";
@@ -141,15 +138,14 @@ export function FormularioDeMensalista({
           <ul className="mt-1.5 space-y-1 text-[13px] text-ink">
             {relatorio.puladas.map((pulada) => (
               <li key={pulada.data}>
-                <span className="font-mono">{data(pulada.data)}</span> —{" "}
-                {pulada.motivo}
+                <span className="font-mono">{data(pulada.data)}</span> — {pulada.motivo}
               </li>
             ))}
           </ul>
           <p className="mt-3 max-w-[62ch] text-[13px] text-gray">
-            A série não foi recusada e nada foi deslocado: a reserva que já
-            estava marcada continua de pé. Combine essas semanas com o cliente
-            ou libere o horário na agenda e gere as semanas de novo.
+            A série não foi recusada e nada foi deslocado: a reserva que já estava marcada continua
+            de pé. Combine essas semanas com o cliente ou libere o horário na agenda e gere as
+            semanas de novo.
           </p>
         </>
       ) : null}
@@ -169,8 +165,8 @@ export function FormularioDeMensalista({
       <>
         {disponiveis.length === 0 ? (
           <p className="mt-6 text-[14px] text-gray">
-            Nenhuma quadra ativa para receber mensalista. Reative uma quadra
-            antes de cadastrar a série.
+            Nenhuma quadra ativa para receber mensalista. Reative uma quadra antes de cadastrar a
+            série.
           </p>
         ) : (
           <button
@@ -208,9 +204,8 @@ export function FormularioDeMensalista({
             className={campo}
           />
           <p className="mt-1 max-w-[62ch] text-[12px] text-gray">
-            A pessoa precisa ter conta no Rally: o horário vira reserva no nome
-            dela toda semana, e é isso que faz a trava do banco proteger o
-            mensalista como qualquer outra reserva.
+            A pessoa precisa ter conta no Rally: o horário vira reserva no nome dela toda semana, e
+            é isso que faz a trava do banco proteger o mensalista como qualquer outra reserva.
           </p>
         </div>
 
@@ -328,13 +323,10 @@ export function FormularioDeMensalista({
           />
           <p className="mt-1 max-w-[62ch] text-[12px] text-gray">
             {sugestao !== null
-              ? `Na tabela, esse horário sai por R$ ${sugestao
-                  .toFixed(2)
-                  .replace(".", ",")}. `
+              ? `Na tabela, esse horário sai por R$ ${sugestao.toFixed(2).replace(".", ",")}. `
               : ""}
-            O preço é o acordado e <strong>congela em cada reserva criada</strong>{" "}
-            (RN-12): reajuste vale para as semanas geradas depois, e não para as
-            que já estão na agenda.
+            O preço é o acordado e <strong>congela em cada reserva criada</strong> (RN-12): reajuste
+            vale para as semanas geradas depois, e não para as que já estão na agenda.
           </p>
         </div>
 

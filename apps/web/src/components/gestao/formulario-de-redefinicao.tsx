@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import {
-  redefinir,
-  type EstadoDaRedefinicao,
-} from "@/app/recuperar-senha/acoes";
+import { redefinir, type EstadoDaRedefinicao } from "@/app/recuperar-senha/acoes";
 import { CAMPO } from "@/lib/estilos";
 
 function Botao() {
@@ -26,10 +23,7 @@ function Botao() {
 }
 
 export function FormularioDeRedefinicao({ token }: { token: string }) {
-  const [estado, acao] = useActionState<EstadoDaRedefinicao, FormData>(
-    redefinir,
-    {},
-  );
+  const [estado, acao] = useActionState<EstadoDaRedefinicao, FormData>(redefinir, {});
 
   return (
     <form action={acao} className="mt-7 space-y-4">

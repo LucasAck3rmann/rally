@@ -32,9 +32,7 @@ describe("RegisterDto — consentimento (RNF-07)", () => {
 
   it("recusa quando a pessoa não aceitou", async () => {
     // `false` precisa ser recusado, e não gravado como "consentiu que não".
-    expect(await erros({ ...VALIDO, aceitouTermos: false })).toContain(
-      "aceitouTermos",
-    );
+    expect(await erros({ ...VALIDO, aceitouTermos: false })).toContain("aceitouTermos");
   });
 
   it("a recusa diz o que fazer", async () => {
@@ -49,9 +47,7 @@ describe("RegisterDto — consentimento (RNF-07)", () => {
   it("não aceita texto no lugar do aceite", async () => {
     // `"true"` vindo de um formulário mal montado passaria por verdadeiro
     // num `if`, mas não é consentimento booleano registrado.
-    expect(await erros({ ...VALIDO, aceitouTermos: "true" })).toContain(
-      "aceitouTermos",
-    );
+    expect(await erros({ ...VALIDO, aceitouTermos: "true" })).toContain("aceitouTermos");
   });
 
   it("continua exigindo nome, e-mail e senha", async () => {

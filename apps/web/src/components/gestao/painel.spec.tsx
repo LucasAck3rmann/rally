@@ -89,9 +89,7 @@ describe("Painel da arena", () => {
     const atual = screen.getByRole("link", { name: "7 dias" });
     expect(atual).toHaveAttribute("aria-current", "page");
     // Os outros não: `aria-current` em todos equivaleria a em nenhum.
-    expect(screen.getByRole("link", { name: "30 dias" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(screen.getByRole("link", { name: "30 dias" })).not.toHaveAttribute("aria-current");
   });
 
   it("o período vai na URL, para o link ser compartilhável", () => {

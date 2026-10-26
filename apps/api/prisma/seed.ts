@@ -295,11 +295,7 @@ async function semearMovimento(ctx: {
     const d = new Date(Date.now() + semana * 7 * 864e5);
     // Anda até a próxima terça a partir de hoje.
     while (d.getUTCDay() !== TERCA) d.setUTCDate(d.getUTCDate() + 1);
-    const inicio = horaLocalParaUtc(
-      d.toISOString().slice(0, 10),
-      "18:00",
-      ctx.timezone,
-    );
+    const inicio = horaLocalParaUtc(d.toISOString().slice(0, 10), "18:00", ctx.timezone);
     if (inicio <= new Date()) continue;
     try {
       await db.reserva.create({

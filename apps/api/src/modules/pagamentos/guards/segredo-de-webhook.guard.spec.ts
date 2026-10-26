@@ -39,9 +39,7 @@ function guard(configurado: string | undefined) {
 
 describe("SegredoDeWebhookGuard", () => {
   it("libera com o segredo correto", () => {
-    expect(guard(SEGREDO).canActivate(contexto({ [CABECALHO]: SEGREDO }))).toBe(
-      true,
-    );
+    expect(guard(SEGREDO).canActivate(contexto({ [CABECALHO]: SEGREDO }))).toBe(true);
   });
 
   it("recusa segredo errado do mesmo tamanho", () => {
@@ -50,45 +48,39 @@ describe("SegredoDeWebhookGuard", () => {
     const errado = "X" + SEGREDO.slice(1);
     expect(errado).toHaveLength(SEGREDO.length);
 
-    expect(() =>
-      guard(SEGREDO).canActivate(contexto({ [CABECALHO]: errado })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard(SEGREDO).canActivate(contexto({ [CABECALHO]: errado }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it("recusa segredo errado de tamanho diferente", () => {
     // `timingSafeEqual` **lança** com buffers de tamanhos diferentes. O hash
     // iguala o comprimento antes, e é por isso que este caso devolve 401 em
     // vez de 500 — sem ele o guarda quebraria com a entrada mais trivial.
-    expect(() =>
-      guard(SEGREDO).canActivate(contexto({ [CABECALHO]: "curto" })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard(SEGREDO).canActivate(contexto({ [CABECALHO]: "curto" }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it("recusa quando o cabeçalho não vem", () => {
-    expect(() => guard(SEGREDO).canActivate(contexto({}))).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard(SEGREDO).canActivate(contexto({}))).toThrow(UnauthorizedException);
   });
 
   it("sem segredo configurado responde 503, e não 401", () => {
     // **A distinção é a decisão do arquivo.** 401 diria "seu segredo está
     // errado" quando o problema é o servidor não ter segredo nenhum — e o
     // fornecedor passaria o dia conferindo a própria configuração.
-    expect(() =>
-      guard(undefined).canActivate(contexto({ [CABECALHO]: SEGREDO })),
-    ).toThrow(ServiceUnavailableException);
+    expect(() => guard(undefined).canActivate(contexto({ [CABECALHO]: SEGREDO }))).toThrow(
+      ServiceUnavailableException,
+    );
   });
 
   it("sem segredo configurado **não libera**, mesmo sem cabeçalho nenhum", () => {
     // O erro oposto seria tratar "não configurado" como "não protegido" e
     // deixar passar. Aqui isso abriria a confirmação de pagamento para a
     // internet, que é o pior resultado possível deste arquivo.
-    expect(() => guard(undefined).canActivate(contexto({}))).toThrow(
-      ServiceUnavailableException,
-    );
-    expect(() => guard("").canActivate(contexto({}))).toThrow(
-      ServiceUnavailableException,
-    );
+    expect(() => guard(undefined).canActivate(contexto({}))).toThrow(ServiceUnavailableException);
+    expect(() => guard("").canActivate(contexto({}))).toThrow(ServiceUnavailableException);
   });
 
   it("lê a variável que o `.env.example` documenta", () => {

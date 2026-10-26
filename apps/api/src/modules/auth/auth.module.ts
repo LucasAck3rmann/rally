@@ -21,20 +21,13 @@ import { VerificacaoDeEmailService } from "./verificacao-de-email.service";
       imports: [ConfigModule],
       inject: [ConfigService],
       useFactory: (config: ConfigService) => ({
-        secret:
-          config.get<string>("JWT_ACCESS_SECRET") ?? "dev-insecure-secret",
+        secret: config.get<string>("JWT_ACCESS_SECRET") ?? "dev-insecure-secret",
         signOptions: { expiresIn: "1d" },
       }),
     }),
   ],
   controllers: [AuthController],
-  providers: [
-    AuthService,
-    SenhaService,
-    VerificacaoDeEmailService,
-    JwtAuthGuard,
-    PapelGuard,
-  ],
+  providers: [AuthService, SenhaService, VerificacaoDeEmailService, JwtAuthGuard, PapelGuard],
   // O guard protege rotas de outros módulos (reservas, replays).
   exports: [JwtAuthGuard, PapelGuard, JwtModule],
 })

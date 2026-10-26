@@ -98,12 +98,7 @@ export class EquipeService {
   }
 
   /** Troca o papel de alguém da equipe. */
-  async trocarPapel(
-    estabelecimentoId: string,
-    usuarioId: string,
-    papel: Role,
-    quemPediu: string,
-  ) {
+  async trocarPapel(estabelecimentoId: string, usuarioId: string, papel: Role, quemPediu: string) {
     this.garantirPapelDeEquipe(papel);
     const vinculo = await this.daEquipe(estabelecimentoId, usuarioId);
 
@@ -126,11 +121,7 @@ export class EquipeService {
    * naquela arena, e apagar a linha derrubaria o histórico dela por causa
    * de uma mudança de cargo.
    */
-  async remover(
-    estabelecimentoId: string,
-    usuarioId: string,
-    quemPediu: string,
-  ) {
+  async remover(estabelecimentoId: string, usuarioId: string, quemPediu: string) {
     const vinculo = await this.daEquipe(estabelecimentoId, usuarioId);
     if (vinculo.role === Role.ADMIN) {
       await this.garantirQueSobraAdmin(estabelecimentoId, usuarioId, quemPediu);
@@ -150,11 +141,7 @@ export class EquipeService {
    * admin é o engano mais fácil de cometer e o mais caro de desfazer —
    * depois dele ninguém mais consegue abrir a tela que consertaria.
    */
-  private async garantirQueSobraAdmin(
-    estabelecimentoId: string,
-    alvo: string,
-    quemPediu: string,
-  ) {
+  private async garantirQueSobraAdmin(estabelecimentoId: string, alvo: string, quemPediu: string) {
     const admins = await this.prisma.membership.count({
       where: { estabelecimentoId, role: Role.ADMIN },
     });

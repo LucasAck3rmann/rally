@@ -40,9 +40,7 @@ function servico(
       findUnique: jest
         .fn()
         .mockResolvedValue(
-          opcoes.quadra === undefined
-            ? { id: "q1", estabelecimentoId: "e1" }
-            : opcoes.quadra,
+          opcoes.quadra === undefined ? { id: "q1", estabelecimentoId: "e1" } : opcoes.quadra,
         ),
     },
     reserva: {
@@ -63,10 +61,7 @@ function servico(
   const notificacoes = { registrar: jest.fn().mockResolvedValue(undefined) };
 
   return {
-    servico: new IngestaoDeReplaysService(
-      prisma,
-      notificacoes as unknown as NotificacoesService,
-    ),
+    servico: new IngestaoDeReplaysService(prisma, notificacoes as unknown as NotificacoesService),
     prisma,
     notificacoes,
   };
@@ -104,8 +99,7 @@ describe("IngestaoDeReplaysService (RF-30)", () => {
       const { servico: s, prisma } = servico();
       await s.ingestar(ENTREGA);
 
-      const status = (prisma.reserva.findFirst as jest.Mock).mock.calls[0][0].where
-        .status.in;
+      const status = (prisma.reserva.findFirst as jest.Mock).mock.calls[0][0].where.status.in;
       expect(status).not.toContain(ReservaStatus.BLOQUEIO);
       expect(status).not.toContain(ReservaStatus.CANCELADA);
     });
@@ -132,9 +126,9 @@ describe("IngestaoDeReplaysService (RF-30)", () => {
 
     it("`gravadoEm` inválido é 400", async () => {
       const { servico: s } = servico();
-      await expect(
-        s.ingestar({ ...ENTREGA, gravadoEm: "ontem à noite" }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(s.ingestar({ ...ENTREGA, gravadoEm: "ontem à noite" })).rejects.toThrow(
+        BadRequestException,
+      );
     });
   });
 
@@ -169,10 +163,7 @@ describe("IngestaoDeReplaysService (RF-30)", () => {
         reserva: { findFirst: jest.fn().mockResolvedValue({ id: "r1", clienteId: "u1" }) },
         replay: {
           // Primeiro `findUnique` não acha; o segundo, depois do conflito, acha.
-          findUnique: jest
-            .fn()
-            .mockResolvedValueOnce(null)
-            .mockResolvedValueOnce(criado()),
+          findUnique: jest.fn().mockResolvedValueOnce(null).mockResolvedValueOnce(criado()),
           create: jest.fn().mockRejectedValue(
             new Prisma.PrismaClientKnownRequestError("conflito", {
               code: "P2002",
@@ -182,10 +173,9 @@ describe("IngestaoDeReplaysService (RF-30)", () => {
         },
       } as unknown as PrismaService & Record<string, never>;
 
-      const s = new IngestaoDeReplaysService(
-        prisma,
-        { registrar: jest.fn() } as unknown as NotificacoesService,
-      );
+      const s = new IngestaoDeReplaysService(prisma, {
+        registrar: jest.fn(),
+      } as unknown as NotificacoesService);
       const saida = await s.ingestar(ENTREGA);
 
       expect(saida.jaExistia).toBe(true);

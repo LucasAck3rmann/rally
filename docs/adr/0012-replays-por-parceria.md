@@ -38,23 +38,29 @@ está fora do escopo de um TCC e fora da competência central do produto.
 ## Opções consideradas
 
 ### A) Construir a captação (posição do ADR-0006)
+
 Câmeras próprias, pipeline de ingestão e transcodificação na AWS.
+
 - **Prós:** controle total da experiência e do custo marginal em escala.
 - **Contras:** disputa direta com empresas que já têm milhares de quadras equipadas;
   exige hardware, logística e visão computacional; inviável no prazo do TCC.
 
 ### B) Parceria comercial com produtos separados
+
 Modelo do **ArenaAi + Apertai**: as duas empresas se divulgam, mas o usuário usa dois
 produtos distintos.
+
 - **Prós:** simples, sem integração técnica.
 - **Contras:** não gera diferencial — o cliente continua com duas contas e dois apps, e
   o Rally não fica dono de nenhuma informação nova.
 
 ### C) Parceria com integração de domínio **(escolhida)**
+
 A captação vem de um parceiro (**FilmaEu** como primeiro), mas o clipe entra no domínio
 do Rally como entidade `Replay` ligada a `Reserva` e `Usuario`. O parceiro é um
 **adaptador atrás de uma porta** (hexagonal), como já é feito com o Pix no
 [ADR-0003](README.md).
+
 - **Prós:** o usuário tem uma conta só e o replay aparece onde ele já está; o Rally
   passa a ser dono do vínculo reserva↔clipe, que é o ativo real; o fornecedor é
   substituível sem tocar no domínio.
@@ -67,7 +73,7 @@ do Rally como entidade `Replay` ligada a `Reserva` e `Usuario`. O parceiro é um
 parceiro entra como adaptador atrás de uma porta do domínio.
 
 O diferencial do Rally passa a ser **arquitetural, não comercial**: a plataforma é a
-única que sabe *quem reservou*, *em qual quadra* e *em qual horário* — e portanto a
+única que sabe _quem reservou_, _em qual quadra_ e _em qual horário_ — e portanto a
 única que pode entregar o clipe certo à pessoa certa sem ela pedir. `Replay` continua
 sendo entidade de primeira classe do modelo, ligada a `Reserva` e `Usuario`, exatamente
 como já está no schema.

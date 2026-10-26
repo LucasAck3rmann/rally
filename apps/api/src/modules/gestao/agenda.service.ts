@@ -28,10 +28,7 @@ const OCUPAM = [
 ];
 
 /** Estados em que a reserva ainda pode mudar de lugar. */
-const MOVIVEIS: ReservaStatus[] = [
-  ReservaStatus.PENDENTE_PAGAMENTO,
-  ReservaStatus.CONFIRMADA,
-];
+const MOVIVEIS: ReservaStatus[] = [ReservaStatus.PENDENTE_PAGAMENTO, ReservaStatus.CONFIRMADA];
 
 const ITEM_DA_AGENDA = {
   id: true,
@@ -209,11 +206,7 @@ export class AgendaService {
    * RN-01), e não por consulta prévia: entre conferir e gravar cabe outra
    * reserva.
    */
-  async moverReserva(
-    estabelecimentoId: string,
-    reservaId: string,
-    dto: MoverReservaDto,
-  ) {
+  async moverReserva(estabelecimentoId: string, reservaId: string, dto: MoverReservaDto) {
     const inicio = new Date(dto.inicio);
     const fim = new Date(dto.fim);
     if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
@@ -235,9 +228,7 @@ export class AgendaService {
       // Bloqueio tem par próprio de criar e remover, e o remover **apaga**
       // em vez de cancelar. Mover por aqui faria o mesmo efeito por um
       // caminho que não é o dele.
-      throw new BadRequestException(
-        "Para mudar um bloqueio, remova e crie de novo.",
-      );
+      throw new BadRequestException("Para mudar um bloqueio, remova e crie de novo.");
     }
     if (reserva.status === ReservaStatus.CANCELADA) {
       throw new ConflictException("Esta reserva já foi cancelada.");
@@ -274,9 +265,7 @@ export class AgendaService {
       return this.paraDto(movida, estabelecimento?.timezone ?? "UTC");
     } catch (erro) {
       if (ehConflitoDeHorario(erro)) {
-        throw new ConflictException(
-          "Esse horário já tem reserva ou bloqueio nessa quadra.",
-        );
+        throw new ConflictException("Esse horário já tem reserva ou bloqueio nessa quadra.");
       }
       if (ehImpasseDeHorario(erro)) {
         throw new ConflictException(HORARIO_DISPUTADO);
@@ -321,10 +310,7 @@ export class AgendaService {
  * na virada do horário de verão o dia tem 23 ou 25 horas, e somar 24 cortaria
  * ou repetiria uma hora da agenda.
  */
-export function janelaDoDia(
-  data: string,
-  timeZone: string,
-): { inicio: Date; fim: Date } {
+export function janelaDoDia(data: string, timeZone: string): { inicio: Date; fim: Date } {
   if (!/^\d{4}-\d{2}-\d{2}$/.test(data)) {
     throw new BadRequestException("Data inválida: use YYYY-MM-DD.");
   }

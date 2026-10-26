@@ -43,9 +43,7 @@ function servico(
     usuario: {
       findUnique: jest
         .fn()
-        .mockResolvedValue(
-          opcoes.usuario === undefined ? usuario() : opcoes.usuario,
-        ),
+        .mockResolvedValue(opcoes.usuario === undefined ? usuario() : opcoes.usuario),
       update: trocarSenha,
     },
     tokenDeSenha: {
@@ -89,9 +87,7 @@ describe("SenhaService.recuperar (RF-03)", () => {
     // A diferença entre as duas respostas seria uma lista de clientes da
     // arena. É a mesma decisão já tomada na mensagem de erro do login.
     const existe = await servico().servico.recuperar("lucas@exemplo.com");
-    const naoExiste = await servico({ usuario: null }).servico.recuperar(
-      "ninguem@exemplo.com",
-    );
+    const naoExiste = await servico({ usuario: null }).servico.recuperar("ninguem@exemplo.com");
 
     expect(existe).toEqual(naoExiste);
     expect(existe.mensagem).toMatch(/se houver conta/i);
@@ -253,10 +249,9 @@ describe("SenhaService.redefinir (RF-03)", () => {
     const { servico: s, prisma } = servico({ token: valido });
     await s.redefinir("token-cru", "senhanova1");
 
-    expect((prisma.tokenDeSenha.findUnique as jest.Mock).mock.calls[0][0].where)
-      .toEqual({
-        tokenHash: createHash("sha256").update("token-cru").digest("hex"),
-      });
+    expect((prisma.tokenDeSenha.findUnique as jest.Mock).mock.calls[0][0].where).toEqual({
+      tokenHash: createHash("sha256").update("token-cru").digest("hex"),
+    });
   });
 
   it("distingue inválido, já usado e vencido", async () => {
@@ -278,9 +273,7 @@ describe("SenhaService.redefinir (RF-03)", () => {
   it("não troca a senha quando o token não vale", async () => {
     const { servico: s, trocarSenha } = servico({ token: null });
 
-    await expect(s.redefinir("t", "senhanova1")).rejects.toThrow(
-      BadRequestException,
-    );
+    await expect(s.redefinir("t", "senhanova1")).rejects.toThrow(BadRequestException);
     expect(trocarSenha).not.toHaveBeenCalled();
   });
 
@@ -303,9 +296,7 @@ describe("SenhaService.redefinir (RF-03)", () => {
       jaUsadoNaCorrida: true,
     });
 
-    await expect(s.redefinir("token-cru", "senhanova1")).rejects.toThrow(
-      /já foi usado/i,
-    );
+    await expect(s.redefinir("token-cru", "senhanova1")).rejects.toThrow(/já foi usado/i);
     expect(trocarSenha).not.toHaveBeenCalled();
   });
 });

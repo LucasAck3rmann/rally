@@ -10,15 +10,15 @@ Isso muda a pergunta. Não é "atualizar a dependência", porque a dependência 
 
 A segunda pergunta é qual alerta importa. "Severidade crítica" não diz se o código vulnerável roda em produção, e tratar os 15 como iguais gastaria o mesmo esforço num compilador de template que só existe dentro do executor de testes e numa biblioteca que a API carrega para gerar planilha. O alcance foi **estabelecido com `pnpm why -r`**, pacote por pacote, e não estimado:
 
-| Pacote | Origem | Alcança produção |
-| --- | --- | --- |
-| `handlebars` | `ts-jest` | não |
-| `vite` | `vitest` | não |
-| `postcss-selector-parser` | `postcss-nested` | não |
-| `sprintf-js` | `jest` | não |
-| `postcss`, `source-map-js` | cadeia de build da web | em tempo de build |
-| `deepmerge-ts` | `@prisma/client` → `@prisma/config` | não em tempo de execução |
-| **`uuid`** | **`exceljs`, dependência de produção** | **sim** |
+| Pacote                     | Origem                                 | Alcança produção         |
+| -------------------------- | -------------------------------------- | ------------------------ |
+| `handlebars`               | `ts-jest`                              | não                      |
+| `vite`                     | `vitest`                               | não                      |
+| `postcss-selector-parser`  | `postcss-nested`                       | não                      |
+| `sprintf-js`               | `jest`                                 | não                      |
+| `postcss`, `source-map-js` | cadeia de build da web                 | em tempo de build        |
+| `deepmerge-ts`             | `@prisma/client` → `@prisma/config`    | não em tempo de execução |
+| **`uuid`**                 | **`exceljs`, dependência de produção** | **sim**                  |
 
 Um só dos 15 alcança a API em execução.
 
@@ -28,11 +28,11 @@ As versões vulneráveis são elevadas por **`pnpm.overrides` na raiz**, com fai
 
 Três achados dessa aplicação ficam registrados, porque cada um deles custaria a próxima pessoa um diagnóstico.
 
-**Override que o pnpm não alcança falha calado.** O `vite` existe apenas como *peer* do `vitest` e do `@vitejs/plugin-react` — ninguém depende dele, o pnpm o instala automaticamente para satisfazer o peer. O override `>=8.3.3` **não o moveu**: o `pnpm install` terminou com sucesso, imprimiu `unmet peer vite@>=8.3.3: found 8.3.1` como aviso, e deixou a versão vulnerável no lockfile. Aviso não falha instalação, e três alertas continuariam abertos com o override parecendo aplicado. A correção não é insistir no override: é **declarar o `vite` como dependência de desenvolvimento do `apps/web`**, que é onde o `vitest` roda. Peer auto-instalado é dependência que ninguém assumiu, e o preço de não assumir é não poder controlar.
+**Override que o pnpm não alcança falha calado.** O `vite` existe apenas como _peer_ do `vitest` e do `@vitejs/plugin-react` — ninguém depende dele, o pnpm o instala automaticamente para satisfazer o peer. O override `>=8.3.3` **não o moveu**: o `pnpm install` terminou com sucesso, imprimiu `unmet peer vite@>=8.3.3: found 8.3.1` como aviso, e deixou a versão vulnerável no lockfile. Aviso não falha instalação, e três alertas continuariam abertos com o override parecendo aplicado. A correção não é insistir no override: é **declarar o `vite` como dependência de desenvolvimento do `apps/web`**, que é onde o `vitest` roda. Peer auto-instalado é dependência que ninguém assumiu, e o preço de não assumir é não poder controlar.
 
 **A versão mais nova não é a versão certa.** O alerta do `uuid` é corrigido em 11.1.1, e `>=11.1.1` resolveu para **14.0.3** — que é ESM puro: `"type": "module"`, sem condição `require` no mapa de exportações. O `exceljs` é CommonJS e o carrega com `require('uuid').v4`. Verificado isolado no Node 22, **funcionou**, porque o Node passou a aceitar `require` de módulo ESM. Verificado sob o Jest, **não**: a suíte `relatorios.service.spec.ts` inteira parou de carregar, 0 testes executados. Por isso a faixa é `^11.1.1`, e não `>=11.1.1`: a **11.1.1 é a última linha que ainda publica build CJS**. O piso vem do alerta; o teto vem do que o consumidor consegue carregar.
 
-**Um alerta não tem correção publicada.** O `sprintf-js` é vulnerável em toda versão até 1.1.3 e não há versão corrigida. Ele chega pela instrumentação de cobertura do `jest` e não vai a produção. Fica **declarado aqui**, não escondido, porque o projeto já decidiu que *furo declarado é furo que continua furo* — a diferença é que este não tem conserto disponível para ser recusado. A conferência dele é no lockfile, e não na lista de alertas, pelo motivo que a última consequência desta decisão registra.
+**Um alerta não tem correção publicada.** O `sprintf-js` é vulnerável em toda versão até 1.1.3 e não há versão corrigida. Ele chega pela instrumentação de cobertura do `jest` e não vai a produção. Fica **declarado aqui**, não escondido, porque o projeto já decidiu que _furo declarado é furo que continua furo_ — a diferença é que este não tem conserto disponível para ser recusado. A conferência dele é no lockfile, e não na lista de alertas, pelo motivo que a última consequência desta decisão registra.
 
 ## Alternativas consideradas
 

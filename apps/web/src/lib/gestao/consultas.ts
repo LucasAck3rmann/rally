@@ -33,19 +33,15 @@ export async function meuPapelEm(estabelecimentoId: string) {
 }
 
 export function painelDoEstabelecimento(estabelecimentoId: string, dias: number) {
-  return chamarApiAutenticada(
-    `/gestao/estabelecimentos/${estabelecimentoId}/painel`,
-    Painel,
-    { parametros: { dias } },
-  );
+  return chamarApiAutenticada(`/gestao/estabelecimentos/${estabelecimentoId}/painel`, Painel, {
+    parametros: { dias },
+  });
 }
 
 export function agendaDoDia(estabelecimentoId: string, data: string) {
-  return chamarApiAutenticada(
-    `/gestao/estabelecimentos/${estabelecimentoId}/agenda`,
-    AgendaDoDia,
-    { parametros: { data } },
-  );
+  return chamarApiAutenticada(`/gestao/estabelecimentos/${estabelecimentoId}/agenda`, AgendaDoDia, {
+    parametros: { data },
+  });
 }
 
 export function quadrasDoEstabelecimento(estabelecimentoId: string) {
@@ -69,11 +65,7 @@ export function equipeDoEstabelecimento(estabelecimentoId: string) {
   );
 }
 
-export function relatorioDoPeriodo(
-  estabelecimentoId: string,
-  de: string,
-  ate: string,
-) {
+export function relatorioDoPeriodo(estabelecimentoId: string, de: string, ate: string) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/relatorios`,
     Relatorio,
@@ -100,10 +92,7 @@ export function conciliacaoDoEstabelecimento(estabelecimentoId: string) {
  * link para 500 em vez de paginar, porque a pergunta que a trilha responde
  * — *quem liberou aquele horário* — quase sempre está nas últimas horas.
  */
-export function trilhaDoEstabelecimento(
-  estabelecimentoId: string,
-  limite: number,
-) {
+export function trilhaDoEstabelecimento(estabelecimentoId: string, limite: number) {
   return chamarApiAutenticada(
     `/gestao/estabelecimentos/${estabelecimentoId}/auditoria`,
     TrilhaDeAuditoria,

@@ -12,15 +12,17 @@ const HORARIOS = [0, 1, 2, 3, 4, 5, 6].map((d) => ({
   fecha: "22:00",
 }));
 
-function reserva(opcoes: {
-  id?: string;
-  horas?: number;
-  preco?: number;
-  status?: ReservaStatus;
-  pagamento?: PagamentoStatus | null;
-  quadraId?: string;
-  dia?: string;
-} = {}) {
+function reserva(
+  opcoes: {
+    id?: string;
+    horas?: number;
+    preco?: number;
+    status?: ReservaStatus;
+    pagamento?: PagamentoStatus | null;
+    quadraId?: string;
+    dia?: string;
+  } = {},
+) {
   // 22:00 UTC = 19:00 em Sao_Paulo, que e o horario nobre da arena.
   const inicio = new Date(`${opcoes.dia ?? "2026-10-05"}T22:00:00.000Z`);
   const fim = new Date(inicio.getTime() + (opcoes.horas ?? 1) * 3_600_000);
@@ -53,18 +55,16 @@ function servico(
 ) {
   const prisma = {
     estabelecimento: {
-      findUnique: jest.fn().mockResolvedValue(
-        opcoes.estabelecimento === undefined
-          ? { timezone: "America/Sao_Paulo", horarios: HORARIOS }
-          : opcoes.estabelecimento,
-      ),
-    },
-    quadra: {
-      findMany: jest
+      findUnique: jest
         .fn()
         .mockResolvedValue(
-          opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }],
+          opcoes.estabelecimento === undefined
+            ? { timezone: "America/Sao_Paulo", horarios: HORARIOS }
+            : opcoes.estabelecimento,
         ),
+    },
+    quadra: {
+      findMany: jest.fn().mockResolvedValue(opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }]),
     },
     reserva: {
       findMany: jest
@@ -211,10 +211,7 @@ describe("PainelService", () => {
       // 1 vendida e 1 cancelada = 50%. Dividir só pelas vendidas daria
       // 100% e esconderia exatamente o que a métrica mostra.
       const { servico: s } = servico({
-        reservas: [
-          reserva({ id: "r1" }),
-          reserva({ id: "r2", status: ReservaStatus.CANCELADA }),
-        ],
+        reservas: [reserva({ id: "r1" }), reserva({ id: "r2", status: ReservaStatus.CANCELADA })],
       });
       const painel = await s.resumo("e1", 7);
       expect(painel.reservas.taxaCancelamento).toBe(50);
@@ -241,10 +238,7 @@ describe("PainelService", () => {
       });
       const painel = await s.resumo("e1", 7);
 
-      expect(painel.porQuadra.map((q) => q.nome)).toEqual([
-        "Quadra 2",
-        "Quadra 1",
-      ]);
+      expect(painel.porQuadra.map((q) => q.nome)).toEqual(["Quadra 2", "Quadra 1"]);
       expect(painel.porQuadra[0].receita).toBe(200);
     });
 
@@ -305,9 +299,8 @@ describe("PainelService", () => {
     for (const chamada of (prisma.reserva.findMany as jest.Mock).mock.calls) {
       expect(chamada[0].where.estabelecimentoId).toBe("e1");
     }
-    expect(
-      (prisma.quadra.findMany as jest.Mock).mock.calls[0][0].where
-        .estabelecimentoId,
-    ).toBe("e1");
+    expect((prisma.quadra.findMany as jest.Mock).mock.calls[0][0].where.estabelecimentoId).toBe(
+      "e1",
+    );
   });
 });

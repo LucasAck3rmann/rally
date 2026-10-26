@@ -34,5 +34,4 @@ export type DescricaoDaAcao = {
  * Rota nova sem o decorador não é auditada — e é isso que o teste do módulo
  * cobra, percorrendo os controladores de gestão.
  */
-export const Auditar = (descricao: DescricaoDaAcao) =>
-  SetMetadata(ACAO_AUDITADA, descricao);
+export const Auditar = (descricao: DescricaoDaAcao) => SetMetadata(ACAO_AUDITADA, descricao);

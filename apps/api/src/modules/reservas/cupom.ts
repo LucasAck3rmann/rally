@@ -34,10 +34,7 @@ export interface CupomParaAplicar {
  * precisa ler: "esse cupom venceu" e "esse cupom acabou" levam a ações
  * diferentes, e um "cupom inválido" genérico não leva a nenhuma.
  */
-export function motivoDaRecusa(
-  cupom: CupomParaAplicar,
-  agora: Date,
-): string | null {
+export function motivoDaRecusa(cupom: CupomParaAplicar, agora: Date): string | null {
   if (!cupom.ativo) return "Esse cupom não está mais disponível.";
   if (agora < cupom.validadeInicio) return "Esse cupom ainda não começou a valer.";
   if (agora > cupom.validadeFim) return "Esse cupom venceu.";
@@ -56,14 +53,9 @@ export function motivoDaRecusa(
  * Nunca passa do preço: um cupom de R$ 100 numa quadra de R$ 80 zera a
  * conta, não gera crédito. Arredonda em duas casas porque é dinheiro.
  */
-export function descontoDoCupom(
-  cupom: CupomParaAplicar,
-  precoBruto: number,
-): number {
+export function descontoDoCupom(cupom: CupomParaAplicar, precoBruto: number): number {
   const bruto =
-    cupom.tipo === PromocaoTipo.PERCENTUAL
-      ? (precoBruto * cupom.valor) / 100
-      : cupom.valor;
+    cupom.tipo === PromocaoTipo.PERCENTUAL ? (precoBruto * cupom.valor) / 100 : cupom.valor;
   return Number(Math.min(Math.max(bruto, 0), precoBruto).toFixed(2));
 }
 

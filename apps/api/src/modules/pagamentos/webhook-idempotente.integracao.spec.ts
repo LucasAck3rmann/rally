@@ -145,9 +145,7 @@ comBanco("webhook de pagamento é idempotente (integração)", () => {
     await reservaPendente("corrida", 12);
 
     const resultados = await Promise.all(
-      Array.from({ length: ENTREGAS }, () =>
-        instancia.aplicarEvento(evento("corrida")),
-      ),
+      Array.from({ length: ENTREGAS }, () => instancia.aplicarEvento(evento("corrida"))),
     );
 
     const aplicaram = resultados.filter((r) => r.aplicado);

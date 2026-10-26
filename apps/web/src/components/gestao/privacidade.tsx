@@ -37,29 +37,23 @@ export function Privacidade({ email }: { email: string }) {
 
   return (
     <div className="mx-auto max-w-[680px] p-6 md:p-10">
-      <h1 className="font-display text-[26px] font-bold text-ink">
-        Privacidade e meus dados
-      </h1>
+      <h1 className="font-display text-[26px] font-bold text-ink">Privacidade e meus dados</h1>
       <p className="mt-2 text-[14px] text-gray">
-        Direitos previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018)
-        sobre os dados da conta <strong className="text-ink">{email}</strong>.
+        Direitos previstos na Lei Geral de Proteção de Dados (Lei nº 13.709/2018) sobre os dados da
+        conta <strong className="text-ink">{email}</strong>.
       </p>
 
       <section className="mt-8 rounded-card border border-line bg-white p-6">
-        <h2 className="font-display text-[18px] font-bold text-ink">
-          Baixar meus dados
-        </h2>
+        <h2 className="font-display text-[18px] font-bold text-ink">Baixar meus dados</h2>
         <p className="mt-2 text-[14px] text-gray">
           Você pode baixar tudo o que guardamos sobre você, em um arquivo que{" "}
-          <strong className="text-ink">outro sistema consegue ler</strong> — é o
-          direito de portabilidade. Vão a conta, os vínculos com arenas, as
-          reservas com o nome da quadra e do estabelecimento, os pagamentos e os
-          avisos recebidos.
+          <strong className="text-ink">outro sistema consegue ler</strong> — é o direito de
+          portabilidade. Vão a conta, os vínculos com arenas, as reservas com o nome da quadra e do
+          estabelecimento, os pagamentos e os avisos recebidos.
         </p>
         <p className="mt-2 text-[13px] text-gray">
-          Sua senha não vai no arquivo: ela é guardada apenas como resumo
-          criptográfico e não pode ser recuperada por ninguém, nem por nós. O
-          próprio arquivo diz o que não está nele.
+          Sua senha não vai no arquivo: ela é guardada apenas como resumo criptográfico e não pode
+          ser recuperada por ninguém, nem por nós. O próprio arquivo diz o que não está nele.
         </p>
         {/* Vínculo e não botão: é uma navegação para download, funciona com o
             meio clique e sem JavaScript, e o servidor é que carrega a sessão. */}
@@ -77,22 +71,19 @@ export function Privacidade({ email }: { email: string }) {
       </section>
 
       <section className="mt-5 rounded-card border border-line bg-white p-6">
-        <h2 className="font-display text-[18px] font-bold text-ink">
-          Excluir minha conta
-        </h2>
+        <h2 className="font-display text-[18px] font-bold text-ink">Excluir minha conta</h2>
         <p className="mt-2 text-[14px] text-gray">
           Seus dados pessoais são apagados e você perde o acesso. O{" "}
           <strong className="text-ink">
-            histórico de reservas pagas continua guardado pela arena, por
-            obrigação fiscal
+            histórico de reservas pagas continua guardado pela arena, por obrigação fiscal
           </strong>
-          , sem ligação com seu nome — a própria lei ressalva a guarda para
-          cumprimento de obrigação legal.
+          , sem ligação com seu nome — a própria lei ressalva a guarda para cumprimento de obrigação
+          legal.
         </p>
         <p className="mt-2 text-[13px] text-gray">
-          Se você for o único administrador de alguma arena, a exclusão é
-          recusada até que outra pessoa seja promovida: sem administrador,
-          ninguém mais conseguiria abrir o painel daquela arena.
+          Se você for o único administrador de alguma arena, a exclusão é recusada até que outra
+          pessoa seja promovida: sem administrador, ninguém mais conseguiria abrir o painel daquela
+          arena.
         </p>
 
         {confirmando ? (
@@ -158,8 +149,8 @@ export function Privacidade({ email }: { email: string }) {
       </section>
 
       <p className="mt-6 text-[12px] text-gray">
-        Pedidos de exportação e eliminação são atendidos em até 15 dias, como o
-        RNF-07 estabelece. Aqui os dois são imediatos, porque você mesmo executa.
+        Pedidos de exportação e eliminação são atendidos em até 15 dias, como o RNF-07 estabelece.
+        Aqui os dois são imediatos, porque você mesmo executa.
       </p>
     </div>
   );

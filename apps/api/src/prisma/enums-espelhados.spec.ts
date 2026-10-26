@@ -65,9 +65,9 @@ function espelhoDoApp(arquivo: string, nomeDoEnum: string): string[] {
 /** Os valores de um `z.enum([...])` da web, pelo nome da constante. */
 function espelhoDaWeb(arquivo: string, constante: string): string[] {
   const fonte = ler("apps", "web", "src", ...arquivo.split("/"));
-  const bloco = new RegExp(
-    `export const ${constante} = z\\.enum\\(\\[([\\s\\S]*?)\\]\\)`,
-  ).exec(fonte);
+  const bloco = new RegExp(`export const ${constante} = z\\.enum\\(\\[([\\s\\S]*?)\\]\\)`).exec(
+    fonte,
+  );
   if (!bloco) throw new Error(`não achei o z.enum de ${constante} em ${arquivo}`);
   return [...bloco[1].matchAll(/"([A-Z][A-Z0-9_]*)"/g)].map((m) => m[1]);
 }
@@ -97,8 +97,7 @@ const ESPELHOS: {
   {
     enumDaApi: "NotificacaoTipo",
     onde: "app · notificacao.dart",
-    valores: () =>
-      espelhoDoApp("notificacoes/domain/notificacao.dart", "NotificacaoTipo"),
+    valores: () => espelhoDoApp("notificacoes/domain/notificacao.dart", "NotificacaoTipo"),
   },
   {
     enumDaApi: "Role",

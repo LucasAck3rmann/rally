@@ -14,10 +14,7 @@ import { ReservaStatus } from "@prisma/client";
 const HORA_MS = 60 * 60 * 1000;
 
 /** Estados em que a reserva ainda aceita ser mexida. */
-const ATIVAS: ReservaStatus[] = [
-  ReservaStatus.PENDENTE_PAGAMENTO,
-  ReservaStatus.CONFIRMADA,
-];
+const ATIVAS: ReservaStatus[] = [ReservaStatus.PENDENTE_PAGAMENTO, ReservaStatus.CONFIRMADA];
 
 /** O que a política precisa saber da reserva — nada além disto. */
 export type ReservaSobPolitica = {
@@ -37,11 +34,7 @@ export function limiteDoPrazo(inicio: Date, cancelamentoHoras: number): Date {
  * direito a devolução. Já a remarcação é recusada, senão bastava empurrar a
  * reserva para longe e cancelar de graça depois.
  */
-export function estaDentroDoPrazo(
-  inicio: Date,
-  cancelamentoHoras: number,
-  agora: Date,
-): boolean {
+export function estaDentroDoPrazo(inicio: Date, cancelamentoHoras: number, agora: Date): boolean {
   return agora <= limiteDoPrazo(inicio, cancelamentoHoras);
 }
 

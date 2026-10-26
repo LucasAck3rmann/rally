@@ -5,7 +5,7 @@ on:
   pull_request:
     branches: [main]
   schedule:
-    - cron: "0 3 * * 1"   # toda segunda 03:00 UTC
+    - cron: "0 3 * * 1" # toda segunda 03:00 UTC
 
 jobs:
   analyze:

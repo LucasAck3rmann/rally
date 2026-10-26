@@ -82,10 +82,7 @@ describe("AppModule", () => {
   });
 
   it("expõe as rotas do painel de gestão", () => {
-    const rotas = [
-      ...rotasDe(GestaoController),
-      ...rotasDe(QuadrasGestaoController),
-    ];
+    const rotas = [...rotasDe(GestaoController), ...rotasDe(QuadrasGestaoController)];
 
     expect(rotas).toEqual(
       expect.arrayContaining([

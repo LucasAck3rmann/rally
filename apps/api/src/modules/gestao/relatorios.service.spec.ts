@@ -14,15 +14,17 @@ const HORARIOS = [0, 1, 2, 3, 4, 5, 6].map((d) => ({
   fecha: "22:00",
 }));
 
-function reserva(opcoes: {
-  dia?: string;
-  horas?: number;
-  preco?: number;
-  status?: ReservaStatus;
-  metodo?: PagamentoMetodo | null;
-  pago?: boolean;
-  quadraId?: string;
-} = {}) {
+function reserva(
+  opcoes: {
+    dia?: string;
+    horas?: number;
+    preco?: number;
+    status?: ReservaStatus;
+    metodo?: PagamentoMetodo | null;
+    pago?: boolean;
+    quadraId?: string;
+  } = {},
+) {
   // 22:00 UTC = 19:00 em Sao_Paulo.
   const inicio = new Date(`${opcoes.dia ?? "2026-09-10"}T22:00:00.000Z`);
   return {
@@ -62,19 +64,17 @@ function servico(
       ),
     },
     quadra: {
-      findMany: jest
-        .fn()
-        .mockResolvedValue(
-          // `modalidades` entra no padrão porque a consulta real sempre a
-          // traz: fixture sem ela deixaria o agrupamento por modalidade
-          // passar num teste e quebrar em produção.
-          (opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }]).map(
-            (q: { id: string; nome: string; modalidades?: { nome: string }[] }) => ({
-              modalidades: [],
-              ...q,
-            }),
-          ),
+      findMany: jest.fn().mockResolvedValue(
+        // `modalidades` entra no padrão porque a consulta real sempre a
+        // traz: fixture sem ela deixaria o agrupamento por modalidade
+        // passar num teste e quebrar em produção.
+        (opcoes.quadras ?? [{ id: "q1", nome: "Quadra 1" }]).map(
+          (q: { id: string; nome: string; modalidades?: { nome: string }[] }) => ({
+            modalidades: [],
+            ...q,
+          }),
         ),
+      ),
     },
     reserva: { findMany: jest.fn().mockResolvedValue(opcoes.reservas ?? []) },
   } as unknown as PrismaService & Record<string, never>;
@@ -337,7 +337,7 @@ describe("RelatoriosService", () => {
         });
     });
 
-    it("quadra sem modalidade cadastrada vira \"Não informada\", e não some", async () => {
+    it('quadra sem modalidade cadastrada vira "Não informada", e não some', async () => {
       // Receita que desaparece de um relatório é pior que receita numa linha
       // sem nome: o gestor conferiria o total e não fecharia.
       const { servico: s } = servico({
@@ -355,10 +355,7 @@ describe("RelatoriosService", () => {
     it("ordena pela receita, da maior para a menor", async () => {
       const { servico: s } = servico({
         quadras: comModalidades,
-        reservas: [
-          reserva({ quadraId: "q1", preco: 30 }),
-          reserva({ quadraId: "q2", preco: 200 }),
-        ],
+        reservas: [reserva({ quadraId: "q1", preco: 30 }), reserva({ quadraId: "q2", preco: 200 })],
       });
 
       const r = await s.relatorio("e1", "2026-09-10", "2026-09-10");
@@ -462,9 +459,7 @@ describe("RelatoriosService", () => {
 
     it("recusa período inválido antes de montar a planilha", async () => {
       const { servico: s } = servico();
-      await expect(s.xlsx("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(s.xlsx("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -523,9 +518,7 @@ describe("RelatoriosService", () => {
 
     it("recusa período inválido antes de montar o documento", async () => {
       const { servico: s } = servico();
-      await expect(s.pdf("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(
-        BadRequestException,
-      );
+      await expect(s.pdf("e1", "2026-09-20", "2026-09-10")).rejects.toThrow(BadRequestException);
     });
   });
 
@@ -534,11 +527,11 @@ describe("RelatoriosService", () => {
     await s.relatorio("e1", "2026-09-10", "2026-09-10");
 
     // ADR-0011: o relatório de um tenant não pode somar a receita de outro.
-    expect(
-      (prisma.reserva.findMany as jest.Mock).mock.calls[0][0].where.estabelecimentoId,
-    ).toBe("e1");
-    expect(
-      (prisma.quadra.findMany as jest.Mock).mock.calls[0][0].where.estabelecimentoId,
-    ).toBe("e1");
+    expect((prisma.reserva.findMany as jest.Mock).mock.calls[0][0].where.estabelecimentoId).toBe(
+      "e1",
+    );
+    expect((prisma.quadra.findMany as jest.Mock).mock.calls[0][0].where.estabelecimentoId).toBe(
+      "e1",
+    );
   });
 });

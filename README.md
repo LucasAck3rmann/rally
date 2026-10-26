@@ -14,6 +14,7 @@ Plataforma **open source** de **agendamento, gestão e replays** para quadras de
 > modelo de dados**. O código de aplicação entra a partir do marco M1 (ver `docs/cronograma.md`).
 
 ## Funcionalidades (visão)
+
 - Busca e **reserva** com disponibilidade em tempo real
 - **Pagamento Pix** (AbacatePay) com confirmação por webhook
 - Painel de **gestão** (agenda, quadras, financeiro, relatórios)
@@ -21,10 +22,12 @@ Plataforma **open source** de **agendamento, gestão e replays** para quadras de
 - Notificações (WhatsApp, push, e-mail)
 
 ## Stack
+
 Next.js · Flutter · NestJS · PostgreSQL/Prisma · Redis/BullMQ · **AWS** · Docker · Cloudflare.
 Monorepo **Turborepo + pnpm**. Detalhes em [`docs/`](docs/) e no design system ([`DESIGN.md`](DESIGN.md)).
 
 ## Estrutura
+
 ```
 apps/        web (Next.js) · api (NestJS) · mobile (Flutter)
 packages/    shared · ui · tokens · config
@@ -51,15 +54,18 @@ O roteiro completo — incluindo o aplicativo Android num aparelho e o que
 mostrar em cada tela — está em **[docs/demonstracao.md](docs/demonstracao.md)**.
 
 ## Contribuindo
+
 Veja [CONTRIBUTING.md](CONTRIBUTING.md) e o [Código de Conduta](CODE_OF_CONDUCT.md).
 Decisões de arquitetura ficam em [`docs/adr/`](docs/adr/).
 
 ## Segurança
+
 Encontrou uma vulnerabilidade? **Não** abra issue pública — siga o [SECURITY.md](SECURITY.md).
 O CI roda **CodeQL**, **Dependabot** e varredura de segredos. Governança do projeto em
 [GOVERNANCE.md](GOVERNANCE.md); como obter ajuda em [SUPPORT.md](SUPPORT.md).
 
 ## Licença
+
 Core sob **AGPL-3.0** (ver [LICENSE](LICENSE)). Pacotes/SDK em Apache-2.0.
 Documentação em **CC-BY-SA-4.0**. Tabela completa na [seção 2 de
 `docs/codigo-aberto.md`](docs/codigo-aberto.md).

@@ -5,9 +5,7 @@ import { Logger } from "@nestjs/common";
 import { LembreteDeJogoJob } from "./lembrete.job";
 import { LembreteService } from "./lembrete.service";
 
-function job(
-  opcoes: { ambiente?: string; enviados?: number; erro?: unknown } = {},
-) {
+function job(opcoes: { ambiente?: string; enviados?: number; erro?: unknown } = {}) {
   const lembretes = {
     enviarPendentes: opcoes.erro
       ? jest.fn().mockRejectedValue(opcoes.erro)
@@ -39,15 +37,11 @@ describe("LembreteDeJogoJob (RF-17)", () => {
   it("falha de banco não derruba o processo", async () => {
     // Um job que estoura mata o processo em algumas configurações do Node.
     // Falha aqui é temporária: registra e tenta na próxima volta.
-    const erro = jest
-      .spyOn(Logger.prototype, "error")
-      .mockImplementation(() => {});
+    const erro = jest.spyOn(Logger.prototype, "error").mockImplementation(() => {});
     const { job: j } = job({ erro: new Error("conexão caiu") });
 
     await expect(j.executar()).resolves.toBeUndefined();
-    expect(erro).toHaveBeenCalledWith(
-      expect.stringContaining("Falha ao enviar lembretes"),
-    );
+    expect(erro).toHaveBeenCalledWith(expect.stringContaining("Falha ao enviar lembretes"));
     erro.mockRestore();
   });
 

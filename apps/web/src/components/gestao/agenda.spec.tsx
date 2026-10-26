@@ -52,10 +52,13 @@ describe("Agenda da arena", () => {
   it("desenha hora nas linhas e quadra nas colunas", () => {
     // A agenda **é** uma matriz; a tabela faz o leitor de tela anunciar
     // linha e coluna de graça, o que uma grade de `div` não faz.
-    montar([], [
-      { id: "q1", nome: "Quadra 1" },
-      { id: "q2", nome: "Quadra 2" },
-    ]);
+    montar(
+      [],
+      [
+        { id: "q1", nome: "Quadra 1" },
+        { id: "q2", nome: "Quadra 2" },
+      ],
+    );
 
     expect(screen.getByRole("columnheader", { name: "Quadra 1" })).toBeInTheDocument();
     expect(screen.getByRole("columnheader", { name: "Quadra 2" })).toBeInTheDocument();
@@ -111,10 +114,7 @@ describe("Agenda da arena", () => {
     montar([]);
 
     const links = screen.getAllByRole("link");
-    expect(links[0]).toHaveAttribute(
-      "href",
-      "/gestao/e1/agenda?data=2026-10-05",
-    );
+    expect(links[0]).toHaveAttribute("href", "/gestao/e1/agenda?data=2026-10-05");
     expect(links[0]).toHaveAttribute("aria-current", "page");
   });
 
@@ -156,17 +156,11 @@ describe("Agenda da arena", () => {
     // Reserva de cliente não se **libera** pela agenda: quem pagou perde o
     // horário pelo cancelamento, que cobra motivo e avisa. Mover é outra
     // coisa, e mantém a reserva de pé (RF-21).
-    expect(
-      within(reservada).queryByRole("button", { name: "Liberar" }),
-    ).not.toBeInTheDocument();
-    expect(
-      within(reservada).getByRole("button", { name: "Mover" }),
-    ).toBeInTheDocument();
+    expect(within(reservada).queryByRole("button", { name: "Liberar" })).not.toBeInTheDocument();
+    expect(within(reservada).getByRole("button", { name: "Mover" })).toBeInTheDocument();
     // E bloqueio não se move por aqui: a API tem par próprio para ele, e o
     // remover apaga em vez de cancelar.
-    expect(
-      within(bloqueada).queryByRole("button", { name: "Mover" }),
-    ).not.toBeInTheDocument();
+    expect(within(bloqueada).queryByRole("button", { name: "Mover" })).not.toBeInTheDocument();
   });
 
   it("a célula ocupada fica na linha da hora certa", () => {

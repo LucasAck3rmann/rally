@@ -52,12 +52,8 @@ function servico(
 ) {
   const contagens = { pagamento: 1, reserva: 1, ...opcoes.contagens };
 
-  const pagamentoUpdateMany = jest
-    .fn()
-    .mockResolvedValue({ count: contagens.pagamento });
-  const reservaUpdateMany = jest
-    .fn()
-    .mockResolvedValue({ count: contagens.reserva });
+  const pagamentoUpdateMany = jest.fn().mockResolvedValue({ count: contagens.pagamento });
+  const reservaUpdateMany = jest.fn().mockResolvedValue({ count: contagens.reserva });
   const acharPagamento = jest.fn().mockResolvedValue(opcoes.pagamento ?? null);
   const registrar = jest.fn().mockResolvedValue(undefined);
   const criarCobranca = jest.fn().mockResolvedValue({ gatewayId: "g1" });
@@ -66,9 +62,7 @@ function servico(
     pagamento: { updateMany: pagamentoUpdateMany },
     reserva: { updateMany: reservaUpdateMany },
   };
-  const transacao = jest.fn(
-    async (cb: (t: typeof tx) => Promise<unknown>) => await cb(tx),
-  );
+  const transacao = jest.fn(async (cb: (t: typeof tx) => Promise<unknown>) => await cb(tx));
 
   const prisma = {
     reserva: { findUnique: jest.fn().mockResolvedValue(opcoes.reserva ?? null) },
@@ -123,9 +117,7 @@ describe("PagamentosService", () => {
       process.env.NODE_ENV = "production";
       const { servico: s, transacao } = servico({ reserva: reservaBase() });
 
-      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(ForbiddenException);
       // O corte vem antes de qualquer escrita: em produção quem confirma é o
       // webhook do gateway, nunca uma chamada do app.
       expect(transacao).not.toHaveBeenCalled();
@@ -134,9 +126,7 @@ describe("PagamentosService", () => {
     it("recusa reserva inexistente", async () => {
       const { servico: s } = servico({ reserva: null });
 
-      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(NotFoundException);
     });
 
     it("recusa reserva sem cobrança", async () => {
@@ -144,17 +134,13 @@ describe("PagamentosService", () => {
         reserva: reservaBase({ pagamento: null }),
       });
 
-      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.simularPagamento("r1", "u1")).rejects.toThrow(NotFoundException);
     });
 
     it("recusa confirmar a reserva de outro cliente", async () => {
       const { servico: s, transacao } = servico({ reserva: reservaBase() });
 
-      await expect(s.simularPagamento("r1", "outro")).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(s.simularPagamento("r1", "outro")).rejects.toThrow(ForbiddenException);
       expect(transacao).not.toHaveBeenCalled();
     });
 
@@ -237,13 +223,17 @@ describe("PagamentosService", () => {
 
     it("não tenta avisar quando a reserva não tem cliente", async () => {
       // Reserva de balcão: existe horário, não existe a quem avisar.
-      const { servico: s, registrar, transacao } = servico({
+      const {
+        servico: s,
+        registrar,
+        transacao,
+      } = servico({
         reserva: reservaBase({ clienteId: null }),
       });
 
-      await expect(
-        s.simularPagamento("r1", null as unknown as string),
-      ).resolves.toMatchObject({ status: PagamentoStatus.PAGO });
+      await expect(s.simularPagamento("r1", null as unknown as string)).resolves.toMatchObject({
+        status: PagamentoStatus.PAGO,
+      });
       expect(transacao).toHaveBeenCalled();
       expect(registrar).not.toHaveBeenCalled();
     });
@@ -308,7 +298,11 @@ describe("PagamentosService", () => {
       // não recebe 2xx — e também quando recebeu e o 2xx se perdeu no
       // caminho. O estado final não muda com a repetição; o que o cliente
       // percebe é o segundo "pagamento confirmado" na caixa de entrada.
-      const { servico: s, registrar, reservaUpdateMany } = servico({
+      const {
+        servico: s,
+        registrar,
+        reservaUpdateMany,
+      } = servico({
         pagamento: { id: "p1", reserva: reservaDoPagamento() },
         contagens: { pagamento: 0 },
       });
@@ -342,7 +336,11 @@ describe("PagamentosService", () => {
       // para outra pessoa, e o pagamento cai depois. Confirmar aqui criaria
       // duas reservas no mesmo horário, e a restrição de exclusão do banco
       // recusaria — derrubando o webhook.
-      const { servico: s, registrar, reservaUpdateMany } = servico({
+      const {
+        servico: s,
+        registrar,
+        reservaUpdateMany,
+      } = servico({
         pagamento: { id: "p1", reserva: reservaDoPagamento() },
         contagens: { reserva: 0 },
       });

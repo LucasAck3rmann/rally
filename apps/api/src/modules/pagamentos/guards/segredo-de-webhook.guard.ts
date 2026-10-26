@@ -37,9 +37,7 @@ export class SegredoDeWebhookGuard implements CanActivate {
   canActivate(contexto: ExecutionContext): boolean {
     const esperado = this.config.get<string>("ABACATEPAY_WEBHOOK_SECRET");
     if (!esperado) {
-      throw new ServiceUnavailableException(
-        "Webhook de pagamento não configurado neste ambiente.",
-      );
+      throw new ServiceUnavailableException("Webhook de pagamento não configurado neste ambiente.");
     }
 
     const req = contexto.switchToHttp().getRequest<Request>();

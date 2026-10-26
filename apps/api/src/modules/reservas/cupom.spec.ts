@@ -1,12 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { PromocaoTipo } from "@prisma/client";
 
-import {
-  contaDaReserva,
-  descontoDoCupom,
-  motivoDaRecusa,
-  type CupomParaAplicar,
-} from "./cupom";
+import { contaDaReserva, descontoDoCupom, motivoDaRecusa, type CupomParaAplicar } from "./cupom";
 
 const AGORA = new Date("2026-10-13T18:00:00.000Z");
 
@@ -32,30 +27,20 @@ describe("validade do cupom (RN-14)", () => {
   it("cada recusa diz o que aconteceu, e não 'inválido'", () => {
     // "Esse cupom venceu" e "esse cupom acabou" levam a ações diferentes;
     // um "cupom inválido" genérico não leva a nenhuma.
-    expect(motivoDaRecusa(cupom({ ativo: false }), AGORA)).toMatch(
-      /não está mais disponível/i,
-    );
+    expect(motivoDaRecusa(cupom({ ativo: false }), AGORA)).toMatch(/não está mais disponível/i);
     expect(
-      motivoDaRecusa(
-        cupom({ validadeInicio: new Date("2026-11-01T00:00:00.000Z") }),
-        AGORA,
-      ),
+      motivoDaRecusa(cupom({ validadeInicio: new Date("2026-11-01T00:00:00.000Z") }), AGORA),
     ).toMatch(/ainda não começou/i);
     expect(
-      motivoDaRecusa(
-        cupom({ validadeFim: new Date("2026-10-12T23:59:59.000Z") }),
-        AGORA,
-      ),
+      motivoDaRecusa(cupom({ validadeFim: new Date("2026-10-12T23:59:59.000Z") }), AGORA),
     ).toMatch(/venceu/i);
-    expect(
-      motivoDaRecusa(cupom({ usosMax: 50, usosFeitos: 50 }), AGORA),
-    ).toMatch(/limite de usos/i);
+    expect(motivoDaRecusa(cupom({ usosMax: 50, usosFeitos: 50 }), AGORA)).toMatch(
+      /limite de usos/i,
+    );
   });
 
   it("sem limite de usos, uso nenhum esgota", () => {
-    expect(
-      motivoDaRecusa(cupom({ usosMax: null, usosFeitos: 9999 }), AGORA),
-    ).toBeNull();
+    expect(motivoDaRecusa(cupom({ usosMax: null, usosFeitos: 9999 }), AGORA)).toBeNull();
   });
 });
 
@@ -65,17 +50,13 @@ describe("desconto do cupom", () => {
   });
 
   it("valor fixo é o próprio valor", () => {
-    expect(
-      descontoDoCupom(cupom({ tipo: PromocaoTipo.VALOR_FIXO, valor: 25 }), 80),
-    ).toBe(25);
+    expect(descontoDoCupom(cupom({ tipo: PromocaoTipo.VALOR_FIXO, valor: 25 }), 80)).toBe(25);
   });
 
   it("nunca passa do preço — cupom não vira crédito", () => {
     // R$ 100 de desconto numa quadra de R$ 80 zera a conta; devolver −20
     // faria a arena dever dinheiro a quem reservou.
-    expect(
-      descontoDoCupom(cupom({ tipo: PromocaoTipo.VALOR_FIXO, valor: 100 }), 80),
-    ).toBe(80);
+    expect(descontoDoCupom(cupom({ tipo: PromocaoTipo.VALOR_FIXO, valor: 100 }), 80)).toBe(80);
   });
 });
 

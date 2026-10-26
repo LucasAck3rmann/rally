@@ -59,18 +59,13 @@ export function EquipeDaArena({
   return (
     <div className="p-6 md:p-10">
       <header>
-        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-          Equipe
-        </h1>
-        <p className="mt-1 text-[14px] text-gray">
-          Quem tem acesso a esta arena
-        </p>
+        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Equipe</h1>
+        <p className="mt-1 text-[14px] text-gray">Quem tem acesso a esta arena</p>
       </header>
 
       {equipe.length === 0 ? (
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-          Só você por aqui. Adicione quem atende no balcão ou cuida do
-          financeiro pelo aplicativo.
+          Só você por aqui. Adicione quem atende no balcão ou cuida do financeiro pelo aplicativo.
         </p>
       ) : (
         <ul className="mt-7 space-y-2.5">
@@ -106,9 +101,7 @@ export function EquipeDaArena({
                     {PAPEIS[membro.papel]}
                   </p>
                 )}
-                <p className="mt-0.5 text-[11px] text-gray">
-                  desde {desdeQuando(membro.desde)}
-                </p>
+                <p className="mt-0.5 text-[11px] text-gray">desde {desdeQuando(membro.desde)}</p>
               </div>
               {podeEditar ? (
                 <BotaoDeAcao
@@ -132,9 +125,8 @@ export function EquipeDaArena({
           consertaria exige ser admin. */}
       {admins === 1 ? (
         <p className="mt-6 rounded-card border border-coral/30 bg-coral/5 px-5 py-4 text-[13px] text-coral-deep">
-          Há um único administrador nesta arena. Promova outra pessoa antes de
-          mudar o papel dele — sem administrador, ninguém consegue abrir esta
-          tela para desfazer.
+          Há um único administrador nesta arena. Promova outra pessoa antes de mudar o papel dele —
+          sem administrador, ninguém consegue abrir esta tela para desfazer.
         </p>
       ) : null}
 

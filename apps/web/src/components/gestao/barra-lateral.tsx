@@ -32,16 +32,11 @@ const SECOES: { slug: string; rotulo: string; somenteAdmin?: boolean }[] = [
   { slug: "auditoria", rotulo: "Auditoria", somenteAdmin: true },
 ];
 
-export function BarraLateral({
-  estabelecimentos,
-}: {
-  estabelecimentos: EstabelecimentoGerido[];
-}) {
+export function BarraLateral({ estabelecimentos }: { estabelecimentos: EstabelecimentoGerido[] }) {
   const caminho = usePathname();
   const parametros = useParams<{ estabelecimentoId?: string }>();
   const atual =
-    estabelecimentos.find((e) => e.id === parametros.estabelecimentoId) ??
-    estabelecimentos[0];
+    estabelecimentos.find((e) => e.id === parametros.estabelecimentoId) ?? estabelecimentos[0];
 
   return (
     <aside
@@ -51,19 +46,13 @@ export function BarraLateral({
       <Link href="/" className="mb-7 flex items-center gap-2.5">
         <Emblem className="h-7 w-7" />
         <span className="font-display text-[17px] font-bold text-ink">Rally</span>
-        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">
-          gestão
-        </span>
+        <span className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">gestão</span>
       </Link>
 
       {atual ? (
         <>
-          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">
-            Arena
-          </p>
-          <p className="mt-1 truncate font-display text-[15px] font-bold text-ink">
-            {atual.nome}
-          </p>
+          <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">Arena</p>
+          <p className="mt-1 truncate font-display text-[15px] font-bold text-ink">{atual.nome}</p>
           <p className="mt-0.5 text-[12px] text-gray">{rotuloDoPapel(atual.meuPapel)}</p>
 
           {/* O seletor só aparece a partir de dois: escolher entre uma
@@ -97,9 +86,7 @@ export function BarraLateral({
                   aria-current={caminho === href ? "page" : undefined}
                   className={cn(
                     "block rounded-button px-3 py-2.5 text-[14px] transition",
-                    caminho === href
-                      ? "bg-ink font-semibold text-white"
-                      : "text-ink hover:bg-bg",
+                    caminho === href ? "bg-ink font-semibold text-white" : "text-ink hover:bg-bg",
                   )}
                 >
                   {secao.rotulo}
@@ -110,8 +97,8 @@ export function BarraLateral({
         </>
       ) : (
         <p className="text-[13px] text-gray">
-          Você ainda não gerencia nenhuma arena. Quando um estabelecimento te
-          der acesso, ele aparece aqui.
+          Você ainda não gerencia nenhuma arena. Quando um estabelecimento te der acesso, ele
+          aparece aqui.
         </p>
       )}
 
@@ -119,9 +106,7 @@ export function BarraLateral({
           dados é da pessoa e não da arena, e quem ainda não gerencia nenhuma
           também precisa alcançá-lo. */}
       <div className="mt-auto pt-6">
-        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">
-          Conta
-        </p>
+        <p className="font-mono text-[10px] uppercase tracking-[0.2em] text-gray">Conta</p>
         <nav className="mt-2">
           <Link
             href="/gestao/privacidade"

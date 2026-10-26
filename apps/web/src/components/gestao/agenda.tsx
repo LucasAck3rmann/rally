@@ -32,8 +32,7 @@ function horaDeInicio(item: ItemDaAgenda): number {
 
 /** Quantas horas inteiras o item ocupa, no mínimo uma. */
 function duracaoEmHoras(item: ItemDaAgenda): number {
-  const minutos =
-    (new Date(item.fim).getTime() - new Date(item.inicio).getTime()) / 60000;
+  const minutos = (new Date(item.fim).getTime() - new Date(item.inicio).getTime()) / 60000;
   return Math.max(1, Math.ceil(minutos / 60));
 }
 
@@ -88,12 +87,8 @@ export function AgendaDaArena({
   return (
     <div className="p-6 md:p-10">
       <header>
-        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-          Agenda
-        </h1>
-        <p className="mt-1 text-[14px] text-gray">
-          O dia inteiro, quadra a quadra
-        </p>
+        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Agenda</h1>
+        <p className="mt-1 text-[14px] text-gray">O dia inteiro, quadra a quadra</p>
       </header>
 
       <nav aria-label="Dia" className="mt-6 flex gap-2 overflow-x-auto pb-2">
@@ -116,8 +111,7 @@ export function AgendaDaArena({
 
       {agenda.quadras.length === 0 ? (
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-          Nenhuma quadra ativa. Cadastre ou reative uma quadra para ela ter
-          agenda.
+          Nenhuma quadra ativa. Cadastre ou reative uma quadra para ela ter agenda.
         </p>
       ) : (
         <div className="mt-6 overflow-x-auto">
@@ -147,10 +141,7 @@ export function AgendaDaArena({
             <tbody>
               {horas.map((hora) => (
                 <tr key={hora}>
-                  <th
-                    scope="row"
-                    className="align-top font-mono text-[11px] font-normal text-gray"
-                  >
+                  <th scope="row" className="align-top font-mono text-[11px] font-normal text-gray">
                     {String(hora).padStart(2, "0")}h
                   </th>
                   {agenda.quadras.map((q) => (
@@ -239,9 +230,7 @@ function Celula({
         // `relative` porque o formulário de mover se posiciona sobre a
         // célula: a grade é apertada e empurrar a linha reorganizaria o dia.
         "relative h-14 rounded-button border px-2 align-middle",
-        item.ehBloqueio
-          ? "border-coral/20 bg-coral/10"
-          : "border-line bg-sand",
+        item.ehBloqueio ? "border-coral/20 bg-coral/10" : "border-line bg-sand",
       )}
     >
       <p

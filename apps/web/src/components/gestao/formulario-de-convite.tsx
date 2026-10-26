@@ -13,11 +13,7 @@ const PAPEIS: { valor: Papel; rotulo: string }[] = [
 ];
 
 /** Dá acesso de equipe a quem já tem conta no Rally. */
-export function FormularioDeConvite({
-  estabelecimentoId,
-}: {
-  estabelecimentoId: string;
-}) {
+export function FormularioDeConvite({ estabelecimentoId }: { estabelecimentoId: string }) {
   const [enviando, iniciar] = useTransition();
   const [erro, setErro] = useState<string | null>(null);
   const [feito, setFeito] = useState<string | null>(null);

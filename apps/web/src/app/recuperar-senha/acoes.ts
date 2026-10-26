@@ -98,12 +98,10 @@ export async function redefinir(
     // A API distingue inválido, já usado e vencido, e a mensagem dela é a
     // que diz o que fazer. Trocar por um texto genérico aqui apagaria
     // justamente a parte útil.
-    const corpo = (await resposta.json().catch(() => null)) as
-      | { message?: string | string[] }
-      | null;
-    const mensagem = Array.isArray(corpo?.message)
-      ? corpo.message[0]
-      : corpo?.message;
+    const corpo = (await resposta.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const mensagem = Array.isArray(corpo?.message) ? corpo.message[0] : corpo?.message;
     return { erro: mensagem ?? "Não foi possível redefinir. Peça um novo link." };
   }
 

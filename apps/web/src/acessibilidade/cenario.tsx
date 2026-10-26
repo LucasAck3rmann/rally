@@ -114,9 +114,7 @@ function cupom(opcoes: Partial<CupomDaGestao> = {}): CupomDaGestao {
   };
 }
 
-function registroDaTrilha(
-  opcoes: Partial<RegistroDaTrilha> = {},
-): RegistroDaTrilha {
+function registroDaTrilha(opcoes: Partial<RegistroDaTrilha> = {}): RegistroDaTrilha {
   return {
     id: "a1",
     acao: "pausar quadra",
@@ -129,9 +127,7 @@ function registroDaTrilha(
   };
 }
 
-function arena(
-  opcoes: Partial<EstabelecimentoGerido> = {},
-): EstabelecimentoGerido {
+function arena(opcoes: Partial<EstabelecimentoGerido> = {}): EstabelecimentoGerido {
   return {
     id: "e1",
     nome: "Arena Beira-Rio",
@@ -169,9 +165,7 @@ const RELATORIO: Relatorio = {
     { data: "2026-09-11", reservas: 0, receita: 0, horas: 0, ocupacao: 0 },
     { data: "2026-09-12", reservas: 4, receita: 400, horas: 4, ocupacao: 28.6 },
   ],
-  porQuadra: [
-    { quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 },
-  ],
+  porQuadra: [{ quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 }],
   porModalidade: [
     { modalidade: "Beach Tennis", reservas: 6, horas: 6, receita: 640, quadras: 2 },
     { modalidade: "Futevôlei", reservas: 2, horas: 2, receita: 240, quadras: 1 },
@@ -224,7 +218,14 @@ const PAINEL: Painel = {
   ocupacao: { percentual: 42.5, horasVendidas: 8, horasDisponiveis: 42 },
   reservas: { vendidas: 8, canceladas: 1, bloqueios: 2, taxaCancelamento: 11.1 },
   porQuadra: [
-    { quadraId: "q1", nome: "Quadra 1", reservas: 6, horasVendidas: 6, receita: 640, ocupacao: 42.5 },
+    {
+      quadraId: "q1",
+      nome: "Quadra 1",
+      reservas: 6,
+      horasVendidas: 6,
+      receita: 640,
+      ocupacao: 42.5,
+    },
   ],
   proximosJogos: [
     {
@@ -322,12 +323,7 @@ export const CENARIOS: Cenario[] = [
     nome: "gestão · painel",
     montar: () =>
       render(
-        <PainelDaArena
-          painel={PAINEL}
-          dias={7}
-          periodos={[7, 30, 90]}
-          estabelecimentoId="e1"
-        />,
+        <PainelDaArena painel={PAINEL} dias={7} periodos={[7, 30, 90]} estabelecimentoId="e1" />,
       ),
   },
   {
@@ -358,13 +354,7 @@ export const CENARIOS: Cenario[] = [
   {
     nome: "gestão · conciliação",
     montar: () =>
-      render(
-        <ConciliacaoDaArena
-          conciliacao={CONCILIACAO}
-          estabelecimentoId="e1"
-          podeExpirar
-        />,
-      ),
+      render(<ConciliacaoDaArena conciliacao={CONCILIACAO} estabelecimentoId="e1" podeExpirar />),
   },
   {
     nome: "gestão · quadras",

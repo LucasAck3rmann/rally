@@ -4,6 +4,7 @@ Definição da infraestrutura como código. **Ainda não implementado** (entra n
 estabilização/deploy — ver `docs/cronograma.md`, marco M5).
 
 ## Estrutura sugerida
+
 ```
 terraform/
 ├─ environments/
@@ -19,12 +20,14 @@ terraform/
 ```
 
 ## Convenções
+
 - **State remoto** em S3 com lock no DynamoDB (nunca state local commitado).
 - Um workspace/conjunto de tfvars por ambiente.
 - `terraform plan` no CI em PRs; `apply` só após review (ver `docs/adr/0010` — deploy AWS-native).
 - Segredos via **AWS Secrets Manager**/SSM, referenciados por data source — nunca em `.tf`.
 
 ## Comandos (quando implementado)
+
 ```bash
 cd environments/staging
 terraform init

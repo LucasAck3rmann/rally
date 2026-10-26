@@ -2,7 +2,7 @@
 
 Precisa de ajuda com o Rally? Use o canal certo:
 
-- **Dúvida de uso / "como faço X"** → abra uma *Discussion* ou uma issue com o template de pergunta.
+- **Dúvida de uso / "como faço X"** → abra uma _Discussion_ ou uma issue com o template de pergunta.
 - **Bug** → abra uma issue usando o template **Bug** (passos para reproduzir, ambiente, logs).
 - **Sugestão de funcionalidade** → template **Feature**.
 - **Falha de segurança** → **não** abra issue pública; siga o [SECURITY.md](SECURITY.md).

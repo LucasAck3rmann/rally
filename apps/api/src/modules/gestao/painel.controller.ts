@@ -18,10 +18,7 @@ export class PainelController {
   constructor(private readonly painel: PainelService) {}
 
   @Get()
-  resumo(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Query("dias") dias?: string,
-  ) {
+  resumo(@Param("estabelecimentoId") estabelecimentoId: string, @Query("dias") dias?: string) {
     // 7 dias é a janela que o dono olha: a semana que está acontecendo.
     return this.painel.resumo(estabelecimentoId, Number(dias ?? 7));
   }

@@ -11,9 +11,7 @@ export const metadata: Metadata = {
 };
 
 type Desfecho =
-  | { tipo: "confirmado" }
-  | { tipo: "ja-confirmado" }
-  | { tipo: "recusado"; motivo: string };
+  { tipo: "confirmado" } | { tipo: "ja-confirmado" } | { tipo: "recusado"; motivo: string };
 
 /**
  * Confirma o endereço a partir do link do e-mail (RF-03).
@@ -36,18 +34,14 @@ async function confirmar(token: string): Promise<Desfecho> {
   }
 
   if (!resposta.ok) {
-    const corpo = (await resposta.json().catch(() => null)) as
-      | { message?: string | string[] }
-      | null;
-    const mensagem = Array.isArray(corpo?.message)
-      ? corpo.message[0]
-      : corpo?.message;
+    const corpo = (await resposta.json().catch(() => null)) as {
+      message?: string | string[];
+    } | null;
+    const mensagem = Array.isArray(corpo?.message) ? corpo.message[0] : corpo?.message;
     return { tipo: "recusado", motivo: mensagem ?? "Link inválido." };
   }
 
-  const corpo = (await resposta.json().catch(() => null)) as
-    | { jaConfirmado?: boolean }
-    | null;
+  const corpo = (await resposta.json().catch(() => null)) as { jaConfirmado?: boolean } | null;
   return corpo?.jaConfirmado ? { tipo: "ja-confirmado" } : { tipo: "confirmado" };
 }
 

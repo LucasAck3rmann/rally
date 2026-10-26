@@ -75,23 +75,14 @@ export class CuponsService {
       });
       return this.paraDto(criado);
     } catch (erro) {
-      if (
-        erro instanceof Prisma.PrismaClientKnownRequestError &&
-        erro.code === "P2002"
-      ) {
-        throw new ConflictException(
-          "Já existe um cupom com esse código nesta arena.",
-        );
+      if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
+        throw new ConflictException("Já existe um cupom com esse código nesta arena.");
       }
       throw erro;
     }
   }
 
-  async atualizar(
-    estabelecimentoId: string,
-    cupomId: string,
-    dto: AtualizarCupomDto,
-  ) {
+  async atualizar(estabelecimentoId: string, cupomId: string, dto: AtualizarCupomDto) {
     const atual = await this.prisma.promocao.findFirst({
       // Escopado pelo estabelecimento da rota (ADR-0011): sem isso, um admin
       // editaria o cupom de outra arena sabendo o id.
@@ -106,18 +97,11 @@ export class CuponsService {
     }
 
     const inicio =
-      dto.validadeInicio !== undefined
-        ? new Date(dto.validadeInicio)
-        : atual.validadeInicio;
-    const fim =
-      dto.validadeFim !== undefined ? new Date(dto.validadeFim) : atual.validadeFim;
+      dto.validadeInicio !== undefined ? new Date(dto.validadeInicio) : atual.validadeInicio;
+    const fim = dto.validadeFim !== undefined ? new Date(dto.validadeFim) : atual.validadeFim;
     this.validarJanela(inicio.toISOString(), fim.toISOString());
 
-    if (
-      dto.usosMax !== undefined &&
-      dto.usosMax !== null &&
-      dto.usosMax < atual.usosFeitos
-    ) {
+    if (dto.usosMax !== undefined && dto.usosMax !== null && dto.usosMax < atual.usosFeitos) {
       // A restrição do banco recusaria do mesmo jeito; recusar aqui devolve
       // o número que o dono precisa saber em vez de um erro de constraint.
       throw new BadRequestException(
@@ -148,9 +132,7 @@ export class CuponsService {
       throw new BadRequestException("Datas inválidas.");
     }
     if (fim <= inicio) {
-      throw new BadRequestException(
-        "O fim da validade precisa ser depois do começo.",
-      );
+      throw new BadRequestException("O fim da validade precisa ser depois do começo.");
     }
     return { inicio, fim };
   }
@@ -180,11 +162,7 @@ export class CuponsService {
       // Estado derivado vem pronto: a tela não precisa repetir a regra de
       // "está valendo?", e a lista do painel e a recusa na reserva não
       // podem discordar sobre o mesmo cupom.
-      vigente:
-        c.ativo &&
-        !esgotado &&
-        agora >= c.validadeInicio &&
-        agora <= c.validadeFim,
+      vigente: c.ativo && !esgotado && agora >= c.validadeInicio && agora <= c.validadeFim,
       esgotado,
       vencido: agora > c.validadeFim,
       createdAt: c.createdAt.toISOString(),

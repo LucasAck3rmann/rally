@@ -32,8 +32,6 @@ import { TELAS, LARGURA, argumento, abrir, contextoAutenticado, responde } from 
 
 const BYTES_MINIMOS = 8 * 1024;
 
-
-
 const base = argumento("base", "http://localhost:3000").replace(/\/$/, "");
 const saida = resolve(argumento("saida", "figuras"));
 // Credenciais do `prisma/seed.ts`, que é onde elas são declaradas: repetir o
@@ -45,13 +43,14 @@ const somenteSemLogin = process.argv.includes("--sem-login");
 // servidores sobem em paralelo e o portao corre logo atras: sem esperar,
 // falharia **as vezes** -- a pior frequencia possivel, rara o bastante para
 // virar "instabilidade" e ser reexecutada sem olhar.
-const api = (argumento("api", process.env.API_URL ?? "http://localhost:3333/api/v1"))
-  .replace(/\/$/, "");
+const api = argumento("api", process.env.API_URL ?? "http://localhost:3333/api/v1").replace(
+  /\/$/,
+  "",
+);
 // **Modo portão:** abre cada tela e cobra o título, sem salvar arquivo. É o
 // mesmo percurso da captura, porque a lista de telas tem de ser uma só — e
 // serve à CI, que não quer as imagens e quer a garantia.
 const semSalvar = process.argv.includes("--sem-salvar");
-
 
 /** Abre a tela, cobra o título e — quando há arquivo — fotografa. */
 async function capturar(pagina, tela, url, destino) {
@@ -89,8 +88,7 @@ async function capturar(pagina, tela, url, destino) {
 
 function anunciar(tela, rota, bytes) {
   const nome = (tela.arquivo ?? "(sem figura)").padEnd(26);
-  const medida =
-    bytes === null ? "   abre" : `${String((bytes / 1024).toFixed(0)).padStart(5)} KB`;
+  const medida = bytes === null ? "   abre" : `${String((bytes / 1024).toFixed(0)).padStart(5)} KB`;
   console.log(`${nome} ${medida}  ${rota}  — ${tela.descricao}`);
 }
 
@@ -100,13 +98,10 @@ function destinoDe(tela) {
   return join(saida, tela.arquivo);
 }
 
-
 const navegador = await chromium.launch();
 try {
   if (!(await responde(base))) {
-    console.error(
-      `a web não respondeu em ${base}.\nSuba com: pnpm --filter @rally/web dev`,
-    );
+    console.error(`a web não respondeu em ${base}.\nSuba com: pnpm --filter @rally/web dev`);
     process.exit(1);
   }
 
@@ -140,8 +135,12 @@ try {
   } else if (comLogin.length) {
     // Sessão separada, e não a mesma de cima: com cookie, `/entrar` e
     // `/recuperar-senha` redirecionam para o painel.
-    const { contexto: privadas, pagina, id, reaproveitada } =
-      await contextoAutenticado(navegador, base, email, senha, { deviceScaleFactor: 2 });
+    const {
+      contexto: privadas,
+      pagina,
+      id,
+      reaproveitada,
+    } = await contextoAutenticado(navegador, base, email, senha, { deviceScaleFactor: 2 });
     const quem = reaproveitada ? "sessão reaproveitada" : `autenticado como ${email}`;
     console.log(`\n${quem}, estabelecimento ${id}\n`);
 

@@ -66,11 +66,7 @@ function quadra(extras: Partial<QuadraDaGestao> = {}): QuadraDaGestao {
   };
 }
 
-function montar(
-  lista: Mensalista[],
-  podeEditar = true,
-  quadras: QuadraDaGestao[] = [quadra()],
-) {
+function montar(lista: Mensalista[], podeEditar = true, quadras: QuadraDaGestao[] = [quadra()]) {
   render(
     <MensalistasDaArena
       mensalistas={lista}
@@ -109,9 +105,7 @@ describe("MensalistasDaArena", () => {
     // o cliente chega e a quadra foi vendida para outro.
     montar([mensalista({ materializadaAte: "2026-10-27" })]);
 
-    expect(
-      screen.getByText(/avança sozinho todo dia, e parou/),
-    ).toBeInTheDocument();
+    expect(screen.getByText(/avança sozinho todo dia, e parou/)).toBeInTheDocument();
   });
 
   it("não avisa quando o horizonte está folgado", () => {
@@ -134,9 +128,7 @@ describe("MensalistasDaArena", () => {
 
     expect(screen.queryByRole("button", { name: "Encerrar" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Gerar semanas" })).not.toBeInTheDocument();
-    expect(
-      screen.queryByRole("button", { name: "Cadastrar mensalista" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cadastrar mensalista" })).not.toBeInTheDocument();
   });
 
   it("série encerrada não oferece encerrar de novo", () => {
@@ -182,9 +174,7 @@ describe("MensalistasDaArena", () => {
   });
   function abrirCadastro(quadras?: QuadraDaGestao[]) {
     montar([], true, quadras);
-    fireEvent.click(
-      screen.getByRole("button", { name: "Cadastrar mensalista" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Cadastrar mensalista" }));
   }
 
   /** Só o que o `required` cobra: o resto do formulário já vem preenchido. */
@@ -202,19 +192,12 @@ describe("MensalistasDaArena", () => {
     // vai cumprir, e o cliente só descobriria ao chegar.
     montar([], true, [quadra({ ativo: false })]);
 
-    expect(
-      screen.queryByRole("button", { name: "Cadastrar mensalista" }),
-    ).not.toBeInTheDocument();
-    expect(
-      screen.getByText(/Nenhuma quadra ativa para receber mensalista/),
-    ).toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Cadastrar mensalista" })).not.toBeInTheDocument();
+    expect(screen.getByText(/Nenhuma quadra ativa para receber mensalista/)).toBeInTheDocument();
   });
 
   it("quadra pausada não entra nas opções", () => {
-    abrirCadastro([
-      quadra(),
-      quadra({ id: "q2", nome: "Quadra 2 em manutenção", ativo: false }),
-    ]);
+    abrirCadastro([quadra(), quadra({ id: "q2", nome: "Quadra 2 em manutenção", ativo: false })]);
 
     const opcoes = screen.getAllByRole("option").map((o) => o.textContent);
     expect(opcoes).toContain("Quadra 1");
@@ -244,13 +227,9 @@ describe("MensalistasDaArena", () => {
       target: { value: "90" },
     });
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Cadastrar mensalista" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Cadastrar mensalista" }));
 
-    await waitFor(() =>
-      expect(vi.mocked(criarMensalista)).toHaveBeenCalledTimes(1),
-    );
+    await waitFor(() => expect(vi.mocked(criarMensalista)).toHaveBeenCalledTimes(1));
     expect(vi.mocked(criarMensalista)).toHaveBeenCalledWith("e1", {
       quadraId: "q1",
       clienteEmail: "augusto@rally.com.br",
@@ -273,20 +252,14 @@ describe("MensalistasDaArena", () => {
     vi.mocked(criarMensalista).mockResolvedValueOnce({
       ok: true,
       criadas: 8,
-      puladas: [
-        { data: "2026-10-27", motivo: "o horário já estava ocupado nessa semana" },
-      ],
+      puladas: [{ data: "2026-10-27", motivo: "o horário já estava ocupado nessa semana" }],
     });
     abrirCadastro();
     preencherMinimo();
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Cadastrar mensalista" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Cadastrar mensalista" }));
 
-    await waitFor(() =>
-      expect(screen.getByText(/Uma semana não entrou/)).toBeInTheDocument(),
-    );
+    await waitFor(() => expect(screen.getByText(/Uma semana não entrou/)).toBeInTheDocument());
     expect(screen.getByText(/27\/10\/2026/)).toBeInTheDocument();
     expect(screen.getByText(/nada foi deslocado/)).toBeInTheDocument();
     // O formulário fechou — o campo de e-mail saiu da tela — e o aviso ficou.
@@ -303,17 +276,13 @@ describe("MensalistasDaArena", () => {
     abrirCadastro();
     preencherMinimo("fantasma@rally.com.br");
 
-    fireEvent.click(
-      screen.getByRole("button", { name: "Cadastrar mensalista" }),
-    );
+    fireEvent.click(screen.getByRole("button", { name: "Cadastrar mensalista" }));
 
     await waitFor(() =>
       expect(screen.getByRole("alert")).toHaveTextContent(
         "Ninguém com esse e-mail tem conta no Rally.",
       ),
     );
-    expect(screen.getByLabelText("E-mail do cliente")).toHaveValue(
-      "fantasma@rally.com.br",
-    );
+    expect(screen.getByLabelText("E-mail do cliente")).toHaveValue("fantasma@rally.com.br");
   });
 });

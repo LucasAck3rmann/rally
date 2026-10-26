@@ -8,7 +8,7 @@ O Instrumento I da pesquisa de campo (n = 10 gestores, outubro de 2026) pergunto
 
 Entre os recursos apontados, é o **único que o sistema não entrega de forma alguma**: o autoatendimento, a agenda visual, o Pix antecipado, o lembrete automático e o relatório de faturamento já existem. Não há entidade, rota nem tela de mensalista.
 
-A pergunta também aparece no campo livre. Um gestor listou, entre o que gostaria de ter e não tem, *"campo com os mensalistas"*, ao lado de controle de bebidas e de um sistema de *follow-up*.
+A pergunta também aparece no campo livre. Um gestor listou, entre o que gostaria de ter e não tem, _"campo com os mensalistas"_, ao lado de controle de bebidas e de um sistema de _follow-up_.
 
 Mensalista, no vocabulário do segmento, é o cliente que ocupa **o mesmo horário toda semana** mediante pagamento mensal — terça-feira às 19h, por exemplo, pelo semestre inteiro. É receita previsível e é o que sustenta a ocupação dos horários nobres.
 

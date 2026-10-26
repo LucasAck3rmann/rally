@@ -74,9 +74,7 @@ export function TrocaDePapel({
         {/* `MANTENEDOR` é da plataforma e não se atribui por aqui; quando
             alguém já é, a opção aparece só para o select não mentir sobre o
             valor selecionado. */}
-        {papel === "MANTENEDOR" ? (
-          <option value="MANTENEDOR">Mantenedor</option>
-        ) : null}
+        {papel === "MANTENEDOR" ? <option value="MANTENEDOR">Mantenedor</option> : null}
       </select>
       {erro ? (
         <span role="alert" className="text-right text-[12px] text-coral-deep">

@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from "@nestjs/common";
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import type { Request } from "express";
 import { Observable, tap } from "rxjs";
 

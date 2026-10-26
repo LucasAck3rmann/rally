@@ -179,34 +179,29 @@ describe("as escritas do painel", () => {
     expect(exportadas.sort()).toEqual(ESCRITAS.map((e) => e.nome).sort());
   });
 
-  it.each(ESCRITAS)("$nome usa $metodo na rota do estabelecimento", async ({
-    executar,
-    caminho,
-    metodo,
-  }) => {
-    await executar();
+  it.each(ESCRITAS)(
+    "$nome usa $metodo na rota do estabelecimento",
+    async ({ executar, caminho, metodo }) => {
+      await executar();
 
-    const [rota, , opcoes] = chamarApiAutenticada.mock.calls[0] as [
-      string,
-      unknown,
-      { metodo?: string },
-    ];
-    expect(rota).toBe(caminho);
-    expect(opcoes.metodo).toBe(metodo);
-    expect(rota).not.toContain(OUTRA);
-  });
+      const [rota, , opcoes] = chamarApiAutenticada.mock.calls[0] as [
+        string,
+        unknown,
+        { metodo?: string },
+      ];
+      expect(rota).toBe(caminho);
+      expect(opcoes.metodo).toBe(metodo);
+      expect(rota).not.toContain(OUTRA);
+    },
+  );
 
-  it.each(ESCRITAS)("$nome revalida o layout, e não só a página", async ({
-    executar,
-  }) => {
+  it.each(ESCRITAS)("$nome revalida o layout, e não só a página", async ({ executar }) => {
     await executar();
 
     expect(revalidatePath).toHaveBeenCalledWith(`/gestao/${ARENA}`, "layout");
   });
 
-  it.each(ESCRITAS)("$nome não revalida quando a API recusa", async ({
-    executar,
-  }) => {
+  it.each(ESCRITAS)("$nome não revalida quando a API recusa", async ({ executar }) => {
     chamarApiAutenticada.mockRejectedValue(new ErroDeApi(403, "Sem permissão."));
 
     const resultado = await executar();
@@ -239,9 +234,7 @@ describe("tradução do erro", () => {
   });
 
   it("erro desconhecido não vaza detalhe interno", async () => {
-    chamarApiAutenticada.mockRejectedValue(
-      new TypeError("cannot read 'data' of undefined"),
-    );
+    chamarApiAutenticada.mockRejectedValue(new TypeError("cannot read 'data' of undefined"));
 
     const resultado = await acoes.tirarDaEquipe(ARENA, "u2");
 

@@ -27,9 +27,7 @@ const WINANSI_ALTO: Record<number, string> = {
 
 function deWinAnsi(bytes: number[]): string {
   return bytes
-    .map((b) =>
-      b >= 0x80 && b <= 0x9f ? (WINANSI_ALTO[b] ?? "?") : String.fromCharCode(b),
-    )
+    .map((b) => (b >= 0x80 && b <= 0x9f ? (WINANSI_ALTO[b] ?? "?") : String.fromCharCode(b)))
     .join("");
 }
 
@@ -70,9 +68,7 @@ export function textoDoPdf(pdf: Buffer): string {
     if (fim < 0) continue;
     const corpo = bruto.slice(inicio, fim).replace(/\r?\n$/, "");
     try {
-      const inflado = zlib
-        .inflateSync(Buffer.from(corpo, "latin1"))
-        .toString("latin1");
+      const inflado = zlib.inflateSync(Buffer.from(corpo, "latin1")).toString("latin1");
       saida.push(...literais(inflado));
     } catch {
       // Fluxo que não é de conteúdo (fonte, imagem) — não interessa aqui.
@@ -120,8 +116,7 @@ export function posicoesDoPdf(pdf: Buffer): Desenhado[] {
       continue;
     }
 
-    const passos =
-      /1 0 0 1 (-?[\d.]+) (-?[\d.]+) Tm|(\[[^\]]*\]\s*TJ)|(<[0-9a-fA-F]*>\s*Tj)/g;
+    const passos = /1 0 0 1 (-?[\d.]+) (-?[\d.]+) Tm|(\[[^\]]*\]\s*TJ)|(<[0-9a-fA-F]*>\s*Tj)/g;
     let x = 0;
     let y = 0;
     let p: RegExpExecArray | null;

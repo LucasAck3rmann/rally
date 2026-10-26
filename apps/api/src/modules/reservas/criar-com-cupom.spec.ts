@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { ConflictException, NotFoundException } from "@nestjs/common";
-import {
-  PagamentoMetodo,
-  Prisma,
-  PromocaoTipo,
-  ReservaStatus,
-} from "@prisma/client";
+import { PagamentoMetodo, Prisma, PromocaoTipo, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
@@ -71,9 +66,7 @@ function servico(
     promocao: {
       findFirst: jest
         .fn()
-        .mockResolvedValue(
-          opcoes.cupom === undefined ? cupomNoBanco() : opcoes.cupom,
-        ),
+        .mockResolvedValue(opcoes.cupom === undefined ? cupomNoBanco() : opcoes.cupom),
     },
     reserva: {
       // O `detalhe()` do retorno; forma mínima que `paraDto` aceita.
@@ -139,9 +132,7 @@ const PEDIDO = { quadraId: "q1", inicio: INICIO, fim: FIM };
 
 /** Valor gravado no `Pagamento` da chamada de criação. */
 function valorCobrado(criarReserva: jest.Mock): number {
-  return Number(
-    criarReserva.mock.calls[0][0].data.pagamento.create.valor.toString(),
-  );
+  return Number(criarReserva.mock.calls[0][0].data.pagamento.create.valor.toString());
 }
 
 describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
@@ -192,9 +183,9 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
   it("cupom inexistente é 404, e não desconto silencioso", async () => {
     const { servico: s } = servico({ cupom: null });
 
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "NAOEXISTE" }, "u1"),
-    ).rejects.toThrow(NotFoundException);
+    await expect(s.criar({ ...PEDIDO, cupom: "NAOEXISTE" }, "u1")).rejects.toThrow(
+      NotFoundException,
+    );
   });
 
   it("cupom vencido é recusado com o motivo", async () => {
@@ -202,9 +193,7 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
       cupom: cupomNoBanco({ validadeFim: new Date("2026-10-01T00:00:00.000Z") }),
     });
 
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1"),
-    ).rejects.toThrow(/venceu/i);
+    await expect(s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1")).rejects.toThrow(/venceu/i);
     expect(usarCupom).not.toHaveBeenCalled();
   });
 
@@ -213,9 +202,9 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
       cupom: cupomNoBanco({ usosMax: 10, usosFeitos: 10 }),
     });
 
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1"),
-    ).rejects.toThrow(/limite de usos/i);
+    await expect(s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1")).rejects.toThrow(
+      /limite de usos/i,
+    );
     expect(usarCupom).not.toHaveBeenCalled();
   });
 
@@ -228,12 +217,12 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
       ),
     });
 
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1"),
-    ).rejects.toThrow(ConflictException);
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1"),
-    ).rejects.toThrow(/limite de usos/i);
+    await expect(s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1")).rejects.toThrow(
+      ConflictException,
+    );
+    await expect(s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1")).rejects.toThrow(
+      /limite de usos/i,
+    );
   });
 
   it("erro que não é de cupom nem de horário sobe inteiro", async () => {
@@ -241,9 +230,7 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
     // que culpa o cliente.
     const { servico: s } = servico({ erroAoCriar: new Error("conexão caiu") });
 
-    await expect(
-      s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1"),
-    ).rejects.toThrow("conexão caiu");
+    await expect(s.criar({ ...PEDIDO, cupom: "BORAJOGAR" }, "u1")).rejects.toThrow("conexão caiu");
   });
 
   it("cupom pior que o desconto do Pix não faz o cliente pagar mais", async () => {
@@ -254,10 +241,7 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
       cupom: cupomNoBanco({ valor: new Prisma.Decimal(5) }),
     });
 
-    await s.criar(
-      { ...PEDIDO, cupom: "BORAJOGAR", metodo: PagamentoMetodo.PIX },
-      "u1",
-    );
+    await s.criar({ ...PEDIDO, cupom: "BORAJOGAR", metodo: PagamentoMetodo.PIX }, "u1");
 
     expect(valorCobrado(criarReserva)).toBe(70);
   });
@@ -265,10 +249,7 @@ describe("ReservasService.criar com cupom (RF-14, RN-14)", () => {
   it("no cartão o desconto do Pix não entra, mas o cupom entra", async () => {
     const { servico: s, criarReserva } = servico({ descontoPixPct: 30 });
 
-    await s.criar(
-      { ...PEDIDO, cupom: "BORAJOGAR", metodo: PagamentoMetodo.CARTAO },
-      "u1",
-    );
+    await s.criar({ ...PEDIDO, cupom: "BORAJOGAR", metodo: PagamentoMetodo.CARTAO }, "u1");
 
     expect(valorCobrado(criarReserva)).toBe(80);
   });

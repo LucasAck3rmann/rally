@@ -5,9 +5,7 @@ import { Logger } from "@nestjs/common";
 import { ConciliacaoService } from "./conciliacao.service";
 import { ExpiracaoDePendentesJob } from "./expiracao.job";
 
-function job(
-  opcoes: { ambiente?: string; liberadas?: number; erro?: unknown } = {},
-) {
+function job(opcoes: { ambiente?: string; liberadas?: number; erro?: unknown } = {}) {
   const conciliacao = {
     expirarPendentes: opcoes.erro
       ? jest.fn().mockRejectedValue(opcoes.erro)
@@ -51,9 +49,7 @@ describe("ExpiracaoDePendentesJob (RN-13)", () => {
     const { job: j } = job({ erro: new Error("conexão caiu") });
 
     await expect(j.executar()).resolves.toBeUndefined();
-    expect(erro).toHaveBeenCalledWith(
-      expect.stringContaining("Falha ao expirar pendentes"),
-    );
+    expect(erro).toHaveBeenCalledWith(expect.stringContaining("Falha ao expirar pendentes"));
     erro.mockRestore();
   });
 

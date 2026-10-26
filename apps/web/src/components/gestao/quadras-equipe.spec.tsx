@@ -34,17 +34,8 @@ function membro(opcoes: Partial<MembroDaEquipe> = {}): MembroDaEquipe {
   };
 }
 
-function montarQuadras(
-  quadras: QuadraDaGestao[],
-  podeEditar = false,
-) {
-  render(
-    <QuadrasDaArena
-      quadras={quadras}
-      estabelecimentoId="e1"
-      podeEditar={podeEditar}
-    />,
-  );
+function montarQuadras(quadras: QuadraDaGestao[], podeEditar = false) {
+  render(<QuadrasDaArena quadras={quadras} estabelecimentoId="e1" podeEditar={podeEditar} />);
 }
 
 describe("Quadras da arena", () => {
@@ -104,10 +95,7 @@ describe("Quadras da arena", () => {
   });
 
   it("o administrador pausa a que está na vitrine e reativa a pausada", () => {
-    montarQuadras(
-      [quadra(), quadra({ id: "q2", nome: "Quadra 2", ativo: false })],
-      true,
-    );
+    montarQuadras([quadra(), quadra({ id: "q2", nome: "Quadra 2", ativo: false })], true);
 
     const naVitrine = screen.getByRole("heading", { name: "Quadra 1" }).closest("li")!;
     const pausada = screen.getByRole("heading", { name: "Quadra 2" }).closest("li")!;
@@ -117,13 +105,7 @@ describe("Quadras da arena", () => {
 });
 
 function montarEquipe(equipe: MembroDaEquipe[], podeEditar = false) {
-  render(
-    <EquipeDaArena
-      equipe={equipe}
-      estabelecimentoId="e1"
-      podeEditar={podeEditar}
-    />,
-  );
+  render(<EquipeDaArena equipe={equipe} estabelecimentoId="e1" podeEditar={podeEditar} />);
 }
 
 describe("Equipe da arena", () => {

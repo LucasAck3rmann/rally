@@ -5,10 +5,7 @@ import Link from "next/link";
 import { useActionState } from "react";
 import { useFormStatus } from "react-dom";
 
-import {
-  pedirLink,
-  type EstadoDaRecuperacao,
-} from "@/app/recuperar-senha/acoes";
+import { pedirLink, type EstadoDaRecuperacao } from "@/app/recuperar-senha/acoes";
 import { CAMPO } from "@/lib/estilos";
 
 function Botao() {
@@ -39,16 +36,13 @@ export function AvisoDeEnvio() {
       {/* O texto não confirma que a conta existe, porque a API também não
           confirma: a diferença entre as duas telas seria uma lista de
           clientes da arena. */}
-      <p
-        role="status"
-        className="rounded-card bg-sand px-4 py-4 text-[15px] text-ink"
-      >
-        Se houver conta com esse e-mail, o link de redefinição acabou de ser
-        enviado. Ele vale por 30 minutos.
+      <p role="status" className="rounded-card bg-sand px-4 py-4 text-[15px] text-ink">
+        Se houver conta com esse e-mail, o link de redefinição acabou de ser enviado. Ele vale por
+        30 minutos.
       </p>
       <p className="text-[14px] text-gray">
-        Não chegou? Confira a caixa de spam. Se pedir de novo logo em seguida,
-        o link que já enviamos continua valendo.
+        Não chegou? Confira a caixa de spam. Se pedir de novo logo em seguida, o link que já
+        enviamos continua valendo.
       </p>
       <Link
         href="/entrar"
@@ -62,10 +56,7 @@ export function AvisoDeEnvio() {
 }
 
 export function FormularioDeRecuperacao() {
-  const [estado, acao] = useActionState<EstadoDaRecuperacao, FormData>(
-    pedirLink,
-    {},
-  );
+  const [estado, acao] = useActionState<EstadoDaRecuperacao, FormData>(pedirLink, {});
 
   if (estado.enviado) return <AvisoDeEnvio />;
 
@@ -96,10 +87,7 @@ export function FormularioDeRecuperacao() {
 
       <Botao />
 
-      <Link
-        href="/entrar"
-        className="block text-center text-[14px] text-gray hover:text-ink"
-      >
+      <Link href="/entrar" className="block text-center text-[14px] text-gray hover:text-ink">
         Lembrei a senha
       </Link>
     </form>

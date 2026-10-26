@@ -237,9 +237,7 @@ export async function tirarDaEquipe(
  * para o dono resolver a lista inteira de uma vez, sem depender de alguém
  * abrir a agenda de cada quadra.
  */
-export async function expirarPendentes(
-  estabelecimentoId: string,
-): Promise<Resultado> {
+export async function expirarPendentes(estabelecimentoId: string): Promise<Resultado> {
   try {
     await chamarApiAutenticada(
       `/gestao/estabelecimentos/${estabelecimentoId}/conciliacao/expirar-pendentes`,

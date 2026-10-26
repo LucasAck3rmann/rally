@@ -9,9 +9,7 @@ describe("EmailDevProvider", () => {
     // único caminho até o que o cliente receberia — inclusive o link de
     // recuperação de senha, que não tem outra forma de chegar sem
     // mensageria.
-    const aviso = jest
-      .spyOn(Logger.prototype, "warn")
-      .mockImplementation(() => {});
+    const aviso = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
 
     await new EmailDevProvider().enviar({
       para: "lucas@exemplo.com",
@@ -30,9 +28,7 @@ describe("EmailDevProvider", () => {
     // Em `warn` e com a palavra "simulado": um log de nível informativo
     // dizendo "e-mail enviado" faria alguém concluir que a mensageria está
     // de pé quando não está.
-    const aviso = jest
-      .spyOn(Logger.prototype, "warn")
-      .mockImplementation(() => {});
+    const aviso = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
 
     await new EmailDevProvider().enviar({
       para: "a@b.c",
