@@ -30,7 +30,23 @@ import "dart:io";
 /// repositório — a camada que fala HTTP e desserializa JSON, que estava
 /// **inteiramente sem cobertura** porque os testes de interface usam
 /// repositórios falsos — são 291 testes e **88,52%**.
-const double pisoPadrao = 87;
+///
+/// **Medido em 26/10: 87,88% com 311 testes — ou seja, caiu.** Quem contou foi
+/// a margem, não o piso: ela estava a **0,88 ponto** da medida, abaixo do
+/// ponto de folga que esta nota exige, e piso colado teria deixado a
+/// regressão passar calada. É a terceira vez que isso acontece no projeto —
+/// antes foram os ramos da API, em 23/10, e as funções da web, em 25/10.
+///
+/// O que estava descoberto não era interface, era **domínio**: o
+/// `notificacao.dart` em 16,7% e o `gestao.dart` em 66,3%, os dois na borda
+/// onde o JSON da API vira objeto. Ali moram os `??` que decidem o que
+/// aparece quando um campo não vem, e a conversão de enum que a correção do
+/// #104 endereçou — a do valor novo da API que não deve cair num valor real.
+/// **A correção estava escrita e nada a exercitava.**
+///
+/// **Medido depois, com 348 testes: 89,22%.** O piso sobe para 88, mantendo o
+/// mesmo ponto de margem.
+const double pisoPadrao = 88;
 
 void main(List<String> argumentos) {
   final piso = _lerPiso(argumentos);
