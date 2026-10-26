@@ -14,7 +14,7 @@
   },
   "dependencies": {
     "@rally/tokens": "workspace:*",
-    "framer-motion": "^13.4.6",
+    "framer-motion": "^14.6.0",
     "lenis": "^1.3.27",
     "next": "^15.5.28",
     "react": "^19.3.1",
