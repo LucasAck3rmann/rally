@@ -153,3 +153,21 @@ node tools/capturas.mjs --sem-salvar
 Abre as treze telas e cobra o título de cada uma. Se passar, a demonstração
 está pronta; se falhar, ele diz **qual** rota e em que página a navegação
 terminou.
+
+### Antes do teste de usabilidade
+
+```bash
+node tools/ensaio-do-piloto.mjs
+```
+
+Percorre as **seis tarefas do Instrumento III** contra a API e desfaz o que
+criou. Ele não testa a interface — isso é do participante, no aparelho —, e
+sim a **pré-condição** de cada tarefa: que o cadastro abra sessão, que o filtro
+de modalidade devolva quadra, que amanhã às 19h esteja livre, que o Pix devolva
+copia e cola, que a reserva apareça na lista do cliente e que o cancelamento
+seja aceito.
+
+A última linha confere que as 19h voltaram a ficar livres, e é o que permite
+rodá-lo na véspera: a tarefa T3 ocupa justamente o horário que a sessão vai
+usar, e deixá-lo reservado faria o participante encontrar "indisponível" e
+falhar a tarefa por causa do ensaio.
