@@ -42,7 +42,7 @@ Futuro (clubes): Jogador, Time, Plano/Mensalidade, Aula.
 - `apps/web/` — Next.js (site, app cliente, painel `/admin`)
 - `apps/api/` — NestJS; `src/modules/{auth,reservas,pagamentos,replays,...}`
 - `apps/mobile/` — Flutter (data/domain/presentation)
-- `packages/tokens` (o único com consumidor) · `packages/ui` · `packages/config`
+- `packages/tokens` — o único pacote, e o único que atravessa a fronteira: 22 arquivos da web o importam, e o app Flutter espelha os mesmos valores
 - `infra/` (docker, Terraform) · `docs/adr/` (decisões) · `docker-compose.yml`
 
 ## Comandos

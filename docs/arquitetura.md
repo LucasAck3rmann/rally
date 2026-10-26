@@ -97,7 +97,7 @@ Disparadas por **eventos de domínio** e processadas em **fila (BullMQ)** — nu
 
 - **Fonte de verdade visual:** arquivo Figma com **Variables, Color/Text Styles e Component Sets** (já construído) + [DESIGN.md (raiz do repo)](../DESIGN.md) + skill `rally-design-system`.
 - **Pipeline de tokens:** Variables do Figma → **Style Dictionary** → saídas para **Tailwind** (web) e **tema Dart** (Flutter). Uma mudança de token propaga para os dois apps.
-- **Componentização:** web em `packages/ui` (shadcn + tokens); Flutter com widgets equivalentes.
+- **Componentização:** os componentes da web moram em `apps/web/src/components`, construídos sobre os tokens de `packages/tokens`; o Flutter tem widgets equivalentes, que espelham os mesmos tokens. Não há pacote de UI compartilhado, e o ADR-0018 explica por que não: há **uma** superfície web, e extrair biblioteca para um consumidor só paga o custo da fronteira sem comprar isolamento.
 - **Acessibilidade** embutida no design system (WCAG AA) — ver [Fundamentação Teórica e Padrões](fundamentacao.md) §acessibilidade.
 
 ## 9. Estrutura de pastas (monorepo)
