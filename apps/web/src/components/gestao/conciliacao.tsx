@@ -48,9 +48,7 @@ export function ConciliacaoDaArena({
   return (
     <div className="p-6 md:p-10">
       <header>
-        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-          Conciliação
-        </h1>
+        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Conciliação</h1>
         <p className="mt-1 text-[14px] text-gray">
           {/* O número que importa é o de divergências, não o de conferidas —
               mas sem o denominador ninguém sabe se 3 é muito ou pouco. */}
@@ -82,8 +80,8 @@ export function ConciliacaoDaArena({
                 <p className="mt-1 text-[13px] text-gray">
                   {/* Dizer o que acontece: o horário volta para a venda e a
                       reserva vira cancelada, não desaparece. */}
-                  Liberar devolve esses horários para a venda e marca as
-                  reservas como canceladas. O histórico fica.
+                  Liberar devolve esses horários para a venda e marca as reservas como canceladas. O
+                  histórico fica.
                 </p>
               </div>
               <BotaoDeAcao
@@ -104,9 +102,7 @@ export function ConciliacaoDaArena({
                 key={t.tipo}
                 className={cn(
                   "rounded-card border px-5 py-4",
-                  t.gravidade === "grave"
-                    ? "border-coral/30 bg-white"
-                    : "border-line bg-white",
+                  t.gravidade === "grave" ? "border-coral/30 bg-white" : "border-line bg-white",
                 )}
               >
                 <p className="font-display text-[22px] font-bold leading-none text-ink">
@@ -125,23 +121,19 @@ export function ConciliacaoDaArena({
             ))}
           </ul>
 
-          <h2 className="mt-9 font-display text-[19px] font-bold text-ink">
-            Reserva por reserva
-          </h2>
+          <h2 className="mt-9 font-display text-[19px] font-bold text-ink">Reserva por reserva</h2>
           <div className="mt-4 overflow-x-auto">
             <table className="w-full min-w-[720px]">
               <thead>
                 <tr className="border-b border-line text-left">
-                  {["Reserva", "Quando", "Problema", "Reserva / Cobrança", ""].map(
-                    (coluna, i) => (
-                      <th
-                        key={coluna || i}
-                        className="pb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gray"
-                      >
-                        {coluna}
-                      </th>
-                    ),
-                  )}
+                  {["Reserva", "Quando", "Problema", "Reserva / Cobrança", ""].map((coluna, i) => (
+                    <th
+                      key={coluna || i}
+                      className="pb-2 font-mono text-[10px] uppercase tracking-[0.15em] text-gray"
+                    >
+                      {coluna}
+                    </th>
+                  ))}
                 </tr>
               </thead>
               <tbody>
@@ -157,9 +149,7 @@ export function ConciliacaoDaArena({
                         {d.cliente ?? "Balcão"} · {d.quadra}
                       </p>
                     </td>
-                    <td className="py-3 pr-4 text-[13px] text-gray">
-                      {quando(d.inicio)}
-                    </td>
+                    <td className="py-3 pr-4 text-[13px] text-gray">{quando(d.inicio)}</td>
                     <td className="py-3 pr-4">
                       <p className="text-[13px] text-ink">{d.descricao}</p>
                       <p className="mt-0.5 font-mono text-[10px] uppercase tracking-[0.1em] text-gray">
@@ -169,13 +159,10 @@ export function ConciliacaoDaArena({
                     </td>
                     <td className="py-3 pr-4 text-[13px] text-ink">
                       {formatarPreco(d.valorReserva)}
-                      {d.valorPagamento !== null &&
-                      d.valorPagamento !== d.valorReserva ? (
+                      {d.valorPagamento !== null && d.valorPagamento !== d.valorReserva ? (
                         <>
                           {" / "}
-                          <span className="text-coral-deep">
-                            {formatarPreco(d.valorPagamento)}
-                          </span>
+                          <span className="text-coral-deep">{formatarPreco(d.valorPagamento)}</span>
                         </>
                       ) : null}
                     </td>
@@ -202,9 +189,8 @@ export function ConciliacaoDaArena({
       {/* O que esta tela não é, dito de frente: sem credencial de gateway não
           há extrato para comparar (ADR-0013). */}
       <p className="mt-10 text-[13px] text-gray">
-        A conciliação compara reserva e cobrança <strong>dentro do Rally</strong>.
-        Comparar com o extrato do gateway depende das credenciais da AbacatePay,
-        que ainda não estão configuradas.
+        A conciliação compara reserva e cobrança <strong>dentro do Rally</strong>. Comparar com o
+        extrato do gateway depende das credenciais da AbacatePay, que ainda não estão configuradas.
       </p>
     </div>
   );

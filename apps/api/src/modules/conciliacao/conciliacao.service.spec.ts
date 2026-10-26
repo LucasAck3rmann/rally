@@ -8,16 +8,18 @@ import { ConciliacaoService } from "./conciliacao.service";
 const ONTEM = new Date(Date.now() - 24 * 60 * 60 * 1000);
 const AMANHA = new Date(Date.now() + 24 * 60 * 60 * 1000);
 
-function reserva(opcoes: {
-  id?: string;
-  status?: ReservaStatus;
-  preco?: number;
-  pagamento?: {
-    status?: PagamentoStatus;
-    valor?: number;
-    expiraEm?: Date | null;
-  } | null;
-} = {}) {
+function reserva(
+  opcoes: {
+    id?: string;
+    status?: ReservaStatus;
+    preco?: number;
+    pagamento?: {
+      status?: PagamentoStatus;
+      valor?: number;
+      expiraEm?: Date | null;
+    } | null;
+  } = {},
+) {
   const p = opcoes.pagamento;
   return {
     id: opcoes.id ?? "ckabcd1234",
@@ -177,9 +179,7 @@ describe("ConciliacaoService (RF-29)", () => {
     it("confirmada sem pagamento é atenção, não grave", async () => {
       // É o normal da reserva de balcão, paga fora do sistema.
       const { servico: s } = servico({
-        reservas: [
-          reserva({ status: ReservaStatus.CONFIRMADA, pagamento: null }),
-        ],
+        reservas: [reserva({ status: ReservaStatus.CONFIRMADA, pagamento: null })],
       });
       const r = await s.relatorio("e1");
 
@@ -190,9 +190,7 @@ describe("ConciliacaoService (RF-29)", () => {
 
     it("pendente sem cobrança nenhuma", async () => {
       const { servico: s } = servico({
-        reservas: [
-          reserva({ status: ReservaStatus.PENDENTE_PAGAMENTO, pagamento: null }),
-        ],
+        reservas: [reserva({ status: ReservaStatus.PENDENTE_PAGAMENTO, pagamento: null })],
       });
       const r = await s.relatorio("e1");
       expect(r.divergencias.map((d) => d.tipo)).toContain("SEM_COBRANCA");
@@ -240,7 +238,13 @@ describe("ConciliacaoService (RF-29)", () => {
 
   it("devolve o código que o cliente dita no balcão", async () => {
     const { servico: s } = servico({
-      reservas: [reserva({ id: "ckxyz7k2p", status: ReservaStatus.CANCELADA, pagamento: { status: PagamentoStatus.PAGO } })],
+      reservas: [
+        reserva({
+          id: "ckxyz7k2p",
+          status: ReservaStatus.CANCELADA,
+          pagamento: { status: PagamentoStatus.PAGO },
+        }),
+      ],
     });
     const r = await s.relatorio("e1");
     expect(r.divergencias[0].codigo).toBe("RALLY-7K2P");
@@ -280,9 +284,9 @@ describe("ConciliacaoService (RF-29)", () => {
       expect(dados.where.id.in).toEqual(["r1", "r2"]);
       expect(dados.data.status).toBe(ReservaStatus.CANCELADA);
       expect(dados.data.motivoCancelamento).toContain("expirou");
-      expect(
-        (prisma.pagamento.updateMany as jest.Mock).mock.calls[0][0].data.status,
-      ).toBe(PagamentoStatus.EXPIRADO);
+      expect((prisma.pagamento.updateMany as jest.Mock).mock.calls[0][0].data.status).toBe(
+        PagamentoStatus.EXPIRADO,
+      );
     });
 
     it("pode varrer uma quadra só, que é o que a grade pede", async () => {

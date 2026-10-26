@@ -36,19 +36,12 @@ export class RelatoriosController {
     @Query("ate") ate: string,
     @Res() resposta: Response,
   ) {
-    const { arquivo, conteudo } = await this.relatorios.csv(
-      estabelecimentoId,
-      de,
-      ate,
-    );
+    const { arquivo, conteudo } = await this.relatorios.csv(estabelecimentoId, de, ate);
 
     // `charset=utf-8` junto do BOM: o cabeçalho orienta o navegador e o BOM
     // orienta o Excel, que ignora o cabeçalho ao abrir arquivo local.
     resposta.setHeader("Content-Type", "text/csv; charset=utf-8");
-    resposta.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${arquivo}"`,
-    );
+    resposta.setHeader("Content-Disposition", `attachment; filename="${arquivo}"`);
     resposta.send(conteudo);
   }
 
@@ -60,20 +53,13 @@ export class RelatoriosController {
     @Query("ate") ate: string,
     @Res() resposta: Response,
   ) {
-    const { arquivo, conteudo } = await this.relatorios.xlsx(
-      estabelecimentoId,
-      de,
-      ate,
-    );
+    const { arquivo, conteudo } = await this.relatorios.xlsx(estabelecimentoId, de, ate);
 
     resposta.setHeader(
       "Content-Type",
       "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
     );
-    resposta.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${arquivo}"`,
-    );
+    resposta.setHeader("Content-Disposition", `attachment; filename="${arquivo}"`);
     // `send` com Buffer e não `end`: o Express põe o Content-Length, e sem
     // ele o navegador não mostra progresso num arquivo que pode crescer.
     resposta.send(conteudo);
@@ -87,20 +73,13 @@ export class RelatoriosController {
     @Query("ate") ate: string,
     @Res() resposta: Response,
   ) {
-    const { arquivo, conteudo } = await this.relatorios.pdf(
-      estabelecimentoId,
-      de,
-      ate,
-    );
+    const { arquivo, conteudo } = await this.relatorios.pdf(estabelecimentoId, de, ate);
 
     resposta.setHeader("Content-Type", "application/pdf");
     // `attachment` e não `inline`: o relatório é para guardar e enviar. Quem
     // quiser só olhar abre o arquivo baixado — o contrário, abrir no
     // navegador e ter de descobrir como salvar, é o caminho mais longo.
-    resposta.setHeader(
-      "Content-Disposition",
-      `attachment; filename="${arquivo}"`,
-    );
+    resposta.setHeader("Content-Disposition", `attachment; filename="${arquivo}"`);
     resposta.send(conteudo);
   }
 }

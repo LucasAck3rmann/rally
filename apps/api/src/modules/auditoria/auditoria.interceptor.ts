@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  CallHandler,
-  ExecutionContext,
-  Injectable,
-  NestInterceptor,
-} from "@nestjs/common";
+import { CallHandler, ExecutionContext, Injectable, NestInterceptor } from "@nestjs/common";
 import { Reflector } from "@nestjs/core";
 import type { Request } from "express";
 import type { Prisma } from "@prisma/client";
@@ -58,15 +53,15 @@ export class AuditoriaInterceptor implements NestInterceptor {
   intercept(contexto: ExecutionContext, proximo: CallHandler): Observable<unknown> {
     if (contexto.getType() !== "http") return proximo.handle();
 
-    const descricao = this.reflector.getAllAndOverride<DescricaoDaAcao>(
-      ACAO_AUDITADA,
-      [contexto.getHandler(), contexto.getClass()],
-    );
+    const descricao = this.reflector.getAllAndOverride<DescricaoDaAcao>(ACAO_AUDITADA, [
+      contexto.getHandler(),
+      contexto.getClass(),
+    ]);
     if (!descricao) return proximo.handle();
 
-    const req = contexto.switchToHttp().getRequest<
-      Request & { user?: JwtPayload; params: Record<string, string> }
-    >();
+    const req = contexto
+      .switchToHttp()
+      .getRequest<Request & { user?: JwtPayload; params: Record<string, string> }>();
     const estabelecimentoId = req.params?.estabelecimentoId;
     // Sem estabelecimento não há trilha: o `AuditLog` é por inquilino, e uma
     // linha sem ele não teria onde aparecer.
@@ -80,9 +75,7 @@ export class AuditoriaInterceptor implements NestInterceptor {
             autorId: req.user?.sub ?? null,
             acao: descricao.acao,
             entidade: descricao.entidade,
-            entidadeId: descricao.parametro
-              ? (req.params?.[descricao.parametro] ?? null)
-              : null,
+            entidadeId: descricao.parametro ? (req.params?.[descricao.parametro] ?? null) : null,
             dados: this.limpar(req.body),
           });
         },

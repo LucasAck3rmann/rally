@@ -16,10 +16,7 @@ export type EstadoDoLogin = { erro?: string };
  * token volta direto para um cookie httpOnly, sem encostar em
  * `localStorage`. É o que torna um XSS incapaz de levar a sessão embora.
  */
-export async function entrar(
-  _anterior: EstadoDoLogin,
-  dados: FormData,
-): Promise<EstadoDoLogin> {
+export async function entrar(_anterior: EstadoDoLogin, dados: FormData): Promise<EstadoDoLogin> {
   const email = String(dados.get("email") ?? "").trim();
   const senha = String(dados.get("senha") ?? "");
 

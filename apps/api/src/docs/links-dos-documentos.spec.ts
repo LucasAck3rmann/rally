@@ -27,7 +27,10 @@ const DOCS = join(RAIZ, "docs");
 
 /** Caminho relativo à raiz, sempre com `/`: a saída é a mesma no Windows e na CI. */
 function daRaiz(caminho: string): string {
-  return caminho.slice(RAIZ.length + 1).split("\\").join("/");
+  return caminho
+    .slice(RAIZ.length + 1)
+    .split("\\")
+    .join("/");
 }
 
 /** Todo `.md` de `docs/` (recursivo) e os da raiz do repositório. */

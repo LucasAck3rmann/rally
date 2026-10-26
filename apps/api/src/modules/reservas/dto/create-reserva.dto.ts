@@ -1,11 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  IsDateString,
-  IsEnum,
-  IsOptional,
-  IsString,
-  MaxLength,
-} from "class-validator";
+import { IsDateString, IsEnum, IsOptional, IsString, MaxLength } from "class-validator";
 import { PagamentoMetodo } from "@prisma/client";
 
 export class CreateReservaDto {

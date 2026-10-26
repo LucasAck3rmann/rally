@@ -1,21 +1,22 @@
 # Modelo de Dados — `schema.prisma` (v3) + migrações + seed
 
-> **Espelho do schema real.** A fonte de verdade é `apps/api/prisma/schema.prisma`; este documento reproduz o que está lá e explica **por que** está assim. Sincronizado em **29/09/2026** (`main`). Ao mudar o modelo, mude o schema primeiro e traga a mudança para cá no mesmo *pull request* — foi por não fazer isso que este arquivo passou a descrever uma trava anti-overbooking que já não existia.
+> **Espelho do schema real.** A fonte de verdade é `apps/api/prisma/schema.prisma`; este documento reproduz o que está lá e explica **por que** está assim. Sincronizado em **29/09/2026** (`main`). Ao mudar o modelo, mude o schema primeiro e traga a mudança para cá no mesmo _pull request_ — foi por não fazer isso que este arquivo passou a descrever uma trava anti-overbooking que já não existia.
 >
 > São **22 entidades e 11 enumerações**, multi-tenant por `estabelecimentoId` (estratégia em [ADR-0011 — Estratégia Multi-tenant](adr/0011-multi-tenant.md)). Entidades do [§15 de Arquitetura](arquitetura.md); regras de negócio em [Requisitos](requisitos.md) §5; ORM escolhido no [ADR-0004](adr/README.md).
 
 ## Decisões de modelagem
 
-- **Multi-tenancy:** tudo pendura em **`Estabelecimento`** (o *tenant*); papéis em **`Membership`** (Usuario × Estabelecimento × Role). O papel é lido do vínculo, nunca do token.
+- **Multi-tenancy:** tudo pendura em **`Estabelecimento`** (o _tenant_); papéis em **`Membership`** (Usuario × Estabelecimento × Role). O papel é lido do vínculo, nunca do token.
 - **Dinheiro:** `Decimal` — nunca `Float`. Ponto flutuante tem erro de representação em base 2, e dinheiro exige exatidão decimal. **IDs:** `cuid()`. **Horas de funcionamento:** `"HH:mm"` em texto + `timezone` do estabelecimento.
-- **Config por estabelecimento:** slot, antecedência, janela de cancelamento, desconto Pix e expiração do Pix são **dados, não código** — RN-02/03/07/08/13. É o que permite mudar a regra de um cliente sem *deploy*.
-- **Anti-overbooking (RN-01):** a trava é a *exclusion constraint* **`reserva_sem_sobreposicao`**, aplicada por migração. **Não há `@@unique([quadraId, inicio])`** — ele foi removido por proteger pouco e atrapalhar muito (ver a seção de migrações).
+- **Config por estabelecimento:** slot, antecedência, janela de cancelamento, desconto Pix e expiração do Pix são **dados, não código** — RN-02/03/07/08/13. É o que permite mudar a regra de um cliente sem _deploy_.
+- **Anti-overbooking (RN-01):** a trava é a _exclusion constraint_ **`reserva_sem_sobreposicao`**, aplicada por migração. **Não há `@@unique([quadraId, inicio])`** — ele foi removido por proteger pouco e atrapalhar muito (ver a seção de migrações).
 - **Notificação (RF-16):** `Notificacao` é o aviso in-app já emitido; `NotificationPreference` é a preferência de canal, que existe desde junho e ainda não tem canal externo para preferir.
 - **LGPD/auditoria:** `AuditLog` para ações sensíveis (RN-05) — a entidade existe e **ainda não é escrita**; consentimento no `Usuario`; exclusão anonimiza em vez de apagar, preservando o registro financeiro que a lei exige manter (RN-18).
 
 ## `schema.prisma`
 
 <!-- REUSE-IgnoreStart -->
+
 ```prisma
 // SPDX-License-Identifier: AGPL-3.0-or-later
 // Rally — schema de dados (PostgreSQL + Prisma)
@@ -543,23 +544,24 @@ model AuditLog {
 // model Plano   { id String @id @default(cuid()) }
 // model Aula    { id String @id @default(cuid()) }
 ```
+
 <!-- REUSE-IgnoreEnd -->
 
 ## Migrações
 
 Em `apps/api/prisma/migrations/`, aplicadas e verificadas contra PostgreSQL real na CI (job "Migrações e concorrência"):
 
-| Migração | O que faz |
-|---|---|
-| `20260928233000_init` | Linha de base, gerada com `prisma migrate diff --from-empty` (dispensa banco rodando) |
-| `20260928233100_reserva_sem_sobreposicao` | Troca o índice único pela *exclusion constraint* — ver abaixo |
-| `20260929170713_notificacoes` | `Notificacao` e `NotificacaoTipo` (RF-16) |
-| `20261002120000_replay_s3key_unico` | Índice único em `Replay.s3Key`. A idempotência da ingestão fica no banco e não na aplicação: entre o `SELECT` e o `INSERT` cabe a segunda entrega do provedor, e quem perde o conflito devolve o vencedor |
-| `20261013170000_cupom_limite_de_usos` | Restrição `promocao_usos_dentro_do_limite` (CHECK) e a coluna `cuponsAcumulam`. O limite de usos fica no banco pelo mesmo motivo da trava de sobreposição: entre ler o contador e gravar cabe outra requisição, e o cupom de cinquenta usos sai cinquenta e um |
-| `20261013180000_token_de_senha` | `TokenDeSenha` (RF-03). Guarda o **resumo** do token e não o token, pelo mesmo motivo de `senhaHash` |
-| `20261013190000_verificacao_de_email` | `TokenDeEmail` (RF-03). Tabela separada da anterior de propósito: validade diferente (7 dias contra 30 min) e consequência diferente — uma confirma um fato, a outra troca uma credencial |
-| `20261014100000_lembrete_de_jogo` | `Reserva.lembreteEnviadoEm` e um índice **parcial** `WHERE "lembreteEnviadoEm" IS NULL` (RF-17). Parcial porque o job pergunta sempre *quais faltam*: as linhas saem do índice quando o aviso sai, então ele não cresce com o histórico |
-| `20261017120000_mensalistas` | `Recorrencia` e a chave estrangeira anulável `Reserva.recorrenciaId` (ADR-0014, RF-36). A ocorrência de mensalista é **reserva de verdade**, e por isso cai sob a `reserva_sem_sobreposicao` como qualquer outra — série virtual não teria linha, e a restrição protege linha que existe. O índice `(recorrenciaId, inicio)` serve a encerrar as ocorrências futuras de uma série sem varrer a tabela |
+| Migração                                  | O que faz                                                                                                                                                                                                                                                                                                                                                                                             |
+| ----------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `20260928233000_init`                     | Linha de base, gerada com `prisma migrate diff --from-empty` (dispensa banco rodando)                                                                                                                                                                                                                                                                                                                 |
+| `20260928233100_reserva_sem_sobreposicao` | Troca o índice único pela _exclusion constraint_ — ver abaixo                                                                                                                                                                                                                                                                                                                                         |
+| `20260929170713_notificacoes`             | `Notificacao` e `NotificacaoTipo` (RF-16)                                                                                                                                                                                                                                                                                                                                                             |
+| `20261002120000_replay_s3key_unico`       | Índice único em `Replay.s3Key`. A idempotência da ingestão fica no banco e não na aplicação: entre o `SELECT` e o `INSERT` cabe a segunda entrega do provedor, e quem perde o conflito devolve o vencedor                                                                                                                                                                                             |
+| `20261013170000_cupom_limite_de_usos`     | Restrição `promocao_usos_dentro_do_limite` (CHECK) e a coluna `cuponsAcumulam`. O limite de usos fica no banco pelo mesmo motivo da trava de sobreposição: entre ler o contador e gravar cabe outra requisição, e o cupom de cinquenta usos sai cinquenta e um                                                                                                                                        |
+| `20261013180000_token_de_senha`           | `TokenDeSenha` (RF-03). Guarda o **resumo** do token e não o token, pelo mesmo motivo de `senhaHash`                                                                                                                                                                                                                                                                                                  |
+| `20261013190000_verificacao_de_email`     | `TokenDeEmail` (RF-03). Tabela separada da anterior de propósito: validade diferente (7 dias contra 30 min) e consequência diferente — uma confirma um fato, a outra troca uma credencial                                                                                                                                                                                                             |
+| `20261014100000_lembrete_de_jogo`         | `Reserva.lembreteEnviadoEm` e um índice **parcial** `WHERE "lembreteEnviadoEm" IS NULL` (RF-17). Parcial porque o job pergunta sempre _quais faltam_: as linhas saem do índice quando o aviso sai, então ele não cresce com o histórico                                                                                                                                                               |
+| `20261017120000_mensalistas`              | `Recorrencia` e a chave estrangeira anulável `Reserva.recorrenciaId` (ADR-0014, RF-36). A ocorrência de mensalista é **reserva de verdade**, e por isso cai sob a `reserva_sem_sobreposicao` como qualquer outra — série virtual não teria linha, e a restrição protege linha que existe. O índice `(recorrenciaId, inicio)` serve a encerrar as ocorrências futuras de uma série sem varrer a tabela |
 
 ### Anti-overbooking (RN-01) — por que deixou de ser índice único
 
@@ -582,7 +584,7 @@ ALTER TABLE "Reserva"
   WHERE (status <> 'CANCELADA');
 ```
 
-- **`btree_gist`** é o que permite misturar a *igualdade* de `quadraId` (texto) com o operador de intervalo no mesmo índice GiST.
+- **`btree_gist`** é o que permite misturar a _igualdade_ de `quadraId` (texto) com o operador de intervalo no mesmo índice GiST.
 - **`tsrange` usa limites `[início, fim)`** — fechado à esquerda, aberto à direita. É isso que deixa 19:00–20:00 e 20:00–21:00 coexistirem, comportamento esperado de uma grade de slots encostados. Com limites fechados dos dois lados, a grade inteira travaria.
 - **`WHERE (status <> 'CANCELADA')`** devolve o horário ao mercado depois de um cancelamento.
 
@@ -593,7 +595,7 @@ ALTER TABLE "Reserva"
 Idempotente (pode rodar quantas vezes quiser) e desenhado para reproduzir os dados das telas do Figma, de modo que o app suba com conteúdo real:
 
 - **Modalidades:** Beach Tennis, Futevôlei e Vôlei.
-- **Dois estabelecimentos:** *Arena Beach Sapiranga* e *Vila do Vôlei*, com horário de funcionamento, quadras, fotos, comodidades e faixas de preço de pico.
+- **Dois estabelecimentos:** _Arena Beach Sapiranga_ e _Vila do Vôlei_, com horário de funcionamento, quadras, fotos, comodidades e faixas de preço de pico.
 - **Dois usuários:** um dono (com `Membership` de `ADMIN`) e um cliente. Senha de desenvolvimento igual para os dois.
 - **Promoção** do card da Home e **replays** do cliente para a tela de Replays.
 

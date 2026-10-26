@@ -87,9 +87,7 @@ describe("RelatoriosController (RF-27, RF-28)", () => {
     it("declara o tipo de conteúdo certo", async () => {
       const s = servico();
       const { res, cabecalhos } = resposta();
-      const controlador = new RelatoriosController(
-        s as unknown as RelatoriosService,
-      );
+      const controlador = new RelatoriosController(s as unknown as RelatoriosService);
 
       await controlador[formato](E, DE, ATE, res);
 
@@ -102,9 +100,7 @@ describe("RelatoriosController (RF-27, RF-28)", () => {
       // seguidos viriam indistinguíveis na pasta.
       const s = servico();
       const { res, cabecalhos } = resposta();
-      const controlador = new RelatoriosController(
-        s as unknown as RelatoriosService,
-      );
+      const controlador = new RelatoriosController(s as unknown as RelatoriosService);
 
       await controlador[formato](E, DE, ATE, res);
 
@@ -116,9 +112,7 @@ describe("RelatoriosController (RF-27, RF-28)", () => {
     it("envia o conteúdo que o serviço montou, sem reescrevê-lo", async () => {
       const s = servico();
       const { res, enviado } = resposta();
-      const controlador = new RelatoriosController(
-        s as unknown as RelatoriosService,
-      );
+      const controlador = new RelatoriosController(s as unknown as RelatoriosService);
 
       await controlador[formato](E, DE, ATE, res);
 
@@ -129,9 +123,7 @@ describe("RelatoriosController (RF-27, RF-28)", () => {
     it("repassa estabelecimento e período ao serviço", async () => {
       const s = servico();
       const { res } = resposta();
-      const controlador = new RelatoriosController(
-        s as unknown as RelatoriosService,
-      );
+      const controlador = new RelatoriosController(s as unknown as RelatoriosService);
 
       await controlador[formato](E, DE, ATE, res);
 
@@ -176,9 +168,7 @@ describe("RelatoriosController (RF-27, RF-28)", () => {
     const { res, enviado } = resposta();
     const controlador = new RelatoriosController(s as unknown as RelatoriosService);
 
-    await expect(controlador.pdf(E, DE, ATE, res)).rejects.toThrow(
-      "período inválido",
-    );
+    await expect(controlador.pdf(E, DE, ATE, res)).rejects.toThrow("período inválido");
     expect(enviado.corpo).toBeUndefined();
   });
 });

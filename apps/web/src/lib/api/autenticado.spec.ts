@@ -32,9 +32,7 @@ function resposta(
   return {
     ok: status >= 200 && status < 300,
     status,
-    json: json
-      ? () => Promise.resolve(corpo)
-      : () => Promise.reject(new Error("corpo não é JSON")),
+    json: json ? () => Promise.resolve(corpo) : () => Promise.reject(new Error("corpo não é JSON")),
   } as Response;
 }
 
@@ -58,9 +56,7 @@ describe("chamarApiAutenticada", () => {
 
     const [, opcoes] = vi.mocked(fetch).mock.calls[0];
     expect(opcoes?.cache).toBe("no-store");
-    expect((opcoes?.headers as Record<string, string>).Authorization).toBe(
-      "Bearer token-bom",
-    );
+    expect((opcoes?.headers as Record<string, string>).Authorization).toBe("Bearer token-bom");
   });
 
   it("sem token, nem chega a chamar a API", async () => {
@@ -92,10 +88,7 @@ describe("chamarApiAutenticada", () => {
     // O `ValidationPipe` do Nest devolve `message` como array. Exibir o array
     // inteiro, ou `[object Object]`, perderia a única frase útil.
     vi.mocked(fetch).mockResolvedValue(
-      resposta(
-        { message: ["O código do cupom é obrigatório.", "e mais uma"] },
-        { status: 400 },
-      ),
+      resposta({ message: ["O código do cupom é obrigatório.", "e mais uma"] }, { status: 400 }),
     );
 
     await expect(chamarApiAutenticada("/cupons", Quadra)).rejects.toThrow(
@@ -106,13 +99,9 @@ describe("chamarApiAutenticada", () => {
   it("erro sem corpo legível ainda diz o status e o caminho", async () => {
     // 502 de proxy costuma vir em HTML. Sem este caminho, o `json()` estoura
     // e o usuário vê uma falha de parse em vez do erro real.
-    vi.mocked(fetch).mockResolvedValue(
-      resposta(null, { status: 502, json: false }),
-    );
+    vi.mocked(fetch).mockResolvedValue(resposta(null, { status: 502, json: false }));
 
-    await expect(chamarApiAutenticada("/painel", Quadra)).rejects.toThrow(
-      /502 em \/painel/,
-    );
+    await expect(chamarApiAutenticada("/painel", Quadra)).rejects.toThrow(/502 em \/painel/);
   });
 
   it("API fora do ar vira ErroDeApi com status 0", async () => {
@@ -147,9 +136,7 @@ describe("chamarApiAutenticada", () => {
       json: () => Promise.reject(new Error("não deveria ler")),
     } as unknown as Response);
 
-    await expect(
-      chamarApiAutenticada("/privacidade/minha-conta", Quadra),
-    ).resolves.toBeUndefined();
+    await expect(chamarApiAutenticada("/privacidade/minha-conta", Quadra)).resolves.toBeUndefined();
   });
 
   it("monta os parâmetros de consulta, ignorando os ausentes", async () => {
@@ -177,9 +164,7 @@ describe("chamarApiAutenticada", () => {
     const [, opcoes] = vi.mocked(fetch).mock.calls[0];
     expect(opcoes?.method).toBe("POST");
     expect(opcoes?.body).toBe(JSON.stringify({ codigo: "BORAJOGAR" }));
-    expect((opcoes?.headers as Record<string, string>)["Content-Type"]).toBe(
-      "application/json",
-    );
+    expect((opcoes?.headers as Record<string, string>)["Content-Type"]).toBe("application/json");
   });
 
   it("leitura não manda Content-Type, porque não tem corpo", async () => {

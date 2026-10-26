@@ -27,10 +27,7 @@ export class AuditoriaController {
 
   @Get()
   @Papeis(Role.ADMIN)
-  listar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Query("limite") limite?: string,
-  ) {
+  listar(@Param("estabelecimentoId") estabelecimentoId: string, @Query("limite") limite?: string) {
     // O teto fica no serviço: a trilha cresce para sempre, e um `limite`
     // sem limite viraria uma leitura de tabela inteira pela URL.
     return this.auditoria.listar(estabelecimentoId, Number(limite ?? 100));

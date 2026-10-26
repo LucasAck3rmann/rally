@@ -47,18 +47,14 @@ export async function repassarArquivo({
   if (!resposta || !resposta.ok) {
     // Texto simples e não JSON: quem clicou esperava um arquivo, e um
     // objeto de erro na tela não diz nada a quem não é programador.
-    return new NextResponse(
-      "Não foi possível gerar o relatório. Tente de novo em instantes.",
-      {
-        status: resposta?.status ?? 502,
-        headers: { "Content-Type": "text/plain; charset=utf-8" },
-      },
-    );
+    return new NextResponse("Não foi possível gerar o relatório. Tente de novo em instantes.", {
+      status: resposta?.status ?? 502,
+      headers: { "Content-Type": "text/plain; charset=utf-8" },
+    });
   }
 
   const disposicao =
-    resposta.headers.get("content-disposition") ??
-    `attachment; filename="${nomePadrao}"`;
+    resposta.headers.get("content-disposition") ?? `attachment; filename="${nomePadrao}"`;
 
   // `arrayBuffer` e não `text`: XLSX e PDF são binários, e ler como texto
   // os corrompe.

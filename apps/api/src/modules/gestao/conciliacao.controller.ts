@@ -1,12 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  Controller,
-  Get,
-  Param,
-  Post,
-  UseGuards,
-  UseInterceptors,
-} from "@nestjs/common";
+import { Controller, Get, Param, Post, UseGuards, UseInterceptors } from "@nestjs/common";
 import { Role } from "@prisma/client";
 
 import { Papeis } from "../auth/decorators/papeis.decorator";

@@ -61,12 +61,7 @@ export class EquipeController {
   ) {
     // Quem pediu importa: rebaixar a si mesmo sendo o único admin tranca a
     // arena, e a mensagem de recusa precisa dizer isso com todas as letras.
-    return this.equipe.trocarPapel(
-      estabelecimentoId,
-      usuarioId,
-      dto.papel,
-      usuario.sub,
-    );
+    return this.equipe.trocarPapel(estabelecimentoId, usuarioId, dto.papel, usuario.sub);
   }
 
   @Delete(":usuarioId")

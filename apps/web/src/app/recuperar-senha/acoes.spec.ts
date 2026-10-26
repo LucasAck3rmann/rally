@@ -30,9 +30,7 @@ function resposta(corpo: unknown, status = 200, json = true) {
   return {
     ok: status >= 200 && status < 300,
     status,
-    json: json
-      ? () => Promise.resolve(corpo)
-      : () => Promise.reject(new Error("não é JSON")),
+    json: json ? () => Promise.resolve(corpo) : () => Promise.reject(new Error("não é JSON")),
   } as Response;
 }
 
@@ -61,9 +59,7 @@ describe("pedirLink", () => {
     // **A asserção que mais importa.** Percorre os status que a API pode
     // devolver e confere que nenhuma mensagem menciona existência de conta.
     for (const status of [401, 403, 404, 409, 500, 502]) {
-      vi.mocked(fetch).mockResolvedValue(
-        resposta({ message: "Usuário não encontrado" }, status),
-      );
+      vi.mocked(fetch).mockResolvedValue(resposta({ message: "Usuário não encontrado" }, status));
 
       const estado = await pedirLink({}, formulario({ email: "x@y.com" }));
 
@@ -116,9 +112,7 @@ describe("pedirLink", () => {
   it("API fora do ar tem mensagem própria", async () => {
     vi.mocked(fetch).mockRejectedValue(new Error("ECONNREFUSED"));
 
-    expect((await pedirLink({}, formulario({ email: "a@b.com" }))).erro).toMatch(
-      /não respondeu/i,
-    );
+    expect((await pedirLink({}, formulario({ email: "a@b.com" }))).erro).toMatch(/não respondeu/i);
   });
 });
 
@@ -157,7 +151,10 @@ describe("redefinir", () => {
   });
 
   it("senha curta é barrada no servidor", async () => {
-    const estado = await redefinir({}, formulario({ ...VALIDO, senha: "12345", confirmacao: "12345" }));
+    const estado = await redefinir(
+      {},
+      formulario({ ...VALIDO, senha: "12345", confirmacao: "12345" }),
+    );
 
     expect(estado.erro).toMatch(/6 caracteres/);
     expect(fetch).not.toHaveBeenCalled();
@@ -167,10 +164,7 @@ describe("redefinir", () => {
     // O formulário funciona sem JavaScript. Sem esta checagem, a conta sairia
     // com a senha que a pessoa digitou errado nos dois campos sem perceber —
     // e ela não conseguiria mais entrar, sem saber por quê.
-    const estado = await redefinir(
-      {},
-      formulario({ ...VALIDO, confirmacao: "outra123" }),
-    );
+    const estado = await redefinir({}, formulario({ ...VALIDO, confirmacao: "outra123" }));
 
     expect(estado.erro).toMatch(/não são iguais/i);
     expect(fetch).not.toHaveBeenCalled();
@@ -179,10 +173,7 @@ describe("redefinir", () => {
   it("a ordem das validações protege a mais específica", async () => {
     // Token ausente **e** senha curta: a mensagem é do token, porque pedir um
     // link novo é o que resolve — corrigir a senha num link inválido não.
-    const estado = await redefinir(
-      {},
-      formulario({ token: "", senha: "1", confirmacao: "2" }),
-    );
+    const estado = await redefinir({}, formulario({ token: "", senha: "1", confirmacao: "2" }));
 
     expect(estado.erro).toMatch(/link inválido/i);
   });
@@ -191,13 +182,9 @@ describe("redefinir", () => {
     // Aqui, ao contrário do `pedirLink`, a mensagem do servidor é a parte
     // útil: ela fala do **token**, não da conta, e diz se o link já foi usado
     // ou se venceu.
-    vi.mocked(fetch).mockResolvedValue(
-      resposta({ message: "Este link já foi usado." }, 400),
-    );
+    vi.mocked(fetch).mockResolvedValue(resposta({ message: "Este link já foi usado." }, 400));
 
-    expect((await redefinir({}, formulario(VALIDO))).erro).toBe(
-      "Este link já foi usado.",
-    );
+    expect((await redefinir({}, formulario(VALIDO))).erro).toBe("Este link já foi usado.");
   });
 
   it("limite de tentativas não repassa a mensagem do framework", async () => {
@@ -219,17 +206,13 @@ describe("redefinir", () => {
       resposta({ message: ["A senha é obrigatória.", "e outra"] }, 400),
     );
 
-    expect((await redefinir({}, formulario(VALIDO))).erro).toBe(
-      "A senha é obrigatória.",
-    );
+    expect((await redefinir({}, formulario(VALIDO))).erro).toBe("A senha é obrigatória.");
   });
 
   it("erro sem corpo legível cai no texto que diz o que fazer", async () => {
     vi.mocked(fetch).mockResolvedValue(resposta(null, 502, false));
 
-    expect((await redefinir({}, formulario(VALIDO))).erro).toMatch(
-      /peça um novo link/i,
-    );
+    expect((await redefinir({}, formulario(VALIDO))).erro).toMatch(/peça um novo link/i);
   });
 
   it("falha não redireciona", async () => {
@@ -243,8 +226,6 @@ describe("redefinir", () => {
   it("API fora do ar tem mensagem própria", async () => {
     vi.mocked(fetch).mockRejectedValue(new Error("ECONNREFUSED"));
 
-    expect((await redefinir({}, formulario(VALIDO))).erro).toMatch(
-      /não respondeu/i,
-    );
+    expect((await redefinir({}, formulario(VALIDO))).erro).toMatch(/não respondeu/i);
   });
 });

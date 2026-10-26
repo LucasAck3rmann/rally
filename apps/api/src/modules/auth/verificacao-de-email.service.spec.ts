@@ -17,9 +17,7 @@ function servico(
   } = {},
 ) {
   const criarToken = jest.fn().mockResolvedValue({ id: "t1" });
-  const marcarUso = jest
-    .fn()
-    .mockResolvedValue({ count: opcoes.jaUsadoNaCorrida ? 0 : 1 });
+  const marcarUso = jest.fn().mockResolvedValue({ count: opcoes.jaUsadoNaCorrida ? 0 : 1 });
   const marcarUsuario = jest.fn().mockResolvedValue({});
   const enviar = opcoes.erroAoEnviar
     ? jest.fn().mockRejectedValue(opcoes.erroAoEnviar)
@@ -59,9 +57,7 @@ describe("VerificacaoDeEmailService.enviar (RF-03)", () => {
     const { servico: s, criarToken, enviar } = servico();
     await s.enviar("u1", "Lucas", "lucas@exemplo.com");
 
-    const link = (enviar.mock.calls[0][0].texto as string).match(
-      /token=([^\s]+)/,
-    )![1];
+    const link = (enviar.mock.calls[0][0].texto as string).match(/token=([^\s]+)/)![1];
     expect(criarToken.mock.calls[0][0].data.tokenHash).toBe(
       createHash("sha256").update(link).digest("hex"),
     );
@@ -75,9 +71,7 @@ describe("VerificacaoDeEmailService.enviar (RF-03)", () => {
     const { servico: s, criarToken, enviar } = servico();
     await s.enviar("u1", "Lucas", "lucas@exemplo.com");
 
-    expect(criarToken.mock.calls[0][0].data.expiraEm).toEqual(
-      new Date(AGORA.getTime() + 7 * DIA),
-    );
+    expect(criarToken.mock.calls[0][0].data.expiraEm).toEqual(new Date(AGORA.getTime() + 7 * DIA));
     expect(enviar.mock.calls[0][0].texto).toContain("7 dias");
   });
 
@@ -104,9 +98,7 @@ describe("VerificacaoDeEmailService.enviar (RF-03)", () => {
     const aviso = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
     const { servico: s } = servico({ erroAoEnviar: new Error("smtp fora") });
 
-    await expect(
-      s.enviar("u1", "Lucas", "lucas@exemplo.com"),
-    ).resolves.toBeUndefined();
+    await expect(s.enviar("u1", "Lucas", "lucas@exemplo.com")).resolves.toBeUndefined();
     aviso.mockRestore();
   });
 });
@@ -155,10 +147,7 @@ describe("VerificacaoDeEmailService.confirmar (RF-03)", () => {
   it("token inexistente e vencido são recusados com o motivo", async () => {
     for (const [token, motivo] of [
       [null, /inválido/i],
-      [
-        { ...valido, expiraEm: new Date(AGORA.getTime() - DIA) },
-        /venceu/i,
-      ],
+      [{ ...valido, expiraEm: new Date(AGORA.getTime() - DIA) }, /venceu/i],
     ] as const) {
       const { servico: s } = servico({ token });
       await expect(s.confirmar("t")).rejects.toThrow(motivo);

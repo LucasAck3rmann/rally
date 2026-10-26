@@ -58,11 +58,7 @@ describe("GestaoService.meusEstabelecimentos", () => {
   it("os papéis listados são exatamente os de gestão da arena", async () => {
     // Amarra a constante ao significado: MANTENEDOR é papel da plataforma e
     // CLIENTE é de quem só joga; nenhum dos dois administra arena.
-    expect(PAPEIS_DE_GESTAO).toEqual([
-      Role.ADMIN,
-      Role.ATENDENTE,
-      Role.FINANCEIRO,
-    ]);
+    expect(PAPEIS_DE_GESTAO).toEqual([Role.ADMIN, Role.ATENDENTE, Role.FINANCEIRO]);
     expect(PAPEIS_DE_GESTAO).not.toContain(Role.MANTENEDOR);
     expect(PAPEIS_DE_GESTAO).not.toContain(Role.CLIENTE);
   });

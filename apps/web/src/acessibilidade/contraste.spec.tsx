@@ -38,9 +38,7 @@ type Par = { frente: string; fundo: string; uso: string };
 
 function luminancia(hex: string): number {
   const canais = [1, 3, 5].map((i) => parseInt(hex.slice(i, i + 2), 16) / 255);
-  const [r, g, b] = canais.map((c) =>
-    c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4,
-  );
+  const [r, g, b] = canais.map((c) => (c <= 0.04045 ? c / 12.92 : ((c + 0.055) / 1.055) ** 2.4));
   return 0.2126 * r + 0.7152 * g + 0.0722 * b;
 }
 
@@ -77,16 +75,20 @@ const COMPONENTE: Par[] = [
 describe("contraste — texto, mínimo 4,5:1 (WCAG 1.4.3, AA)", () => {
   it.each(TEXTO)("$uso", ({ frente, fundo, uso }) => {
     const razao = contraste(frente, fundo);
-    expect(razao, `${uso}: ${frente} sobre ${fundo} = ${razao.toFixed(2)}:1`)
-      .toBeGreaterThanOrEqual(4.5);
+    expect(
+      razao,
+      `${uso}: ${frente} sobre ${fundo} = ${razao.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(4.5);
   });
 });
 
 describe("contraste — componentes e ícones, mínimo 3:1 (WCAG 1.4.11, AA)", () => {
   it.each(COMPONENTE)("$uso", ({ frente, fundo, uso }) => {
     const razao = contraste(frente, fundo);
-    expect(razao, `${uso}: ${frente} sobre ${fundo} = ${razao.toFixed(2)}:1`)
-      .toBeGreaterThanOrEqual(3);
+    expect(
+      razao,
+      `${uso}: ${frente} sobre ${fundo} = ${razao.toFixed(2)}:1`,
+    ).toBeGreaterThanOrEqual(3);
   });
 });
 
@@ -114,12 +116,13 @@ describe("o coral puro não carrega informação", () => {
         const classes = el.className.split(/\s+/);
         if (!classes.includes("text-coral")) continue; // text-coral-deep passa
         if (el.closest('[aria-hidden="true"]')) continue;
-        expostos.push(`${cenario.nome} → <${el.tagName.toLowerCase()}> "${el.textContent?.trim().slice(0, 30)}"`);
+        expostos.push(
+          `${cenario.nome} → <${el.tagName.toLowerCase()}> "${el.textContent?.trim().slice(0, 30)}"`,
+        );
       }
       document.body.innerHTML = "";
     }
 
-    expect(expostos, `coral puro visível ao leitor:\n  ${expostos.join("\n  ")}`)
-      .toEqual([]);
+    expect(expostos, `coral puro visível ao leitor:\n  ${expostos.join("\n  ")}`).toEqual([]);
   });
 });

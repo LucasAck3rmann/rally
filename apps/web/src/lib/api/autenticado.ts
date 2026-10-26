@@ -59,9 +59,7 @@ export async function chamarApiAutenticada<S extends ZodTypeAny>(
     const corpo = (await resposta.json().catch(() => null)) as {
       message?: string | string[];
     } | null;
-    const mensagem = Array.isArray(corpo?.message)
-      ? corpo.message[0]
-      : corpo?.message;
+    const mensagem = Array.isArray(corpo?.message) ? corpo.message[0] : corpo?.message;
     throw new ErroDeApi(
       resposta.status,
       mensagem ?? `A API respondeu ${resposta.status} em ${caminho}.`,

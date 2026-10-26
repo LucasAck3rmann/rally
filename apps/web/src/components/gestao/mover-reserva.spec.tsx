@@ -38,8 +38,7 @@ describe("intervalo local da grade", () => {
     // Encurtar em silêncio devolveria para a venda uma hora que o cliente
     // já tinha comprado.
     const { inicio, fim } = intervaloLocal("2026-10-05", 19, 2);
-    const horas =
-      (new Date(fim).getTime() - new Date(inicio).getTime()) / 3_600_000;
+    const horas = (new Date(fim).getTime() - new Date(inicio).getTime()) / 3_600_000;
     expect(horas).toBe(2);
   });
 
@@ -85,9 +84,7 @@ describe("Mover reserva", () => {
 
     const quadra = screen.getByLabelText("Quadra");
     expect(within(quadra).getAllByRole("option")).toHaveLength(3);
-    expect(
-      within(quadra).getByRole("option", { name: "Quadra 3" }),
-    ).toBeInTheDocument();
+    expect(within(quadra).getByRole("option", { name: "Quadra 3" })).toBeInTheDocument();
   });
 
   it("fecha sem enviar quando o dono desiste", () => {

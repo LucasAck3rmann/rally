@@ -33,8 +33,7 @@ function renderizar(props: Partial<Parameters<typeof BotaoDeAcao>[0]> = {}) {
   return { acao };
 }
 
-const botao = (nome: RegExp | string = /pausar/i) =>
-  screen.getByRole("button", { name: nome });
+const botao = (nome: RegExp | string = /pausar/i) => screen.getByRole("button", { name: nome });
 
 describe("BotaoDeAcao", () => {
   it("executa a ação no clique quando não há confirmação", async () => {
@@ -105,14 +104,12 @@ describe("BotaoDeAcao", () => {
   it("mostra a mensagem do servidor, inteira, num alerta", async () => {
     // **A asserção que mais importa.** `role="alert"` para o leitor de tela
     // anunciar sem a pessoa procurar, e o texto é o da API.
-    const acao = vi
-      .fn()
-      .mockResolvedValue({
-        ok: false,
-        erro:
-          "Você é o único administrador de Arena Beira-Rio. Promova outra " +
-          "pessoa a administrador antes de excluir a conta.",
-      });
+    const acao = vi.fn().mockResolvedValue({
+      ok: false,
+      erro:
+        "Você é o único administrador de Arena Beira-Rio. Promova outra " +
+        "pessoa a administrador antes de excluir a conta.",
+    });
     render(<BotaoDeAcao acao={acao}>Tirar</BotaoDeAcao>);
 
     fireEvent.click(botao(/tirar/i));

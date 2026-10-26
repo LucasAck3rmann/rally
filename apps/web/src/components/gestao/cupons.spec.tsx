@@ -25,13 +25,7 @@ function cupom(parcial: Partial<CupomDaGestao> = {}): CupomDaGestao {
 }
 
 function montar(cupons: CupomDaGestao[] = [cupom()], podeEditar = true) {
-  render(
-    <CuponsDaArena
-      cupons={cupons}
-      estabelecimentoId="e1"
-      podeEditar={podeEditar}
-    />,
-  );
+  render(<CuponsDaArena cupons={cupons} estabelecimentoId="e1" podeEditar={podeEditar} />);
 }
 
 describe("Cupons da arena", () => {
@@ -64,8 +58,7 @@ describe("Cupons da arena", () => {
       }),
     ]);
 
-    const linha = (codigo: string) =>
-      screen.getByText(codigo).closest("li")!;
+    const linha = (codigo: string) => screen.getByText(codigo).closest("li")!;
     expect(within(linha("DESLIGADO")).getByText("Desligado")).toBeInTheDocument();
     expect(within(linha("VENCIDO")).getByText("Vencido")).toBeInTheDocument();
     expect(within(linha("ESGOTADO")).getByText("Esgotado")).toBeInTheDocument();

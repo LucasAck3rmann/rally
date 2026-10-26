@@ -25,28 +25,22 @@ function divergencia(opcoes: Partial<Divergencia> = {}): Divergencia {
   };
 }
 
-function montar(
-  parcial: Partial<Conciliacao> = {},
-  podeExpirar = true,
-) {
+function montar(parcial: Partial<Conciliacao> = {}, podeExpirar = true) {
   const divergencias = parcial.divergencias ?? [divergencia()];
   render(
     <ConciliacaoDaArena
       conciliacao={{
         conferidas: parcial.conferidas ?? 12,
-        graves:
-          parcial.graves ??
-          divergencias.filter((d) => d.gravidade === "grave").length,
+        graves: parcial.graves ?? divergencias.filter((d) => d.gravidade === "grave").length,
         divergencias,
-        porTipo:
-          parcial.porTipo ?? [
-            {
-              tipo: "PENDENTE_EXPIRADA",
-              quantidade: 1,
-              descricao: "Pix expirou e a reserva continua ocupando o horário.",
-              gravidade: "grave",
-            },
-          ],
+        porTipo: parcial.porTipo ?? [
+          {
+            tipo: "PENDENTE_EXPIRADA",
+            quantidade: 1,
+            descricao: "Pix expirou e a reserva continua ocupando o horário.",
+            gravidade: "grave",
+          },
+        ],
       }}
       estabelecimentoId="e1"
       podeExpirar={podeExpirar}

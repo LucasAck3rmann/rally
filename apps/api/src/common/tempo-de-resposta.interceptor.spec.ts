@@ -5,10 +5,7 @@ import { of, throwError } from "rxjs";
 import { Latencia } from "./latencia";
 import { TempoDeRespostaInterceptor } from "./tempo-de-resposta.interceptor";
 
-function contexto(
-  req: Record<string, unknown>,
-  tipo: "http" | "rpc" = "http",
-): ExecutionContext {
+function contexto(req: Record<string, unknown>, tipo: "http" | "rpc" = "http"): ExecutionContext {
   return {
     getType: () => tipo,
     switchToHttp: () => ({ getRequest: () => req }),
@@ -48,10 +45,7 @@ describe("TempoDeRespostaInterceptor (RNF-01)", () => {
 
     await consumir(interceptor.intercept(contexto(req), respondeOk));
     await consumir(
-      interceptor.intercept(
-        contexto({ ...req, path: "/quadras/clx999" }),
-        respondeOk,
-      ),
+      interceptor.intercept(contexto({ ...req, path: "/quadras/clx999" }), respondeOk),
     );
 
     const resumo = latencia.resumo();
@@ -92,9 +86,7 @@ describe("TempoDeRespostaInterceptor (RNF-01)", () => {
   it("não mede o que não é requisição HTTP", async () => {
     // O job de expiração roda por `@Cron`, fora de rota; medi-lo como rota
     // poluiria o resumo com algo que nenhum cliente esperou.
-    await consumir(
-      interceptor.intercept(contexto({ method: "GET" }, "rpc"), respondeOk),
-    );
+    await consumir(interceptor.intercept(contexto({ method: "GET" }, "rpc"), respondeOk));
 
     expect(latencia.resumo()).toEqual([]);
   });

@@ -7,7 +7,7 @@ updates:
       interval: "weekly"
     open-pull-requests-limit: 10
     groups:
-      npm-minor-patch:                  # agrupa minor/patch num PR só
+      npm-minor-patch: # agrupa minor/patch num PR só
         update-types: ["minor", "patch"]
     commit-message:
       prefix: "chore"
@@ -20,7 +20,7 @@ updates:
     schedule:
       interval: "weekly"
     groups:
-      github-actions:                   # todas as actions num PR só (menos ruído)
+      github-actions: # todas as actions num PR só (menos ruído)
         patterns: ["*"]
     commit-message:
       prefix: "ci"

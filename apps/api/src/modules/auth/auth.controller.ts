@@ -50,9 +50,7 @@ import { JwtPayload } from "./types/jwt-payload";
  * Os nomes saem do `LIMITES`, e nao de uma lista escrita a mao: balde novo
  * no modulo entra aqui sozinho, em vez de deixar esta isencao pela metade.
  */
-const SEM_LIMITE = Object.fromEntries(
-  LIMITES.throttlers.map((t) => [t.name, true]),
-);
+const SEM_LIMITE = Object.fromEntries(LIMITES.throttlers.map((t) => [t.name, true]));
 
 @Controller("auth")
 @UseGuards(ThrottlerGuard)

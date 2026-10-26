@@ -26,7 +26,28 @@ import { QuadrasGestaoService } from "./quadras-gestao.service";
 /** Lado do dono: o que o painel do estabelecimento consome. */
 @Module({
   imports: [AuthModule, ConciliacaoModule],
-  controllers: [RecorrenciasController, GestaoController, AuditoriaController, QuadrasGestaoController, AgendaController, PainelController, EquipeController, RelatoriosController, ConciliacaoController, CuponsController],
-  providers: [RecorrenciasService, HorizonteDeMensalistasJob, GestaoService, QuadrasGestaoService, AgendaService, PainelService, EquipeService, RelatoriosService, CuponsService],
+  controllers: [
+    RecorrenciasController,
+    GestaoController,
+    AuditoriaController,
+    QuadrasGestaoController,
+    AgendaController,
+    PainelController,
+    EquipeController,
+    RelatoriosController,
+    ConciliacaoController,
+    CuponsController,
+  ],
+  providers: [
+    RecorrenciasService,
+    HorizonteDeMensalistasJob,
+    GestaoService,
+    QuadrasGestaoService,
+    AgendaService,
+    PainelService,
+    EquipeService,
+    RelatoriosService,
+    CuponsService,
+  ],
 })
 export class GestaoModule {}

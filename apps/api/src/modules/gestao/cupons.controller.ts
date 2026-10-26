@@ -44,10 +44,7 @@ export class CuponsController {
   @Post()
   @Auditar({ acao: "criar cupom", entidade: "Promocao" })
   @Papeis(Role.ADMIN)
-  criar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Body() dto: CriarCupomDto,
-  ) {
+  criar(@Param("estabelecimentoId") estabelecimentoId: string, @Body() dto: CriarCupomDto) {
     return this.cupons.criar(estabelecimentoId, dto);
   }
 

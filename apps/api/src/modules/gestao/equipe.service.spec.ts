@@ -34,18 +34,14 @@ function servico(
     usuario: {
       findUnique: jest
         .fn()
-        .mockResolvedValue(
-          opcoes.usuario === undefined ? { id: "u2" } : opcoes.usuario,
-        ),
+        .mockResolvedValue(opcoes.usuario === undefined ? { id: "u2" } : opcoes.usuario),
     },
     membership: {
       findMany: jest.fn().mockResolvedValue(opcoes.lista ?? [MEMBRO]),
       findUnique: jest
         .fn()
         .mockResolvedValue(
-          opcoes.vinculo === undefined
-            ? { id: "m1", role: Role.ATENDENTE }
-            : opcoes.vinculo,
+          opcoes.vinculo === undefined ? { id: "m1", role: Role.ATENDENTE } : opcoes.vinculo,
         ),
       count: jest.fn().mockResolvedValue(opcoes.admins ?? 2),
       create: jest.fn().mockResolvedValue(MEMBRO),
@@ -62,14 +58,9 @@ describe("EquipeService", () => {
       const { servico: s, prisma } = servico();
       await s.listar("e1");
 
-      const where = (prisma.membership.findMany as jest.Mock).mock.calls[0][0]
-        .where;
+      const where = (prisma.membership.findMany as jest.Mock).mock.calls[0][0].where;
       expect(where.estabelecimentoId).toBe("e1");
-      expect(where.role.in).toEqual([
-        Role.ADMIN,
-        Role.ATENDENTE,
-        Role.FINANCEIRO,
-      ]);
+      expect(where.role.in).toEqual([Role.ADMIN, Role.ATENDENTE, Role.FINANCEIRO]);
       expect(where.role.in).not.toContain(Role.CLIENTE);
     });
 
@@ -108,18 +99,18 @@ describe("EquipeService", () => {
       const { servico: s, prisma } = servico({ vinculo: null });
       await s.adicionar("e1", "  Augusto@Rally.com.BR  ", Role.ADMIN);
 
-      expect(
-        (prisma.usuario.findUnique as jest.Mock).mock.calls[0][0].where.email,
-      ).toBe("augusto@rally.com.br");
+      expect((prisma.usuario.findUnique as jest.Mock).mock.calls[0][0].where.email).toBe(
+        "augusto@rally.com.br",
+      );
     });
 
     it("quem não tem conta vira 404 com o motivo", async () => {
       // O MVP não tem convite pendente nem e-mail transacional; a recusa
       // diz o que fazer em vez de fingir que deu certo.
       const { servico: s } = servico({ usuario: null });
-      await expect(
-        s.adicionar("e1", "ninguem@rally.com.br", Role.ATENDENTE),
-      ).rejects.toThrow(NotFoundException);
+      await expect(s.adicionar("e1", "ninguem@rally.com.br", Role.ATENDENTE)).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("promove quem já era cliente pelo mesmo vínculo", async () => {
@@ -142,9 +133,9 @@ describe("EquipeService", () => {
       const { servico: s } = servico({
         vinculo: { id: "m1", role: Role.ATENDENTE },
       });
-      await expect(
-        s.adicionar("e1", "augusto@rally.com.br", Role.ADMIN),
-      ).rejects.toThrow(ConflictException);
+      await expect(s.adicionar("e1", "augusto@rally.com.br", Role.ADMIN)).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it("não dá para entrar como CLIENTE nem como MANTENEDOR", async () => {
@@ -152,9 +143,9 @@ describe("EquipeService", () => {
       // sairia do próprio tenant.
       const { servico: s } = servico({ vinculo: null });
       for (const papel of [Role.CLIENTE, Role.MANTENEDOR]) {
-        await expect(
-          s.adicionar("e1", "augusto@rally.com.br", papel),
-        ).rejects.toThrow(BadRequestException);
+        await expect(s.adicionar("e1", "augusto@rally.com.br", papel)).rejects.toThrow(
+          BadRequestException,
+        );
       }
     });
   });
@@ -177,9 +168,9 @@ describe("EquipeService", () => {
       const { servico: s } = servico({
         vinculo: { id: "m9", role: Role.CLIENTE },
       });
-      await expect(
-        s.trocarPapel("e1", "u9", Role.ATENDENTE, "u1"),
-      ).rejects.toThrow(NotFoundException);
+      await expect(s.trocarPapel("e1", "u9", Role.ATENDENTE, "u1")).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("não rebaixa o último administrador", async () => {
@@ -189,9 +180,9 @@ describe("EquipeService", () => {
         vinculo: { id: "m1", role: Role.ADMIN },
         admins: 1,
       });
-      await expect(
-        s.trocarPapel("e1", "u2", Role.ATENDENTE, "u1"),
-      ).rejects.toThrow(ForbiddenException);
+      await expect(s.trocarPapel("e1", "u2", Role.ATENDENTE, "u1")).rejects.toThrow(
+        ForbiddenException,
+      );
       expect(prisma.membership.update).not.toHaveBeenCalled();
     });
 
@@ -200,9 +191,9 @@ describe("EquipeService", () => {
         vinculo: { id: "m1", role: Role.ADMIN },
         admins: 1,
       });
-      await expect(
-        s.trocarPapel("e1", "u1", Role.ATENDENTE, "u1"),
-      ).rejects.toThrow("Você é o único administrador");
+      await expect(s.trocarPapel("e1", "u1", Role.ATENDENTE, "u1")).rejects.toThrow(
+        "Você é o único administrador",
+      );
     });
 
     it("com outro admin, rebaixar é permitido", async () => {
@@ -245,9 +236,7 @@ describe("EquipeService", () => {
         vinculo: { id: "m1", role: Role.ADMIN },
         admins: 1,
       });
-      await expect(s.remover("e1", "u1", "u1")).rejects.toThrow(
-        ForbiddenException,
-      );
+      await expect(s.remover("e1", "u1", "u1")).rejects.toThrow(ForbiddenException);
       expect(prisma.membership.update).not.toHaveBeenCalled();
     });
 
@@ -257,9 +246,7 @@ describe("EquipeService", () => {
 
       // ADR-0011: sem o par (usuário, estabelecimento) daria para tirar
       // alguém da equipe de outra arena.
-      expect(
-        (prisma.membership.findUnique as jest.Mock).mock.calls[0][0].where,
-      ).toEqual({
+      expect((prisma.membership.findUnique as jest.Mock).mock.calls[0][0].where).toEqual({
         usuarioId_estabelecimentoId: {
           usuarioId: "u2",
           estabelecimentoId: "e1",

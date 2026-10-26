@@ -55,11 +55,7 @@ describe("Latencia", () => {
     l.registrar("POST /lenta", 900);
     l.registrar("GET /media", 100);
 
-    expect(l.resumo().map((r) => r.rota)).toEqual([
-      "POST /lenta",
-      "GET /media",
-      "GET /rapida",
-    ]);
+    expect(l.resumo().map((r) => r.rota)).toEqual(["POST /lenta", "GET /media", "GET /rapida"]);
   });
 
   it("a janela guarda as últimas medidas, e descarta as antigas", () => {

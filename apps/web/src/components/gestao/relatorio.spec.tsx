@@ -28,9 +28,7 @@ const BASE: Relatorio = {
     { data: "2026-09-11", reservas: 0, receita: 0, horas: 0, ocupacao: 0 },
     { data: "2026-09-12", reservas: 4, receita: 400, horas: 4, ocupacao: 28.6 },
   ],
-  porQuadra: [
-    { quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 },
-  ],
+  porQuadra: [{ quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 }],
   porModalidade: [
     { modalidade: "Beach Tennis", reservas: 6, horas: 6, receita: 640, quadras: 2 },
     { modalidade: "Futevôlei", reservas: 2, horas: 2, receita: 240, quadras: 1 },
@@ -69,17 +67,11 @@ describe("Relatório da arena", () => {
     expect(excel).toHaveAttribute("download");
 
     const pdf = screen.getByRole("link", { name: "PDF" });
-    expect(pdf).toHaveAttribute(
-      "href",
-      "/gestao/e1/relatorios/pdf?de=2026-09-10&ate=2026-09-12",
-    );
+    expect(pdf).toHaveAttribute("href", "/gestao/e1/relatorios/pdf?de=2026-09-10&ate=2026-09-12");
     expect(pdf).toHaveAttribute("download");
 
     const csv = screen.getByRole("link", { name: "CSV" });
-    expect(csv).toHaveAttribute(
-      "href",
-      "/gestao/e1/relatorios/csv?de=2026-09-10&ate=2026-09-12",
-    );
+    expect(csv).toHaveAttribute("href", "/gestao/e1/relatorios/csv?de=2026-09-10&ate=2026-09-12");
     expect(csv).toHaveAttribute("download");
   });
 
@@ -168,5 +160,4 @@ describe("Relatório da arena", () => {
 
     expect(screen.getByText(/não somam o total/)).toBeInTheDocument();
   });
-
 });

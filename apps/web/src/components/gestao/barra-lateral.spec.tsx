@@ -83,16 +83,12 @@ describe("BarraLateral", () => {
   it("com uma arena só, não há seletor — escolher entre uma não é escolher", () => {
     render(<BarraLateral estabelecimentos={[arena()]} />);
     expect(screen.getByText("Arena Beira-Rio")).toBeInTheDocument();
-    expect(
-      screen.queryByRole("link", { name: "Arena Beira-Rio" }),
-    ).not.toBeInTheDocument();
+    expect(screen.queryByRole("link", { name: "Arena Beira-Rio" })).not.toBeInTheDocument();
   });
 
   it("com duas, o seletor aparece e leva a cada uma", () => {
     render(
-      <BarraLateral
-        estabelecimentos={[arena(), arena({ id: "e2", nome: "Arena Sapiranga" })]}
-      />,
+      <BarraLateral estabelecimentos={[arena(), arena({ id: "e2", nome: "Arena Sapiranga" })]} />,
     );
     expect(screen.getByRole("link", { name: "Arena Sapiranga" })).toHaveAttribute(
       "href",
@@ -114,12 +110,7 @@ describe("BarraLateral", () => {
   it("marca a página atual para quem navega por teclado e leitor de tela", () => {
     // O setup mocka `usePathname` em `/gestao/e1`, que é o Painel.
     montar("ADMIN");
-    expect(screen.getByRole("link", { name: "Painel" })).toHaveAttribute(
-      "aria-current",
-      "page",
-    );
-    expect(screen.getByRole("link", { name: "Agenda" })).not.toHaveAttribute(
-      "aria-current",
-    );
+    expect(screen.getByRole("link", { name: "Painel" })).toHaveAttribute("aria-current", "page");
+    expect(screen.getByRole("link", { name: "Agenda" })).not.toHaveAttribute("aria-current");
   });
 });

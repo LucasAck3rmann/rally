@@ -12,10 +12,7 @@ import { Reflector } from "@nestjs/core";
 import { Role } from "@prisma/client";
 
 import { PrismaService } from "../../../prisma/prisma.service";
-import {
-  PAPEIS_DE_GESTAO,
-  PAPEIS_EXIGIDOS,
-} from "../decorators/papeis.decorator";
+import { PAPEIS_DE_GESTAO, PAPEIS_EXIGIDOS } from "../decorators/papeis.decorator";
 import { JwtPayload } from "../types/jwt-payload";
 import { RequisicaoDeGestao } from "../types/requisicao-de-gestao";
 
@@ -37,9 +34,7 @@ export class PapelGuard implements CanActivate {
   ) {}
 
   async canActivate(contexto: ExecutionContext): Promise<boolean> {
-    const req = contexto
-      .switchToHttp()
-      .getRequest<RequisicaoDeGestao & { user?: JwtPayload }>();
+    const req = contexto.switchToHttp().getRequest<RequisicaoDeGestao & { user?: JwtPayload }>();
 
     if (!req.user) {
       throw new UnauthorizedException("Sessão ausente.");
@@ -76,9 +71,7 @@ export class PapelGuard implements CanActivate {
 
     // Aqui já sabemos que ele é da casa — o 403 não vaza nada e é honesto.
     if (!exigidos.includes(vinculo.role)) {
-      throw new ForbiddenException(
-        "Seu papel não permite essa ação neste estabelecimento.",
-      );
+      throw new ForbiddenException("Seu papel não permite essa ação neste estabelecimento.");
     }
 
     req.vinculo = vinculo;

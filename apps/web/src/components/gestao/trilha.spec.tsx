@@ -23,14 +23,7 @@ function montar(
   filtro: Parameters<typeof filtrar>[1] = {},
   teto = 100,
 ) {
-  render(
-    <TrilhaDaArena
-      trilha={trilha}
-      estabelecimentoId="e1"
-      filtro={filtro}
-      teto={teto}
-    />,
-  );
+  render(<TrilhaDaArena trilha={trilha} estabelecimentoId="e1" filtro={filtro} teto={teto} />);
 }
 
 describe("simples", () => {
@@ -69,34 +62,22 @@ describe("filtrar", () => {
     // O engano fácil aqui é tratar busca vazia como "não casa com nada", e a
     // tela abriria vazia no primeiro acesso, que é o acesso que importa.
     expect(filtrar(trilha, {}).map((r) => r.id)).toEqual(["a1", "a2", "a3"]);
-    expect(filtrar(trilha, { busca: "   " }).map((r) => r.id)).toEqual([
-      "a1",
-      "a2",
-      "a3",
-    ]);
+    expect(filtrar(trilha, { busca: "   " }).map((r) => r.id)).toEqual(["a1", "a2", "a3"]);
   });
 
   it("acha sem acento o que foi escrito com acento", () => {
     // **É o defeito que nenhuma inspeção visual pega.** Ninguém digita
     // "horário" com acento numa caixa de busca, e sem dobrar o acento a
     // trilha responde "nenhum registro" sobre um registro que está ali.
-    expect(filtrar(trilha, { busca: "horario" }).map((r) => r.id)).toEqual([
-      "a3",
-    ]);
-    expect(filtrar(trilha, { busca: "HORARIO" }).map((r) => r.id)).toEqual([
-      "a3",
-    ]);
+    expect(filtrar(trilha, { busca: "horario" }).map((r) => r.id)).toEqual(["a3"]);
+    expect(filtrar(trilha, { busca: "HORARIO" }).map((r) => r.id)).toEqual(["a3"]);
     // E quem digita com acento também acha: dobrar os dois lados, e não só o
     // da busca, é o que faz as duas direções funcionarem.
-    expect(filtrar(trilha, { busca: "horário" }).map((r) => r.id)).toEqual([
-      "a3",
-    ]);
+    expect(filtrar(trilha, { busca: "horário" }).map((r) => r.id)).toEqual(["a3"]);
   });
 
   it("busca pelo nome de quem fez", () => {
-    expect(filtrar(trilha, { busca: "augusto" }).map((r) => r.id)).toEqual([
-      "a2",
-    ]);
+    expect(filtrar(trilha, { busca: "augusto" }).map((r) => r.id)).toEqual(["a2"]);
   });
 
   it("busca pelo identificador, que é como se chega de outra tela", () => {
@@ -107,29 +88,21 @@ describe("filtrar", () => {
     // Autor nulo é ação de sistema, e a tela escreve "Sistema". Se a busca não
     // enxergasse isso, o que a tela mostra não seria filtrável pelo que mostra.
     const comSistema = [...trilha, registro({ id: "a4", autor: null })];
-    expect(filtrar(comSistema, { busca: "sistema" }).map((r) => r.id)).toEqual([
-      "a4",
-    ]);
+    expect(filtrar(comSistema, { busca: "sistema" }).map((r) => r.id)).toEqual(["a4"]);
   });
 
   it("entidade é casamento exato, não trecho", () => {
-    expect(filtrar(trilha, { entidade: "Quadra" }).map((r) => r.id)).toEqual([
-      "a1",
-    ]);
-    expect(filtrar(trilha, { entidade: "Promocao" }).map((r) => r.id)).toEqual([
-      "a3",
-    ]);
+    expect(filtrar(trilha, { entidade: "Quadra" }).map((r) => r.id)).toEqual(["a1"]);
+    expect(filtrar(trilha, { entidade: "Promocao" }).map((r) => r.id)).toEqual(["a3"]);
   });
 
   it("os dois filtros juntos são E, e não OU", () => {
     // Composição de filtro é onde o erro passa: um `||` aqui devolveria tudo
     // de Quadra **mais** tudo que casa a busca, e a tela pareceria funcionar.
-    expect(
-      filtrar(trilha, { busca: "pausar", entidade: "Quadra" }).map((r) => r.id),
-    ).toEqual(["a1"]);
-    expect(
-      filtrar(trilha, { busca: "pausar", entidade: "Pagamento" }),
-    ).toEqual([]);
+    expect(filtrar(trilha, { busca: "pausar", entidade: "Quadra" }).map((r) => r.id)).toEqual([
+      "a1",
+    ]);
+    expect(filtrar(trilha, { busca: "pausar", entidade: "Pagamento" })).toEqual([]);
   });
 });
 
@@ -168,12 +141,8 @@ describe("resumoDosDados", () => {
   });
 
   it("conta itens de lista em vez de despejá-los", () => {
-    expect(resumoDosDados({ comodidades: ["Vestiário", "Bar"] })).toBe(
-      "comodidades: 2 itens",
-    );
-    expect(resumoDosDados({ comodidades: ["Bar"] })).toBe(
-      "comodidades: 1 item",
-    );
+    expect(resumoDosDados({ comodidades: ["Vestiário", "Bar"] })).toBe("comodidades: 2 itens");
+    expect(resumoDosDados({ comodidades: ["Bar"] })).toBe("comodidades: 1 item");
   });
 });
 
@@ -223,17 +192,11 @@ describe("TrilhaDaArena", () => {
     ]);
     const seletor = screen.getByLabelText("Entidade");
     const opcoes = within(seletor).getAllByRole("option");
-    expect(opcoes.map((o) => o.textContent)).toEqual([
-      "Todas",
-      "Quadra",
-      "Reserva",
-    ]);
+    expect(opcoes.map((o) => o.textContent)).toEqual(["Todas", "Quadra", "Reserva"]);
   });
 
   it("conta quantos de quantos, e declara o teto quando bate nele", () => {
-    const cheia = Array.from({ length: 3 }, (_, i) =>
-      registro({ id: `a${i}` }),
-    );
+    const cheia = Array.from({ length: 3 }, (_, i) => registro({ id: `a${i}` }));
     montar(cheia, {}, 3);
     expect(screen.getByText(/3 de 3 registros/)).toBeInTheDocument();
     expect(screen.getByText(/mostrando os 3 mais recentes/)).toBeInTheDocument();

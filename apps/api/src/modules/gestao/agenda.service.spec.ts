@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { Prisma, ReservaOrigem, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -49,19 +45,19 @@ function servico(
 ) {
   const prisma = {
     estabelecimento: {
-      findUnique: jest.fn().mockResolvedValue(
-        opcoes.estabelecimento === undefined
-          ? { timezone: "America/Sao_Paulo" }
-          : opcoes.estabelecimento,
-      ),
+      findUnique: jest
+        .fn()
+        .mockResolvedValue(
+          opcoes.estabelecimento === undefined
+            ? { timezone: "America/Sao_Paulo" }
+            : opcoes.estabelecimento,
+        ),
     },
     quadra: {
       findMany: jest.fn().mockResolvedValue([{ id: "q1", nome: "Quadra 1" }]),
       findFirst: jest
         .fn()
-        .mockResolvedValue(
-          opcoes.quadra === undefined ? { id: "q1" } : opcoes.quadra,
-        ),
+        .mockResolvedValue(opcoes.quadra === undefined ? { id: "q1" } : opcoes.quadra),
     },
     reserva: {
       findMany: jest.fn().mockResolvedValue(opcoes.itens ?? []),
@@ -118,9 +114,7 @@ describe("AgendaService", () => {
     });
 
     it("recusa data fora do formato", () => {
-      expect(() => janelaDoDia("05/10/2026", "America/Sao_Paulo")).toThrow(
-        BadRequestException,
-      );
+      expect(() => janelaDoDia("05/10/2026", "America/Sao_Paulo")).toThrow(BadRequestException);
     });
   });
 
@@ -129,8 +123,7 @@ describe("AgendaService", () => {
       const { servico: s, prisma } = servico({ itens: [RESERVA_NA_AGENDA] });
       await s.doDia("e1", "2026-10-05");
 
-      const where = (prisma.reserva.findMany as jest.Mock).mock.calls[0][0]
-        .where;
+      const where = (prisma.reserva.findMany as jest.Mock).mock.calls[0][0].where;
       // Sem isto, a agenda de um tenant mostraria a reserva de outro — é a
       // mitigação de IDOR que o ADR-0011 exige, conferida no teste.
       expect(where.estabelecimentoId).toBe("e1");
@@ -141,8 +134,7 @@ describe("AgendaService", () => {
       const { servico: s, prisma } = servico();
       await s.doDia("e1", "2026-10-05");
 
-      const where = (prisma.reserva.findMany as jest.Mock).mock.calls[0][0]
-        .where;
+      const where = (prisma.reserva.findMany as jest.Mock).mock.calls[0][0].where;
       // `inicio < fimDoDia` e `fim > inicioDoDia`: um jogo que atravessa a
       // meia-noite some da agenda se a busca for só por `inicio` dentro.
       expect(where.inicio.lt.toISOString()).toBe("2026-10-06T03:00:00.000Z");
@@ -173,9 +165,7 @@ describe("AgendaService", () => {
 
     it("estabelecimento inexistente é 404", async () => {
       const { servico: s } = servico({ estabelecimento: null });
-      await expect(s.doDia("e9", "2026-10-05")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.doDia("e9", "2026-10-05")).rejects.toThrow(NotFoundException);
     });
   });
 
@@ -205,22 +195,22 @@ describe("AgendaService", () => {
 
       // Sem o `estabelecimentoId` aqui, um admin de uma arena bloquearia a
       // quadra de outra só sabendo o id.
-      expect((prisma.quadra.findFirst as jest.Mock).mock.calls[0][0].where)
-        .toEqual({ id: "q1", estabelecimentoId: "e1" });
+      expect((prisma.quadra.findFirst as jest.Mock).mock.calls[0][0].where).toEqual({
+        id: "q1",
+        estabelecimentoId: "e1",
+      });
     });
 
     it("quadra de outro estabelecimento é 404", async () => {
       const { servico: s } = servico({ quadra: null });
-      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(NotFoundException);
     });
 
     it("fim antes do início é 400", async () => {
       const { servico: s } = servico();
-      await expect(
-        s.criarBloqueio("e1", { ...BLOQUEIO, fim: BLOQUEIO.inicio }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(s.criarBloqueio("e1", { ...BLOQUEIO, fim: BLOQUEIO.inicio })).rejects.toThrow(
+        BadRequestException,
+      );
     });
 
     it("horário já ocupado vira 409, não 500", async () => {
@@ -231,18 +221,14 @@ describe("AgendaService", () => {
           'conflicting key value violates exclusion constraint "reserva_sem_sobreposicao"',
         ),
       });
-      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(
-        ConflictException,
-      );
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(ConflictException);
     });
 
     it("erro que não é de horário sobe inteiro", async () => {
       // Engolir tudo como 409 esconderia falha de banco atrás de uma
       // mensagem que culpa o usuário.
       const { servico: s } = servico({ erroAoCriar: new Error("conexão caiu") });
-      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(
-        "conexão caiu",
-      );
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow("conexão caiu");
     });
   });
 
@@ -263,19 +249,16 @@ describe("AgendaService", () => {
 
       // Sem o filtro de status, este endpoint apagaria a reserva de um
       // cliente que pagou — e `delete` não tem volta.
-      expect((prisma.reserva.findFirst as jest.Mock).mock.calls[0][0].where)
-        .toEqual({
-          id: "b1",
-          estabelecimentoId: "e1",
-          status: ReservaStatus.BLOQUEIO,
-        });
+      expect((prisma.reserva.findFirst as jest.Mock).mock.calls[0][0].where).toEqual({
+        id: "b1",
+        estabelecimentoId: "e1",
+        status: ReservaStatus.BLOQUEIO,
+      });
     });
 
     it("id que não é bloqueio é 404 e nada é apagado", async () => {
       const { servico: s, prisma } = servico({ bloqueio: null });
-      await expect(s.removerBloqueio("e1", "r1")).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.removerBloqueio("e1", "r1")).rejects.toThrow(NotFoundException);
       expect(prisma.reserva.delete).not.toHaveBeenCalled();
     });
   });
@@ -375,9 +358,9 @@ describe("AgendaService", () => {
     it("reserva de outra arena é 404", async () => {
       const { servico: s } = servico({ reserva: null });
 
-      await expect(
-        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
-      ).rejects.toThrow(NotFoundException);
+      await expect(s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
+        NotFoundException,
+      );
     });
 
     it("bloqueio não se move por aqui, e a recusa diz o caminho", async () => {
@@ -387,9 +370,9 @@ describe("AgendaService", () => {
         reserva: reservaFutura({ status: ReservaStatus.BLOQUEIO }),
       });
 
-      await expect(
-        s.moverReserva("e1", "b1", { inicio: daqui(5), fim: daqui(6) }),
-      ).rejects.toThrow(/remova e crie de novo/i);
+      await expect(s.moverReserva("e1", "b1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
+        /remova e crie de novo/i,
+      );
     });
 
     it("recusa reserva cancelada, concluída e já começada", async () => {
@@ -408,9 +391,9 @@ describe("AgendaService", () => {
     it("recusa fim antes do início e data inválida", async () => {
       const { servico: s } = servico({ reserva: reservaFutura() });
 
-      await expect(
-        s.moverReserva("e1", "r1", { inicio: daqui(6), fim: daqui(5) }),
-      ).rejects.toThrow(BadRequestException);
+      await expect(s.moverReserva("e1", "r1", { inicio: daqui(6), fim: daqui(5) })).rejects.toThrow(
+        BadRequestException,
+      );
       await expect(
         s.moverReserva("e1", "r1", { inicio: "nao-e-data", fim: daqui(5) }),
       ).rejects.toThrow(BadRequestException);
@@ -426,9 +409,9 @@ describe("AgendaService", () => {
         ),
       });
 
-      await expect(
-        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
-      ).rejects.toThrow(ConflictException);
+      await expect(s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
+        ConflictException,
+      );
     });
 
     it("erro que não é de sobreposição sobe sem virar 409", async () => {
@@ -437,9 +420,9 @@ describe("AgendaService", () => {
         erroAoMover: new Error("conexão caiu"),
       });
 
-      await expect(
-        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
-      ).rejects.toThrow("conexão caiu");
+      await expect(s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
+        "conexão caiu",
+      );
     });
   });
 });

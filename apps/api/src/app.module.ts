@@ -48,8 +48,6 @@ import { PrivacidadeModule } from "./modules/privacidade/privacidade.module";
     NotificacoesModule,
     PrivacidadeModule,
   ],
-  providers: [
-    { provide: APP_INTERCEPTOR, useClass: TempoDeRespostaInterceptor },
-  ],
+  providers: [{ provide: APP_INTERCEPTOR, useClass: TempoDeRespostaInterceptor }],
 })
 export class AppModule {}

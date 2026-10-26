@@ -2,10 +2,7 @@
 import { render, screen } from "@testing-library/react";
 import { describe, expect, it, vi } from "vitest";
 
-import {
-  AvisoDeEnvio,
-  FormularioDeRecuperacao,
-} from "./formulario-de-recuperacao";
+import { AvisoDeEnvio, FormularioDeRecuperacao } from "./formulario-de-recuperacao";
 import { FormularioDeRedefinicao } from "./formulario-de-redefinicao";
 
 /**
@@ -90,16 +87,14 @@ describe("Formulário de redefinição", () => {
     // em vez de preencher a antiga, que é justamente a que não serve aqui.
     render(<FormularioDeRedefinicao token="abc123" />);
 
-    expect(screen.getByLabelText(/^nova senha$/i)).toHaveAttribute(
-      "autocomplete",
-      "new-password",
-    );
+    expect(screen.getByLabelText(/^nova senha$/i)).toHaveAttribute("autocomplete", "new-password");
   });
 
   it("deixa pedir outro link sem voltar ao começo", () => {
     render(<FormularioDeRedefinicao token="abc123" />);
-    expect(
-      screen.getByRole("link", { name: /pedir um novo link/i }),
-    ).toHaveAttribute("href", "/recuperar-senha");
+    expect(screen.getByRole("link", { name: /pedir um novo link/i })).toHaveAttribute(
+      "href",
+      "/recuperar-senha",
+    );
   });
 });

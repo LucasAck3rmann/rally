@@ -20,18 +20,18 @@ function notificacao(extras: Record<string, unknown> = {}) {
   };
 }
 
-function servico(opcoes: {
-  itens?: unknown[];
-  naoLidas?: number;
-  atualizadas?: number;
-  existe?: number;
-  erroAoCriar?: unknown;
-  erroAoEnviar?: unknown;
-  usuario?: unknown;
-} = {}) {
-  const updateMany = jest
-    .fn()
-    .mockResolvedValue({ count: opcoes.atualizadas ?? 1 });
+function servico(
+  opcoes: {
+    itens?: unknown[];
+    naoLidas?: number;
+    atualizadas?: number;
+    existe?: number;
+    erroAoCriar?: unknown;
+    erroAoEnviar?: unknown;
+    usuario?: unknown;
+  } = {},
+) {
+  const updateMany = jest.fn().mockResolvedValue({ count: opcoes.atualizadas ?? 1 });
   const create = opcoes.erroAoCriar
     ? jest.fn().mockRejectedValue(opcoes.erroAoCriar)
     : jest.fn().mockResolvedValue(notificacao());
@@ -53,9 +53,7 @@ function servico(opcoes: {
       findUnique: jest
         .fn()
         .mockResolvedValue(
-          opcoes.usuario === undefined
-            ? { email: "lucas@exemplo.com" }
-            : opcoes.usuario,
+          opcoes.usuario === undefined ? { email: "lucas@exemplo.com" } : opcoes.usuario,
         ),
     },
     $transaction: jest.fn((ops: Promise<unknown>[]) => Promise.all(ops)),
@@ -185,9 +183,7 @@ describe("NotificacoesService", () => {
     });
 
     it("falha no e-mail não derruba o que o cliente pediu", async () => {
-      const aviso = jest
-        .spyOn(Logger.prototype, "warn")
-        .mockImplementation(() => {});
+      const aviso = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
       const { servico: s } = servico({ erroAoEnviar: new Error("smtp fora") });
 
       await expect(
@@ -203,9 +199,7 @@ describe("NotificacoesService", () => {
       // É a razão de os dois canais terem `try` separados. Com um só, uma
       // falha de banco levaria junto o e-mail, e o cliente ficaria sem os
       // dois — quando o certo é ficar sem o que falhou.
-      const aviso = jest
-        .spyOn(Logger.prototype, "warn")
-        .mockImplementation(() => {});
+      const aviso = jest.spyOn(Logger.prototype, "warn").mockImplementation(() => {});
       const { servico: s, enviar } = servico({
         erroAoCriar: new Error("banco fora"),
       });

@@ -35,9 +35,7 @@ const BASE: RelatorioParaPdf = {
     { data: "2026-09-11", reservas: 0, receita: 0, horas: 0, ocupacao: 0 },
     { data: "2026-09-12", reservas: 4, receita: 400, horas: 4, ocupacao: 28.6 },
   ],
-  porQuadra: [
-    { quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 },
-  ],
+  porQuadra: [{ quadraId: "q1", nome: "Quadra 1", reservas: 6, horas: 6, receita: 640 }],
 };
 
 const QUANDO = new Date("2026-10-08T18:30:00.000Z");

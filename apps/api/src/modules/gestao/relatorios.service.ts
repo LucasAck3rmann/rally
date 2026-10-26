@@ -1,11 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
-import {
-  PagamentoMetodo,
-  PagamentoStatus,
-  Prisma,
-  ReservaStatus,
-} from "@prisma/client";
+import { PagamentoMetodo, PagamentoStatus, Prisma, ReservaStatus } from "@prisma/client";
 
 import ExcelJS from "exceljs";
 
@@ -215,7 +210,7 @@ export class RelatoriosService {
     // Dinheiro com duas casas e separador de milhar: a formatação vive na
     // célula, não no valor — é o que permite somar e exibir ao mesmo tempo.
     for (const linha of [3, 4, 5, 6]) {
-      resumo.getCell(`B${linha + 1}`).numFmt = '#,##0.00';
+      resumo.getCell(`B${linha + 1}`).numFmt = "#,##0.00";
     }
 
     const metodos = livro.addWorksheet("Por método");
@@ -347,8 +342,7 @@ export class RelatoriosService {
       receitaPaga: arredondar(paga),
       receitaAReceber: arredondar(aReceber),
       receitaTotal: arredondar(paga + aReceber),
-      ticketMedio:
-        vendidas.length === 0 ? null : arredondar((paga + aReceber) / vendidas.length),
+      ticketMedio: vendidas.length === 0 ? null : arredondar((paga + aReceber) / vendidas.length),
       ocupacao: capacidade === 0 ? null : arredondar((horas / capacidade) * 100, 1),
       horasVendidas: arredondar(horas, 1),
       horasDisponiveis: arredondar(capacidade, 1),
@@ -494,10 +488,7 @@ export class RelatoriosService {
       .sort((a, b) => b.receita - a.receita || a.modalidade.localeCompare(b.modalidade));
   }
 
-  private porQuadra(
-    quadras: { id: string; nome: string }[],
-    vendidas: ReservaDoRelatorio[],
-  ) {
+  private porQuadra(quadras: { id: string; nome: string }[], vendidas: ReservaDoRelatorio[]) {
     return quadras
       .map((q) => {
         const daQuadra = vendidas.filter((r) => r.quadraId === q.id);
@@ -520,10 +511,7 @@ function arredondar(valor: number, casas = 2): number {
 }
 
 function somaHoras(reservas: { inicio: Date; fim: Date }[]): number {
-  return reservas.reduce(
-    (s, r) => s + (r.fim.getTime() - r.inicio.getTime()) / 3_600_000,
-    0,
-  );
+  return reservas.reduce((s, r) => s + (r.fim.getTime() - r.inicio.getTime()) / 3_600_000, 0);
 }
 
 /** Data-calendário de um instante, no fuso do estabelecimento. */

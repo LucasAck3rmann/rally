@@ -54,9 +54,7 @@ describe("PapelGuard", () => {
     for (const role of [Role.ADMIN, Role.ATENDENTE, Role.FINANCEIRO]) {
       const req: Requisicao = { user: USUARIO, params: PARAMS };
       const vinculo = { id: "m1", role, estabelecimentoId: "e1" };
-      await expect(guard(vinculo).canActivate(contexto(req))).resolves.toBe(
-        true,
-      );
+      await expect(guard(vinculo).canActivate(contexto(req))).resolves.toBe(true);
     }
   });
 
@@ -64,25 +62,23 @@ describe("PapelGuard", () => {
     // Quem não participa do estabelecimento não deve nem descobrir que ele
     // existe: 403 confirmaria a existência do recurso (IDOR).
     const req: Requisicao = { user: USUARIO, params: PARAMS };
-    await expect(guard(null).canActivate(contexto(req))).rejects.toBeInstanceOf(
-      NotFoundException,
-    );
+    await expect(guard(null).canActivate(contexto(req))).rejects.toBeInstanceOf(NotFoundException);
   });
 
   it("trata o vínculo de cliente como se não existisse", async () => {
     const req: Requisicao = { user: USUARIO, params: PARAMS };
     const vinculo = { id: "m1", role: Role.CLIENTE, estabelecimentoId: "e1" };
-    await expect(
-      guard(vinculo).canActivate(contexto(req)),
-    ).rejects.toBeInstanceOf(NotFoundException);
+    await expect(guard(vinculo).canActivate(contexto(req))).rejects.toBeInstanceOf(
+      NotFoundException,
+    );
   });
 
   it("recusa com 403 quem é da casa mas não tem o papel exigido", async () => {
     const req: Requisicao = { user: USUARIO, params: PARAMS };
     const vinculo = { id: "m1", role: Role.ATENDENTE, estabelecimentoId: "e1" };
-    await expect(
-      guard(vinculo, [Role.ADMIN]).canActivate(contexto(req)),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(guard(vinculo, [Role.ADMIN]).canActivate(contexto(req))).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it("não deixa passar o mantenedor da plataforma pela porta do tenant", async () => {
@@ -92,23 +88,23 @@ describe("PapelGuard", () => {
       role: Role.MANTENEDOR,
       estabelecimentoId: "e1",
     };
-    await expect(
-      guard(vinculo).canActivate(contexto(req)),
-    ).rejects.toBeInstanceOf(ForbiddenException);
+    await expect(guard(vinculo).canActivate(contexto(req))).rejects.toBeInstanceOf(
+      ForbiddenException,
+    );
   });
 
   it("exige sessão", async () => {
     const req: Requisicao = { params: PARAMS };
-    await expect(
-      guard(null).canActivate(contexto(req)),
-    ).rejects.toBeInstanceOf(UnauthorizedException);
+    await expect(guard(null).canActivate(contexto(req))).rejects.toBeInstanceOf(
+      UnauthorizedException,
+    );
   });
 
   it("acusa rota mal configurada, sem o parâmetro do estabelecimento", async () => {
     const req: Requisicao = { user: USUARIO, params: {} };
-    await expect(
-      guard(null).canActivate(contexto(req)),
-    ).rejects.toBeInstanceOf(BadRequestException);
+    await expect(guard(null).canActivate(contexto(req))).rejects.toBeInstanceOf(
+      BadRequestException,
+    );
   });
 
   it("consulta o vínculo pelo par usuário × estabelecimento", async () => {

@@ -1,10 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  CanActivate,
-  ExecutionContext,
-  Injectable,
-  UnauthorizedException,
-} from "@nestjs/common";
+import { CanActivate, ExecutionContext, Injectable, UnauthorizedException } from "@nestjs/common";
 import { JwtService } from "@nestjs/jwt";
 import { Request } from "express";
 
@@ -15,9 +10,7 @@ export class JwtAuthGuard implements CanActivate {
   constructor(private readonly jwt: JwtService) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const req = context
-      .switchToHttp()
-      .getRequest<Request & { user?: JwtPayload }>();
+    const req = context.switchToHttp().getRequest<Request & { user?: JwtPayload }>();
     const header = req.headers.authorization;
     if (!header || !header.startsWith("Bearer ")) {
       throw new UnauthorizedException("Token ausente.");

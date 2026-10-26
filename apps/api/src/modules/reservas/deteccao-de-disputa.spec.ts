@@ -1,11 +1,7 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { Prisma } from "@prisma/client";
 
-import {
-  ehConflitoDeHorario,
-  ehImpasseDeHorario,
-  semImpasse,
-} from "./reservas.service";
+import { ehConflitoDeHorario, ehImpasseDeHorario, semImpasse } from "./reservas.service";
 
 /**
  * As duas formas de perder a disputa por um horário, e por que elas não são a
@@ -120,9 +116,7 @@ describe("ehImpasseDeHorario — a transação perdeu a disputa", () => {
    * contenha a sequência não seja confundido com o código do erro.
    */
   it("não dispara com a sequência embutida noutro identificador", () => {
-    expect(
-      ehImpasseDeHorario(new Error('gatewayId: "cob40P01x" não encontrado')),
-    ).toBe(false);
+    expect(ehImpasseDeHorario(new Error('gatewayId: "cob40P01x" não encontrado'))).toBe(false);
   });
 });
 

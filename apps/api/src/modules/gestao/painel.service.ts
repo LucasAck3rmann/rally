@@ -2,12 +2,7 @@
 import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { PagamentoStatus, Prisma, ReservaStatus } from "@prisma/client";
 
-import {
-  emMinutos,
-  hojeLocal,
-  horaLocalParaUtc,
-  rotuloHoraLocal,
-} from "../../common/timezone";
+import { emMinutos, hojeLocal, horaLocalParaUtc, rotuloHoraLocal } from "../../common/timezone";
 import { PrismaService } from "../../prisma/prisma.service";
 
 /** Reservas que representam venda — bloqueio e cancelada ficam de fora. */
@@ -98,12 +93,8 @@ export class PainelService {
     ]);
 
     const vendidas = reservas.filter((r) => VENDIDAS.includes(r.status));
-    const canceladas = reservas.filter(
-      (r) => r.status === ReservaStatus.CANCELADA,
-    );
-    const bloqueios = reservas.filter(
-      (r) => r.status === ReservaStatus.BLOQUEIO,
-    );
+    const canceladas = reservas.filter((r) => r.status === ReservaStatus.CANCELADA);
+    const bloqueios = reservas.filter((r) => r.status === ReservaStatus.BLOQUEIO);
 
     const horasAbertas = this.horasAbertas(horarios, de, dias);
     const capacidade = horasAbertas * quadras.length;
@@ -116,9 +107,7 @@ export class PainelService {
         // Sem horário de funcionamento cadastrado não há denominador — e um
         // "0%" aqui mentiria dizendo que a arena está vazia.
         percentual:
-          capacidade === 0
-            ? null
-            : Number(((horasVendidas / capacidade) * 100).toFixed(1)),
+          capacidade === 0 ? null : Number(((horasVendidas / capacidade) * 100).toFixed(1)),
         horasVendidas: Number(horasVendidas.toFixed(1)),
         horasDisponiveis: Number(capacidade.toFixed(1)),
       },
@@ -133,11 +122,7 @@ export class PainelService {
           vendidas.length + canceladas.length === 0
             ? null
             : Number(
-                (
-                  (canceladas.length /
-                    (vendidas.length + canceladas.length)) *
-                  100
-                ).toFixed(1),
+                ((canceladas.length / (vendidas.length + canceladas.length)) * 100).toFixed(1),
               ),
       },
       porQuadra: this.porQuadra(quadras, vendidas, horasAbertas),
@@ -165,9 +150,7 @@ export class PainelService {
       aReceber: Number(aReceber.toFixed(2)),
       total: Number((paga + aReceber).toFixed(2)),
       ticketMedio:
-        vendidas.length === 0
-          ? null
-          : Number(((paga + aReceber) / vendidas.length).toFixed(2)),
+        vendidas.length === 0 ? null : Number(((paga + aReceber) / vendidas.length).toFixed(2)),
     };
   }
 
@@ -185,13 +168,8 @@ export class PainelService {
           nome: q.nome,
           reservas: daQuadra.length,
           horasVendidas: Number(horas.toFixed(1)),
-          receita: Number(
-            daQuadra.reduce((s, r) => s + Number(r.preco), 0).toFixed(2),
-          ),
-          ocupacao:
-            horasAbertas === 0
-              ? null
-              : Number(((horas / horasAbertas) * 100).toFixed(1)),
+          receita: Number(daQuadra.reduce((s, r) => s + Number(r.preco), 0).toFixed(2)),
+          ocupacao: horasAbertas === 0 ? null : Number(((horas / horasAbertas) * 100).toFixed(1)),
         };
       })
       .sort((a, b) => b.receita - a.receita);
@@ -242,10 +220,7 @@ export class PainelService {
 
 /** Horas ocupadas por um conjunto de reservas. */
 function somaHoras(reservas: { inicio: Date; fim: Date }[]): number {
-  return reservas.reduce(
-    (s, r) => s + (r.fim.getTime() - r.inicio.getTime()) / 3_600_000,
-    0,
-  );
+  return reservas.reduce((s, r) => s + (r.fim.getTime() - r.inicio.getTime()) / 3_600_000, 0);
 }
 
 /** "2026-10-05" + n dias, respeitando fim de mês e ano bissexto. */

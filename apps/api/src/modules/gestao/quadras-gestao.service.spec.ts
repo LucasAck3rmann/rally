@@ -9,10 +9,12 @@ const MODALIDADES = [
   { id: "mod-fute", nome: "Futevôlei" },
 ];
 
-function servico(opcoes: {
-  modalidades?: { id: string; nome: string }[];
-  quadraExistente?: unknown;
-} = {}) {
+function servico(
+  opcoes: {
+    modalidades?: { id: string; nome: string }[];
+    quadraExistente?: unknown;
+  } = {},
+) {
   const quadraCriada = {
     id: "q1",
     nome: "Quadra 1",
@@ -31,14 +33,10 @@ function servico(opcoes: {
     modalidade: {
       // O dublê respeita o filtro `in`, senão "acharia" modalidades que não
       // foram pedidas e a checagem de nome desconhecido nunca dispararia.
-      findMany: jest.fn().mockImplementation((args: {
-        where?: { nome?: { in?: string[] } };
-      }) => {
+      findMany: jest.fn().mockImplementation((args: { where?: { nome?: { in?: string[] } } }) => {
         const pedidos = args.where?.nome?.in ?? [];
         const catalogo = opcoes.modalidades ?? MODALIDADES;
-        return Promise.resolve(
-          catalogo.filter((m) => pedidos.includes(m.nome)),
-        );
+        return Promise.resolve(catalogo.filter((m) => pedidos.includes(m.nome)));
       }),
     },
     quadra: {
@@ -46,9 +44,7 @@ function servico(opcoes: {
       findFirst: jest
         .fn()
         .mockResolvedValue(
-          opcoes.quadraExistente === undefined
-            ? { id: "q1" }
-            : opcoes.quadraExistente,
+          opcoes.quadraExistente === undefined ? { id: "q1" } : opcoes.quadraExistente,
         ),
       create: jest.fn().mockResolvedValue(quadraCriada),
       update: jest.fn().mockResolvedValue(quadraCriada),
@@ -58,8 +54,8 @@ function servico(opcoes: {
   } as unknown as PrismaService & Record<string, never>;
 
   // `$transaction(cb)` recebe o próprio cliente — o dublê se passa por ele.
-  (prisma.$transaction as unknown as jest.Mock).mockImplementation(
-    (cb: (tx: unknown) => unknown) => cb(prisma),
+  (prisma.$transaction as unknown as jest.Mock).mockImplementation((cb: (tx: unknown) => unknown) =>
+    cb(prisma),
   );
 
   return { servico: new QuadrasGestaoService(prisma), prisma };
@@ -86,9 +82,9 @@ describe("QuadrasGestaoService", () => {
 
     it("recusa modalidade que não existe em vez de inventar uma", async () => {
       const { servico: s } = servico({ modalidades: [] });
-      await expect(
-        s.criar("e1", { ...BASE, modalidades: ["Padel"] }),
-      ).rejects.toBeInstanceOf(BadRequestException);
+      await expect(s.criar("e1", { ...BASE, modalidades: ["Padel"] })).rejects.toBeInstanceOf(
+        BadRequestException,
+      );
     });
 
     it("recusa faixa de preço que termina antes de começar", async () => {
@@ -96,9 +92,7 @@ describe("QuadrasGestaoService", () => {
       await expect(
         s.criar("e1", {
           ...BASE,
-          faixasPreco: [
-            { horaInicio: "22:00", horaFim: "18:00", precoHora: 110 },
-          ],
+          faixasPreco: [{ horaInicio: "22:00", horaFim: "18:00", precoHora: 110 }],
         }),
       ).rejects.toBeInstanceOf(BadRequestException);
     });

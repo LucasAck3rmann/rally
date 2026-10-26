@@ -26,9 +26,7 @@ function reserva(extras: Record<string, unknown> = {}) {
   };
 }
 
-function servico(
-  opcoes: { candidatas?: unknown[]; marcadas?: number[] } = {},
-) {
+function servico(opcoes: { candidatas?: unknown[]; marcadas?: number[] } = {}) {
   const marcadas = [...(opcoes.marcadas ?? [])];
   const marcar = jest.fn(async () => ({
     // Permite simular quem perde a corrida pela marcação.

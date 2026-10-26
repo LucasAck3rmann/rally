@@ -36,10 +36,7 @@ export class AgendaController {
   constructor(private readonly agenda: AgendaService) {}
 
   @Get("agenda")
-  doDia(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Query("data") data: string,
-  ) {
+  doDia(@Param("estabelecimentoId") estabelecimentoId: string, @Query("data") data: string) {
     return this.agenda.doDia(estabelecimentoId, data);
   }
 

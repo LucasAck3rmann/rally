@@ -59,9 +59,9 @@ describe("JwtAuthGuard", () => {
 
   it("recusa sem cabeçalho de autorização", async () => {
     const verificar = jest.fn();
-    await expect(
-      guard(verificar).canActivate(contexto({ headers: {} })),
-    ).rejects.toThrow(UnauthorizedException);
+    await expect(guard(verificar).canActivate(contexto({ headers: {} }))).rejects.toThrow(
+      UnauthorizedException,
+    );
     // Não chega a verificar nada: sem cabeçalho não há o que verificar, e
     // chamar o verificador com `undefined` só trocaria a mensagem por uma
     // pior.
@@ -83,9 +83,7 @@ describe("JwtAuthGuard", () => {
   it("recusa o token nu, sem esquema", async () => {
     const verificar = jest.fn();
     await expect(
-      guard(verificar).canActivate(
-        contexto({ headers: { authorization: "abc.def.ghi" } }),
-      ),
+      guard(verificar).canActivate(contexto({ headers: { authorization: "abc.def.ghi" } })),
     ).rejects.toThrow(UnauthorizedException);
   });
 
@@ -95,9 +93,7 @@ describe("JwtAuthGuard", () => {
     // que o emissor nunca emite.
     const verificar = jest.fn();
     await expect(
-      guard(verificar).canActivate(
-        contexto({ headers: { authorization: "bearer abc" } }),
-      ),
+      guard(verificar).canActivate(contexto({ headers: { authorization: "bearer abc" } })),
     ).rejects.toThrow(UnauthorizedException);
   });
 

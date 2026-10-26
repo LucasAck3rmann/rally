@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { Prisma } from "@prisma/client";
 
 import { emMinutos } from "../../common/timezone";
@@ -96,11 +92,7 @@ export class QuadrasGestaoService {
    * corpo — comparar faixa a faixa não valeria a complexidade, e a tela de
    * gestão sempre envia a lista completa.
    */
-  async atualizar(
-    estabelecimentoId: string,
-    quadraId: string,
-    dto: AtualizarQuadraDto,
-  ) {
+  async atualizar(estabelecimentoId: string, quadraId: string, dto: AtualizarQuadraDto) {
     const existe = await this.prisma.quadra.findFirst({
       where: { id: quadraId, estabelecimentoId },
       select: { id: true },
@@ -127,20 +119,13 @@ export class QuadrasGestaoService {
         data: {
           nome: dto.nome,
           descricao: dto.descricao,
-          precoHora:
-            dto.precoHora === undefined
-              ? undefined
-              : new Prisma.Decimal(dto.precoHora),
+          precoHora: dto.precoHora === undefined ? undefined : new Prisma.Decimal(dto.precoHora),
           capacidade: dto.capacidade,
           comodidades: dto.comodidades,
           fotos: dto.fotos,
           ativo: dto.ativo,
-          modalidades: modalidades
-            ? { set: modalidades.map((id) => ({ id })) }
-            : undefined,
-          faixasPreco: dto.faixasPreco
-            ? { create: dto.faixasPreco }
-            : undefined,
+          modalidades: modalidades ? { set: modalidades.map((id) => ({ id })) } : undefined,
+          faixasPreco: dto.faixasPreco ? { create: dto.faixasPreco } : undefined,
         },
         select: QUADRA_DA_GESTAO,
       });
@@ -164,9 +149,7 @@ export class QuadrasGestaoService {
     if (encontradas.length !== unicos.length) {
       const conhecidas = new Set(encontradas.map((m) => m.nome));
       const faltando = unicos.filter((n) => !conhecidas.has(n));
-      throw new BadRequestException(
-        `Modalidade não cadastrada: ${faltando.join(", ")}.`,
-      );
+      throw new BadRequestException(`Modalidade não cadastrada: ${faltando.join(", ")}.`);
     }
     return encontradas.map((m) => m.id);
   }
@@ -195,8 +178,7 @@ export class QuadrasGestaoService {
         // mais tem chance de colidir com as outras.
         const diaA = a.diaSemana ?? undefined;
         const diaB = b.diaSemana ?? undefined;
-        const mesmoDia =
-          diaA === undefined || diaB === undefined || diaA === diaB;
+        const mesmoDia = diaA === undefined || diaB === undefined || diaA === diaB;
         const sobrepoe =
           emMinutos(a.horaInicio) < emMinutos(b.horaFim) &&
           emMinutos(b.horaInicio) < emMinutos(a.horaFim);

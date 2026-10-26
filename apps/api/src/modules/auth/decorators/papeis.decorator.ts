@@ -9,16 +9,11 @@ export const PAPEIS_EXIGIDOS = "papeis_exigidos";
  * joga, e `MANTENEDOR` é da plataforma (nível SaaS) — nenhum dos dois entra
  * numa rota de gestão pela porta da frente.
  */
-export const PAPEIS_DE_GESTAO: Role[] = [
-  Role.ADMIN,
-  Role.ATENDENTE,
-  Role.FINANCEIRO,
-];
+export const PAPEIS_DE_GESTAO: Role[] = [Role.ADMIN, Role.ATENDENTE, Role.FINANCEIRO];
 
 /**
  * Restringe a rota aos papéis informados, avaliados **dentro do
  * estabelecimento da URL** — ninguém é "admin" globalmente (ver ADR-0011).
  * Sem o decorador, vale {@link PAPEIS_DE_GESTAO}.
  */
-export const Papeis = (...papeis: Role[]) =>
-  SetMetadata(PAPEIS_EXIGIDOS, papeis);
+export const Papeis = (...papeis: Role[]) => SetMetadata(PAPEIS_EXIGIDOS, papeis);

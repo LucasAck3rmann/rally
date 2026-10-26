@@ -48,8 +48,10 @@ const CONTROLES = 'button, select, input:not([type="hidden"]), [role="button"]';
 const base = argumento("base", "http://localhost:3000").replace(/\/$/, "");
 const email = argumento("email", "dono@arena.com");
 const senha = argumento("senha", "rally123");
-const api = argumento("api", process.env.API_URL ?? "http://localhost:3333/api/v1")
-  .replace(/\/$/, "");
+const api = argumento("api", process.env.API_URL ?? "http://localhost:3333/api/v1").replace(
+  /\/$/,
+  "",
+);
 
 const navegador = await chromium.launch();
 let falhas = 0;
@@ -110,9 +112,7 @@ try {
     console.log(`${marca} ${String(total).padStart(3)} controles  ${rota}`);
     for (const c of curtos) {
       falhas++;
-      console.log(
-        `        ${c.largura} × ${c.altura} px  <${c.tag}> "${c.nome}"`,
-      );
+      console.log(`        ${c.largura} × ${c.altura} px  <${c.tag}> "${c.nome}"`);
     }
   }
 } finally {

@@ -39,9 +39,7 @@ function guard(configurado: string | undefined) {
 
 describe("SegredoDeIngestaoGuard", () => {
   it("libera com o segredo correto", () => {
-    expect(
-      guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": SEGREDO })),
-    ).toBe(true);
+    expect(guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": SEGREDO }))).toBe(true);
   });
 
   it("recusa segredo errado do mesmo tamanho", () => {
@@ -50,9 +48,9 @@ describe("SegredoDeIngestaoGuard", () => {
     const errado = "X" + SEGREDO.slice(1);
     expect(errado).toHaveLength(SEGREDO.length);
 
-    expect(() =>
-      guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": errado })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": errado }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it("recusa segredo errado de outro tamanho, sem estourar", () => {
@@ -71,25 +69,21 @@ describe("SegredoDeIngestaoGuard", () => {
     // teste unitário não é viável —, mas prende o comportamento: prefixo
     // correto é recusa igual a qualquer outra.
     expect(() =>
-      guard(SEGREDO).canActivate(
-        contexto({ "x-rally-ingest-secret": SEGREDO.slice(0, -1) + "Z" }),
-      ),
+      guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": SEGREDO.slice(0, -1) + "Z" })),
     ).toThrow(UnauthorizedException);
   });
 
   it("recusa sem o cabeçalho", () => {
-    expect(() => guard(SEGREDO).canActivate(contexto({}))).toThrow(
-      UnauthorizedException,
-    );
+    expect(() => guard(SEGREDO).canActivate(contexto({}))).toThrow(UnauthorizedException);
   });
 
   it("recusa cabeçalho vazio, em vez de compará-lo", () => {
     // String vazia é falsy: a guarda sai antes do `iguais`. Se não saísse,
     // compararia o resumo de "" com o do segredo — recusaria igual, mas por
     // caminho mais longo e sem dizer o motivo certo.
-    expect(() =>
-      guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": "" })),
-    ).toThrow(UnauthorizedException);
+    expect(() => guard(SEGREDO).canActivate(contexto({ "x-rally-ingest-secret": "" }))).toThrow(
+      UnauthorizedException,
+    );
   });
 
   it("sem segredo configurado responde 503, e não 401", () => {
@@ -103,9 +97,9 @@ describe("SegredoDeIngestaoGuard", () => {
   it("segredo vazio na configuração também é 503", () => {
     // `REPLAY_INGEST_SECRET=` num `.env` dá string vazia. Tratá-la como
     // configurada abriria a ingestão para quem mandasse o cabeçalho vazio.
-    expect(() =>
-      guard("").canActivate(contexto({ "x-rally-ingest-secret": "" })),
-    ).toThrow(ServiceUnavailableException);
+    expect(() => guard("").canActivate(contexto({ "x-rally-ingest-secret": "" }))).toThrow(
+      ServiceUnavailableException,
+    );
   });
 
   it("a recusa não devolve o segredo esperado nem parte dele", () => {

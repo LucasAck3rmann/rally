@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  ConflictException,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, ConflictException, NotFoundException } from "@nestjs/common";
 import { Prisma, PromocaoTipo } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -34,28 +30,20 @@ function cupom(parcial: Record<string, unknown> = {}) {
  * com `undefined` e o mock mentiria sobre o que o banco faria.
  */
 function comoOPrismaGrava(data: Record<string, unknown>) {
-  const mudancas = Object.fromEntries(
-    Object.entries(data).filter(([, v]) => v !== undefined),
-  );
+  const mudancas = Object.fromEntries(Object.entries(data).filter(([, v]) => v !== undefined));
   return { ...cupom(), ...mudancas };
 }
 
-function servico(
-  opcoes: { atual?: unknown; lista?: unknown[]; erroAoCriar?: unknown } = {},
-) {
+function servico(opcoes: { atual?: unknown; lista?: unknown[]; erroAoCriar?: unknown } = {}) {
   const criar = opcoes.erroAoCriar
     ? jest.fn().mockRejectedValue(opcoes.erroAoCriar)
     : jest.fn().mockImplementation(({ data }) => comoOPrismaGrava(data));
-  const atualizar = jest
-    .fn()
-    .mockImplementation(({ data }) => comoOPrismaGrava(data));
+  const atualizar = jest.fn().mockImplementation(({ data }) => comoOPrismaGrava(data));
 
   const prisma = {
     promocao: {
       findMany: jest.fn().mockResolvedValue(opcoes.lista ?? [cupom()]),
-      findFirst: jest
-        .fn()
-        .mockResolvedValue(opcoes.atual === undefined ? cupom() : opcoes.atual),
+      findFirst: jest.fn().mockResolvedValue(opcoes.atual === undefined ? cupom() : opcoes.atual),
       create: criar,
       update: atualizar,
     },
@@ -164,9 +152,7 @@ describe("CuponsService (RF-25)", () => {
     it("recusa desconto percentual acima de 100%", async () => {
       // Um cupom de 120% devolveria dinheiro a quem reserva.
       const { servico: s } = servico();
-      await expect(
-        s.criar("e1", { ...NOVO, valor: 120 }),
-      ).rejects.toThrow(/não passa de 100/i);
+      await expect(s.criar("e1", { ...NOVO, valor: 120 })).rejects.toThrow(/não passa de 100/i);
     });
 
     it("valor fixo acima de 100 é legítimo e passa", async () => {
@@ -205,9 +191,7 @@ describe("CuponsService (RF-25)", () => {
       // que precisa em vez de um erro de constraint.
       const { servico: s } = servico({ atual: cupom({ usosFeitos: 7 }) });
 
-      await expect(
-        s.atualizar("e1", "c1", { usosMax: 5 }),
-      ).rejects.toThrow(/já foi usado 7/i);
+      await expect(s.atualizar("e1", "c1", { usosMax: 5 })).rejects.toThrow(/já foi usado 7/i);
     });
 
     it("tirar o teto é permitido mesmo com usos feitos", async () => {
@@ -220,9 +204,7 @@ describe("CuponsService (RF-25)", () => {
     it("cupom de outra arena é 404", async () => {
       const { servico: s, prisma } = servico({ atual: null });
 
-      await expect(s.atualizar("e1", "c9", { ativo: false })).rejects.toThrow(
-        NotFoundException,
-      );
+      await expect(s.atualizar("e1", "c9", { ativo: false })).rejects.toThrow(NotFoundException);
       expect((prisma.promocao.findFirst as jest.Mock).mock.calls[0][0].where).toEqual({
         id: "c9",
         estabelecimentoId: "e1",
@@ -248,9 +230,9 @@ describe("CuponsService (RF-25)", () => {
         atual: cupom({ tipo: PromocaoTipo.VALOR_FIXO, valor: new Prisma.Decimal(120) }),
       });
 
-      await expect(
-        s.atualizar("e1", "c1", { tipo: PromocaoTipo.PERCENTUAL }),
-      ).rejects.toThrow(/não passa de 100/i);
+      await expect(s.atualizar("e1", "c1", { tipo: PromocaoTipo.PERCENTUAL })).rejects.toThrow(
+        /não passa de 100/i,
+      );
     });
   });
 });

@@ -74,12 +74,12 @@ function varrer(): { semNome: Achado[]; semRotulo: Achado[]; total: number } {
     // vir de um `<label>` associado ou de `aria-label`, porque é o rótulo que
     // continua visível depois do preenchimento e é ele que amplia a área
     // clicável do campo.
-    const campos = 'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea';
+    const campos =
+      'input:not([type="hidden"]):not([type="submit"]):not([type="button"]), select, textarea';
     for (const el of Array.from(document.querySelectorAll(campos))) {
       const temAria = el.hasAttribute("aria-label") || el.hasAttribute("aria-labelledby");
       const id = el.getAttribute("id");
-      const temLabel =
-        (id && document.querySelector(`label[for="${id}"]`)) || el.closest("label");
+      const temLabel = (id && document.querySelector(`label[for="${id}"]`)) || el.closest("label");
       if (!temAria && !temLabel) {
         semRotulo.push({ tela: cenario.nome, controle: descrever(el) });
       }

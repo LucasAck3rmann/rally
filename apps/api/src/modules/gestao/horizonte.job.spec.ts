@@ -12,9 +12,7 @@ type Resultado = {
   falhas: number;
 };
 
-function job(
-  opcoes: { ambiente?: string; resultado?: Partial<Resultado>; erro?: unknown } = {},
-) {
+function job(opcoes: { ambiente?: string; resultado?: Partial<Resultado>; erro?: unknown } = {}) {
   const resultado: Resultado = {
     series: 0,
     criadas: 0,
@@ -65,9 +63,7 @@ describe("HorizonteDeMensalistasJob (RF-36, ADR-0014)", () => {
     const { job: j } = job({ erro: new Error("conexão caiu") });
 
     await expect(j.executar()).resolves.toBeUndefined();
-    expect(erro).toHaveBeenCalledWith(
-      expect.stringContaining("Falha ao estender o horizonte"),
-    );
+    expect(erro).toHaveBeenCalledWith(expect.stringContaining("Falha ao estender o horizonte"));
     erro.mockRestore();
   });
 
@@ -103,9 +99,7 @@ describe("HorizonteDeMensalistasJob (RF-36, ADR-0014)", () => {
 
     await j.executar();
 
-    expect(aviso).toHaveBeenCalledWith(
-      expect.stringContaining("2 série(s) não materializaram"),
-    );
+    expect(aviso).toHaveBeenCalledWith(expect.stringContaining("2 série(s) não materializaram"));
     expect(aviso).toHaveBeenCalledWith(expect.stringContaining("livre na grade"));
     aviso.mockRestore();
     log.mockRestore();
@@ -118,9 +112,7 @@ describe("HorizonteDeMensalistasJob (RF-36, ADR-0014)", () => {
     const { job: j } = job({ resultado: { series: 2, puladas: 1 } });
 
     await j.executar();
-    expect(log).toHaveBeenCalledWith(
-      expect.stringContaining("1 semana(s) pulada(s)"),
-    );
+    expect(log).toHaveBeenCalledWith(expect.stringContaining("1 semana(s) pulada(s)"));
     log.mockRestore();
   });
 });

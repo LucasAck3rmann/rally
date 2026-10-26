@@ -30,9 +30,7 @@ export default async function RedefinirSenha({
             <h1 className="font-display text-[32px] font-bold leading-tight text-ink">
               Escolha a nova senha
             </h1>
-            <p className="mt-2 text-[15px] text-gray">
-              Depois de salvar, entre no painel com ela.
-            </p>
+            <p className="mt-2 text-[15px] text-gray">Depois de salvar, entre no painel com ela.</p>
             <FormularioDeRedefinicao token={token} />
           </>
         ) : (
@@ -44,9 +42,8 @@ export default async function RedefinirSenha({
               Link incompleto
             </h1>
             <p className="mt-2 text-[15px] text-gray">
-              O endereço veio sem o código de redefinição. Isso costuma
-              acontecer quando o programa de e-mail quebra o link em duas
-              linhas — copie o endereço inteiro, ou peça outro.
+              O endereço veio sem o código de redefinição. Isso costuma acontecer quando o programa
+              de e-mail quebra o link em duas linhas — copie o endereço inteiro, ou peça outro.
             </p>
             <Link
               href="/recuperar-senha"

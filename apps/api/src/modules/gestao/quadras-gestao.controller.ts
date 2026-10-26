@@ -49,10 +49,7 @@ export class QuadrasGestaoController {
   @Post()
   @Auditar({ acao: "cadastrar quadra", entidade: "Quadra" })
   @Papeis(Role.ADMIN)
-  criar(
-    @Param("estabelecimentoId") estabelecimentoId: string,
-    @Body() dto: CriarQuadraDto,
-  ) {
+  criar(@Param("estabelecimentoId") estabelecimentoId: string, @Body() dto: CriarQuadraDto) {
     return this.quadras.criar(estabelecimentoId, dto);
   }
 

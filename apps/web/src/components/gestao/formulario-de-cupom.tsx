@@ -23,11 +23,7 @@ function emDias(dias: number): string {
  * alguém realmente escreve; deixar as duas datas vazias transforma o caso
  * comum em dois cliques de calendário.
  */
-export function FormularioDeCupom({
-  estabelecimentoId,
-}: {
-  estabelecimentoId: string;
-}) {
+export function FormularioDeCupom({ estabelecimentoId }: { estabelecimentoId: string }) {
   const [aberto, setAberto] = useState(false);
   const [codigo, setCodigo] = useState("");
   const [tipo, setTipo] = useState<"PERCENTUAL" | "VALOR_FIXO">("PERCENTUAL");
@@ -76,8 +72,7 @@ export function FormularioDeCupom({
     );
   }
 
-  const rotulo =
-    "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray";
+  const rotulo = "mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray";
   const campo =
     "w-full rounded-button border border-line px-3 py-2 text-[14px] text-ink " +
     "focus:border-coral";

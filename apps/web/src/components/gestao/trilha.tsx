@@ -34,10 +34,7 @@ export function simples(texto: string): string {
  * em português que não dobra acento não acha "conciliação" quando se digita
  * "conciliacao", e isso não aparece em nenhuma inspeção visual.
  */
-export function filtrar(
-  registros: RegistroDaTrilha[],
-  filtro: FiltroDaTrilha,
-): RegistroDaTrilha[] {
+export function filtrar(registros: RegistroDaTrilha[], filtro: FiltroDaTrilha): RegistroDaTrilha[] {
   const busca = simples(filtro.busca ?? "");
   const entidade = filtro.entidade;
 
@@ -47,9 +44,7 @@ export function filtrar(
     // O identificador entra na busca porque é por ele que se procura uma
     // quadra específica depois de achá-la em outra tela.
     const alvo = simples(
-      [r.acao, r.entidade, r.entidadeId ?? "", r.autor?.nome ?? "sistema"].join(
-        " ",
-      ),
+      [r.acao, r.entidade, r.entidadeId ?? "", r.autor?.nome ?? "sistema"].join(" "),
     );
     return alvo.includes(busca);
   });
@@ -157,8 +152,8 @@ export function TrilhaDaArena({
            confundir as duas faria o dono concluir que a auditoria não funciona
            quando ele só digitou um nome errado. */
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-          Nada registrado ainda. A trilha começa na próxima ação de gestão —
-          liberar um horário, pausar uma quadra, trocar o papel de alguém.
+          Nada registrado ainda. A trilha começa na próxima ação de gestão — liberar um horário,
+          pausar uma quadra, trocar o papel de alguém.
         </p>
       ) : (
         <>
@@ -210,9 +205,7 @@ export function TrilhaDaArena({
                 ))}
               </select>
             </div>
-            {filtro.limite ? (
-              <input type="hidden" name="limite" value={filtro.limite} />
-            ) : null}
+            {filtro.limite ? <input type="hidden" name="limite" value={filtro.limite} /> : null}
             <button
               type="submit"
               className={cn(
@@ -256,8 +249,7 @@ export function TrilhaDaArena({
 
           {visiveis.length === 0 ? (
             <p className="mt-7 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-              Nenhum registro para esse filtro. A trilha tem {trilha.length} no
-              período carregado.
+              Nenhum registro para esse filtro. A trilha tem {trilha.length} no período carregado.
             </p>
           ) : (
             porDia(visiveis).map(([dia, registros]) => (
@@ -293,9 +285,7 @@ export function TrilhaDaArena({
                             {r.entidadeId ? ` · ${r.entidadeId}` : ""}
                           </p>
                           {dados ? (
-                            <p className="mt-1 break-words text-[12px] text-gray">
-                              {dados}
-                            </p>
+                            <p className="mt-1 break-words text-[12px] text-gray">{dados}</p>
                           ) : null}
                         </div>
                       </li>
@@ -312,11 +302,10 @@ export function TrilhaDaArena({
           conciliação. A escrita acontece depois da ação e nunca a bloqueia,
           logo uma falha de banco perde a linha sem desfazer a operação. */}
       <p className="mt-10 text-[13px] text-gray">
-        A trilha é de <strong>melhor esforço</strong>: ela é escrita depois de a
-        ação acontecer, para que uma falha de registro nunca impeça o trabalho
-        no balcão. O preço é que uma indisponibilidade do banco entre a ação e o
-        registro deixa um buraco — que fica no log do servidor. Nenhum registro
-        é apagado ou editado, e não existe rota para isso.
+        A trilha é de <strong>melhor esforço</strong>: ela é escrita depois de a ação acontecer,
+        para que uma falha de registro nunca impeça o trabalho no balcão. O preço é que uma
+        indisponibilidade do banco entre a ação e o registro deixa um buraco — que fica no log do
+        servidor. Nenhum registro é apagado ou editado, e não existe rota para isso.
       </p>
     </div>
   );

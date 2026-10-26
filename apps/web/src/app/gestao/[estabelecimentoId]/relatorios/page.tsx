@@ -29,8 +29,7 @@ export default async function Relatorios({
   // padrão de 30 dias em vez de virar 400.
   const hoje = hojeNaQuadra();
   const ate = pedido.ate && FORMATO.test(pedido.ate) ? pedido.ate : hoje;
-  const de =
-    pedido.de && FORMATO.test(pedido.de) ? pedido.de : trintaDiasAtras(ate);
+  const de = pedido.de && FORMATO.test(pedido.de) ? pedido.de : trintaDiasAtras(ate);
 
   const relatorio = await relatorioDoPeriodo(estabelecimentoId, de, ate);
   const periodo = new URLSearchParams({ de, ate }).toString();

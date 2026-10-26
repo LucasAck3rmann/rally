@@ -79,13 +79,15 @@ const dinheiroBr = new Intl.NumberFormat("pt-BR", {
  */
 // A flag `u` é o que faz um emoji — que em UTF-16 são duas unidades —
 // contar como um caractere só, e virar um `?` em vez de dois.
-const REPRESENTAVEL =
-  /[^\x20-\x7E\xA0-\xFF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/gu;
+const REPRESENTAVEL = /[^\x20-\x7E\xA0-\xFF€‚ƒ„…†‡ˆ‰Š‹ŒŽ‘’“”•–—˜™š›œžŸ]/gu;
 
 export function texto(valor: string): string {
   // O espaço fino que o `Intl` põe entre "R$" e o número vira espaço comum:
   // ele existe em WinAnsi, mas atrapalha a medida de largura da pdfkit.
-  return valor.normalize("NFC").replace(/\u00a0/g, " ").replace(REPRESENTAVEL, "?");
+  return valor
+    .normalize("NFC")
+    .replace(/\u00a0/g, " ")
+    .replace(REPRESENTAVEL, "?");
 }
 
 export function dinheiro(valor: number): string {
@@ -301,10 +303,7 @@ function rodape(doc: Doc, r: RelatorioParaPdf, gerado: string): void {
  * `geradoEm` é parâmetro e não `new Date()` lá dentro para que o teste possa
  * fixar o carimbo e comparar bytes.
  */
-export function montarPdf(
-  r: RelatorioParaPdf,
-  geradoEm: Date = new Date(),
-): Promise<Buffer> {
+export function montarPdf(r: RelatorioParaPdf, geradoEm: Date = new Date()): Promise<Buffer> {
   const doc = new PDFDocument({
     size: "A4",
     margins: { top: MARGEM, bottom: 46, left: MARGEM, right: MARGEM },
@@ -330,11 +329,7 @@ export function montarPdf(
     .fontSize(18)
     .fillColor(TINTA)
     .text("Relatório", doc.page.margins.left, doc.page.margins.top);
-  doc
-    .font("Helvetica")
-    .fontSize(11)
-    .fillColor(TINTA)
-    .text(texto(r.estabelecimento.nome));
+  doc.font("Helvetica").fontSize(11).fillColor(TINTA).text(texto(r.estabelecimento.nome));
   doc
     .font("Helvetica")
     .fontSize(9)
@@ -376,8 +371,7 @@ export function montarPdf(
   const w = largura(doc);
   titulo(doc, "Por método de pagamento");
   if (r.porMetodo.length === 0) {
-    doc.font("Helvetica").fontSize(9.5).fillColor(APOIO)
-      .text("Nenhuma venda no período.");
+    doc.font("Helvetica").fontSize(9.5).fillColor(APOIO).text("Nenhuma venda no período.");
     doc.moveDown(1);
   } else {
     tabela(
@@ -399,8 +393,7 @@ export function montarPdf(
 
   titulo(doc, "Por quadra");
   if (r.porQuadra.length === 0) {
-    doc.font("Helvetica").fontSize(9.5).fillColor(APOIO)
-      .text("Nenhuma quadra ativa.");
+    doc.font("Helvetica").fontSize(9.5).fillColor(APOIO).text("Nenhuma quadra ativa.");
     doc.moveDown(1);
   } else {
     tabela(

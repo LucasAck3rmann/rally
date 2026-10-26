@@ -24,9 +24,7 @@ function usuarioCompleto(extras: Record<string, unknown> = {}) {
       canalPush: false,
       marketingOptIn: false,
     },
-    memberships: [
-      { role: Role.ADMIN, estabelecimento: { nome: "Arena Beira-Rio" } },
-    ],
+    memberships: [{ role: Role.ADMIN, estabelecimento: { nome: "Arena Beira-Rio" } }],
     reservas: [
       {
         id: "r1",
@@ -89,12 +87,16 @@ function servico(
   };
 
   const findUnique = jest.fn(async (args: { select?: Record<string, unknown> }) =>
-    args.select && "anonimizadoEm" in args.select && "id" in args.select &&
+    args.select &&
+    "anonimizadoEm" in args.select &&
+    "id" in args.select &&
     Object.keys(args.select).length === 2
-      ? (opcoes.paraExcluir === undefined
-          ? { id: "u1", anonimizadoEm: null }
-          : opcoes.paraExcluir)
-      : (opcoes.usuario === undefined ? usuarioCompleto() : opcoes.usuario),
+      ? opcoes.paraExcluir === undefined
+        ? { id: "u1", anonimizadoEm: null }
+        : opcoes.paraExcluir
+      : opcoes.usuario === undefined
+        ? usuarioCompleto()
+        : opcoes.usuario,
   );
 
   const prisma = {
@@ -125,9 +127,7 @@ describe("PrivacidadeService.exportar (RNF-07)", () => {
     expect(saida.conta).toMatchObject({ nome: "Lucas Ackermann" });
     expect(saida.reservas).toHaveLength(1);
     expect(saida.avisos).toHaveLength(1);
-    expect(saida.vinculos).toEqual([
-      { estabelecimento: "Arena Beira-Rio", papel: Role.ADMIN },
-    ]);
+    expect(saida.vinculos).toEqual([{ estabelecimento: "Arena Beira-Rio", papel: Role.ADMIN }]);
     expect(saida.preferenciasDeAviso).toMatchObject({ canalPush: false });
   });
 

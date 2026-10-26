@@ -18,8 +18,8 @@ export default async function Gestao() {
   return (
     <div className="p-6 md:p-10">
       <Notice rotulo="Sem acesso" titulo="Você ainda não gerencia nenhuma arena">
-        Peça para o administrador do estabelecimento adicionar o seu e-mail à
-        equipe. Assim que ele fizer isso, o painel aparece aqui.
+        Peça para o administrador do estabelecimento adicionar o seu e-mail à equipe. Assim que ele
+        fizer isso, o painel aparece aqui.
       </Notice>
     </div>
   );

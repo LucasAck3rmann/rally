@@ -62,23 +62,19 @@ export function CuponsDaArena({
   return (
     <div className="p-6 md:p-10">
       <header>
-        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-          Cupons
-        </h1>
+        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Cupons</h1>
         <p className="mt-1 max-w-[62ch] text-[14px] text-gray">
-          O cliente digita o código na hora de reservar. Cupom não soma com o
-          desconto do Pix: vale o maior dos dois.
+          O cliente digita o código na hora de reservar. Cupom não soma com o desconto do Pix: vale
+          o maior dos dois.
         </p>
       </header>
 
-      {podeEditar ? (
-        <FormularioDeCupom estabelecimentoId={estabelecimentoId} />
-      ) : null}
+      {podeEditar ? <FormularioDeCupom estabelecimentoId={estabelecimentoId} /> : null}
 
       {cupons.length === 0 ? (
         <p className="mt-8 text-[14px] text-gray">
-          Nenhum cupom ainda. O primeiro costuma ser um desconto para o horário
-          que fica vazio no meio da semana.
+          Nenhum cupom ainda. O primeiro costuma ser um desconto para o horário que fica vazio no
+          meio da semana.
         </p>
       ) : (
         <ul className="mt-8 space-y-2">
@@ -110,9 +106,7 @@ export function CuponsDaArena({
                 <span
                   className={cn(
                     "rounded-button px-2.5 py-1 text-[12px] font-semibold",
-                    motivo === null
-                      ? "bg-coral/15 text-coral-deep"
-                      : "bg-bg text-gray",
+                    motivo === null ? "bg-coral/15 text-coral-deep" : "bg-bg text-gray",
                   )}
                 >
                   {motivo ?? "Valendo"}
@@ -140,8 +134,8 @@ export function CuponsDaArena({
       {/* Declarado em vez de escondido: o cupom usado é a origem do desconto
           de uma reserva paga, e apagá-lo deixaria um preço sem explicação. */}
       <p className="mt-8 text-[13px] text-gray">
-        Cupom não se apaga, se desliga — ele é a origem do desconto das
-        reservas que já usaram, e some do relatório junto.
+        Cupom não se apaga, se desliga — ele é a origem do desconto das reservas que já usaram, e
+        some do relatório junto.
       </p>
     </div>
   );

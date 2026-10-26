@@ -56,12 +56,7 @@ function alturaDeclarada(classe: string): number | null {
 
   // Ordem de precedência: altura fixa, depois mínima, depois `size`.
   return (
-    literal("h") ??
-    escala("h") ??
-    literal("min-h") ??
-    escala("min-h") ??
-    escala("size") ??
-    null
+    literal("h") ?? escala("h") ?? literal("min-h") ?? escala("min-h") ?? escala("size") ?? null
   );
 }
 

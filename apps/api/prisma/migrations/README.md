@@ -1,6 +1,7 @@
 # Migrations (Prisma)
 
 As migrações são geradas a partir de `../schema.prisma` com:
+
 ```bash
 pnpm prisma migrate dev --name <descrição>
 ```
@@ -10,10 +11,10 @@ Sem um banco à mão, dá para gerar o SQL a partir do schema com
 
 ## Migrações
 
-| Migração | O que faz |
-|---|---|
-| `20260928233000_init` | Linha de base: todo o schema (enums, tabelas, índices e chaves). |
-| `20260928233100_reserva_sem_sobreposicao` | Anti-overbooking de verdade (RN-01) — ver abaixo. |
+| Migração                                  | O que faz                                                        |
+| ----------------------------------------- | ---------------------------------------------------------------- |
+| `20260928233000_init`                     | Linha de base: todo o schema (enums, tabelas, índices e chaves). |
+| `20260928233100_reserva_sem_sobreposicao` | Anti-overbooking de verdade (RN-01) — ver abaixo.                |
 
 ## Anti-overbooking (RN-01) — aplicado
 

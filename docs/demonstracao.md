@@ -11,11 +11,11 @@ celular Android, falando com a mesma API.
 
 ## 1. O que precisa estar instalado
 
-| | Versão | Por quê |
-| --- | --- | --- |
-| Node | 22 | é a do `setup-node` da CI |
-| pnpm | o do `packageManager` no `package.json` | `corepack enable` já resolve |
-| Docker Desktop | qualquer recente | só para o PostgreSQL |
+|                | Versão                                  | Por quê                      |
+| -------------- | --------------------------------------- | ---------------------------- |
+| Node           | 22                                      | é a do `setup-node` da CI    |
+| pnpm           | o do `packageManager` no `package.json` | `corepack enable` já resolve |
+| Docker Desktop | qualquer recente                        | só para o PostgreSQL         |
 
 O Flutter **não** é preciso para a demonstração: o aplicativo vai instalado
 como APK (seção 5).
@@ -57,9 +57,9 @@ que é uma tela ruim para mostrar.
 
 As contas que ele cria:
 
-| Conta | Senha | Serve para |
-| --- | --- | --- |
-| `dono@arena.com` | `rally123` | entrar no painel de gestão |
+| Conta               | Senha      | Serve para                        |
+| ------------------- | ---------- | --------------------------------- |
+| `dono@arena.com`    | `rally123` | entrar no painel de gestão        |
 | `cliente@rally.com` | `rally123` | entrar no aplicativo como jogador |
 
 > ⚠️ São credenciais de demonstração, declaradas no `prisma/seed.ts`. Não
@@ -128,14 +128,14 @@ precisa ser aceito.
 
 ## 6. O que mostrar
 
-| Tela | Onde | O que ela prova |
-| --- | --- | --- |
-| Página inicial | `/` | identidade visual e proposta |
-| Painel do dono | `/gestao` | receita, ocupação e próximos jogos |
-| Agenda | `/gestao/:id/agenda` | grade quadra a quadra, reservar, mover e bloquear |
-| Mensalistas | `/gestao/:id/mensalistas` | o recurso que cinco dos dez gestores pediram |
-| Trilha de auditoria | `/gestao/:id/auditoria` | quem fez o quê, exigência da RN-05 |
-| Aplicativo | celular | a mesma API, da perspectiva do jogador |
+| Tela                | Onde                      | O que ela prova                                   |
+| ------------------- | ------------------------- | ------------------------------------------------- |
+| Página inicial      | `/`                       | identidade visual e proposta                      |
+| Painel do dono      | `/gestao`                 | receita, ocupação e próximos jogos                |
+| Agenda              | `/gestao/:id/agenda`      | grade quadra a quadra, reservar, mover e bloquear |
+| Mensalistas         | `/gestao/:id/mensalistas` | o recurso que cinco dos dez gestores pediram      |
+| Trilha de auditoria | `/gestao/:id/auditoria`   | quem fez o quê, exigência da RN-05                |
+| Aplicativo          | celular                   | a mesma API, da perspectiva do jogador            |
 
 ## 7. Conferir que está tudo de pé
 

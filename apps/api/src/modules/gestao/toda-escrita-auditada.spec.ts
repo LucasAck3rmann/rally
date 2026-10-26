@@ -40,13 +40,12 @@ import { GestaoModule } from "./gestao.module";
  * instante em que entra no módulo.
  */
 /** O esquema, que e a fonte dos nomes de entidade. */
-const schema = readFileSync(
-  join(__dirname, "..", "..", "..", "prisma", "schema.prisma"),
-  "utf-8",
-);
+const schema = readFileSync(join(__dirname, "..", "..", "..", "prisma", "schema.prisma"), "utf-8");
 
-const CONTROLADORES = (Reflect.getMetadata("controllers", GestaoModule) ??
-  []) as { name: string; prototype: object }[];
+const CONTROLADORES = (Reflect.getMetadata("controllers", GestaoModule) ?? []) as {
+  name: string;
+  prototype: object;
+}[];
 
 const ESCRITA = new Set([
   RequestMethod.POST,
@@ -80,9 +79,7 @@ function rotas(): Rota[] {
       const alvo = proto[nome];
       if (typeof alvo !== "function") continue;
 
-      const verbo = Reflect.getMetadata(METHOD_METADATA, alvo) as
-        | RequestMethod
-        | undefined;
+      const verbo = Reflect.getMetadata(METHOD_METADATA, alvo) as RequestMethod | undefined;
       if (verbo === undefined) continue;
 
       achadas.push({
@@ -90,9 +87,7 @@ function rotas(): Rota[] {
         metodo: nome,
         verbo,
         caminho: String(Reflect.getMetadata(PATH_METADATA, alvo) ?? "/"),
-        auditada: Reflect.getMetadata(ACAO_AUDITADA, alvo) as
-          | DescricaoDaAcao
-          | undefined,
+        auditada: Reflect.getMetadata(ACAO_AUDITADA, alvo) as DescricaoDaAcao | undefined,
       });
     }
   }
@@ -141,9 +136,7 @@ describe("RN-05 — toda escrita da gestão deixa rastro", () => {
     // saem do módulo: lista escrita à mão envelhece calada. Esta tinha seis
     // nomes e não incluía `Recorrencia`, de modo que uma entidade nova do
     // modelo seria recusada pelo portão como se fosse erro de digitação.
-    const ENTIDADES = new Set(
-      [...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]),
-    );
+    const ENTIDADES = new Set([...schema.matchAll(/^model (\w+) \{/gm)].map((m) => m[1]));
     expect(ENTIDADES.size).toBeGreaterThan(15);
 
     // Cada afirmacao leva a rota dentro do valor, para a falha dizer qual e.
@@ -165,9 +158,7 @@ describe("RN-05 — toda escrita da gestão deixa rastro", () => {
   it("quando a rota tem identificador na URL, a trilha o registra", () => {
     // Sem o `parametro`, a linha diz "editou uma quadra" sem dizer **qual** —
     // e numa arena com seis quadras isso não responde à pergunta.
-    const comIdNaRota = todas.filter(
-      (r) => r.auditada && /:(\w+)/.test(r.caminho),
-    );
+    const comIdNaRota = todas.filter((r) => r.auditada && /:(\w+)/.test(r.caminho));
     const semParametro = comIdNaRota
       .filter((r) => !r.auditada!.parametro)
       .map((r) => `${r.controlador}.${r.metodo} (${r.caminho})`);
@@ -177,7 +168,9 @@ describe("RN-05 — toda escrita da gestão deixa rastro", () => {
     // faria `entidadeId` ficar nulo sem ninguem notar.
     const parametroInexistente = comIdNaRota
       .filter((r) => !r.caminho.includes(`:${r.auditada!.parametro}`))
-      .map((r) => `${r.controlador}.${r.metodo}: :${r.auditada!.parametro} nao esta em ${r.caminho}`);
+      .map(
+        (r) => `${r.controlador}.${r.metodo}: :${r.auditada!.parametro} nao esta em ${r.caminho}`,
+      );
     expect(parametroInexistente).toEqual([]);
   });
 

@@ -40,9 +40,7 @@ export function RelatorioDaArena({
     <div className="p-6 md:p-10">
       <header className="flex flex-wrap items-end justify-between gap-4">
         <div>
-          <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-            Relatórios
-          </h1>
+          <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Relatórios</h1>
           <p className="mt-1 text-[14px] text-gray">
             {periodo.de.split("-").reverse().join("/")} a{" "}
             {periodo.ate.split("-").reverse().join("/")} · {periodo.dias} dia
@@ -88,23 +86,13 @@ export function RelatorioDaArena({
           <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
             De
           </span>
-          <input
-            type="date"
-            name="de"
-            defaultValue={periodo.de}
-            className={CAMPO_COMPACTO}
-          />
+          <input type="date" name="de" defaultValue={periodo.de} className={CAMPO_COMPACTO} />
         </label>
         <label>
           <span className="mb-1.5 block font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
             Até
           </span>
-          <input
-            type="date"
-            name="ate"
-            defaultValue={periodo.ate}
-            className={CAMPO_COMPACTO}
-          />
+          <input type="date" name="ate" defaultValue={periodo.ate} className={CAMPO_COMPACTO} />
         </label>
         <button
           type="submit"
@@ -142,9 +130,7 @@ export function RelatorioDaArena({
 
       <div className="mt-8 grid gap-8 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.4fr)]">
         <section>
-          <h2 className="font-display text-[19px] font-bold text-ink">
-            Por método de pagamento
-          </h2>
+          <h2 className="font-display text-[19px] font-bold text-ink">Por método de pagamento</h2>
           {porMetodo.length === 0 ? (
             <p className="mt-4 text-[13px] text-gray">Nenhuma venda no período.</p>
           ) : (
@@ -168,12 +154,8 @@ export function RelatorioDaArena({
               <tbody>
                 {porMetodo.map((m) => (
                   <tr key={m.metodo} className="border-b border-line/60">
-                    <td className="py-2.5 text-[14px] font-semibold text-ink">
-                      {m.metodo}
-                    </td>
-                    <td className="py-2.5 text-right text-[14px] text-gray">
-                      {m.reservas}
-                    </td>
+                    <td className="py-2.5 text-[14px] font-semibold text-ink">{m.metodo}</td>
+                    <td className="py-2.5 text-right text-[14px] text-gray">{m.reservas}</td>
                     <td className="py-2.5 text-right text-[14px] font-semibold text-ink">
                       {formatarPreco(m.valor)}
                     </td>
@@ -186,9 +168,7 @@ export function RelatorioDaArena({
             </table>
           )}
 
-          <h2 className="mt-8 font-display text-[19px] font-bold text-ink">
-            Por quadra
-          </h2>
+          <h2 className="mt-8 font-display text-[19px] font-bold text-ink">Por quadra</h2>
           <ul className="mt-4 space-y-2">
             {porQuadra.map((q) => (
               <li
@@ -218,9 +198,7 @@ export function RelatorioDaArena({
           {/* A pergunta "qual esporte tem mais procura" veio do campo livre
               do Instrumento I, escrita por um gestor. O relatório sabia
               responder por quadra e por dia, e não por modalidade. */}
-          <h2 className="mt-8 font-display text-[19px] font-bold text-ink">
-            Por modalidade
-          </h2>
+          <h2 className="mt-8 font-display text-[19px] font-bold text-ink">Por modalidade</h2>
           <ul className="mt-4 space-y-2">
             {porModalidade.map((m) => (
               <li
@@ -237,24 +215,19 @@ export function RelatorioDaArena({
                 <span className="shrink-0 text-gray">
                   {m.reservas} · {numero(m.horas)}h
                 </span>
-                <span className="shrink-0 font-semibold text-ink">
-                  {formatarPreco(m.receita)}
-                </span>
+                <span className="shrink-0 font-semibold text-ink">{formatarPreco(m.receita)}</span>
               </li>
             ))}
             {porModalidade.length === 0 ? (
-              <li className="text-[13px] text-gray">
-                Nenhuma reserva no período.
-              </li>
+              <li className="text-[13px] text-gray">Nenhuma reserva no período.</li>
             ) : null}
           </ul>
           {porModalidade.length > 0 ? (
             <p className="mt-3 text-[13px] text-gray">
               {/* Dito aqui e também dentro do CSV e da planilha: quem recebe o
                   arquivo por e-mail não recebe esta tela junto. */}
-              Uma quadra pode atender mais de uma modalidade, e a reserva
-              registra a quadra e não o esporte jogado. Por isso a receita
-              aparece em cada modalidade da quadra e{" "}
+              Uma quadra pode atender mais de uma modalidade, e a reserva registra a quadra e não o
+              esporte jogado. Por isso a receita aparece em cada modalidade da quadra e{" "}
               <strong>estes valores não somam o total</strong>.
             </p>
           ) : null}
@@ -282,9 +255,7 @@ export function RelatorioDaArena({
                   }}
                 />
                 <span className="shrink-0 text-[12px] text-gray">
-                  {d.reservas === 0
-                    ? "—"
-                    : `${formatarPreco(d.receita)} · ${d.reservas}`}
+                  {d.reservas === 0 ? "—" : `${formatarPreco(d.receita)} · ${d.reservas}`}
                 </span>
               </li>
             ))}
@@ -295,32 +266,19 @@ export function RelatorioDaArena({
       {/* Os três formatos do RF-28 não são o mesmo arquivo em embalagens
           diferentes, e dizer para que serve cada um evita o download errado. */}
       <p className="mt-10 text-[13px] text-gray">
-        O Excel traz números e datas como valores — soma e gera gráfico sem
-        converter nada. O PDF é para ler e enviar: imprime e anexa num e-mail
-        sem passar por planilha. O CSV é o formato simples, para importar em
-        outro sistema.
+        O Excel traz números e datas como valores — soma e gera gráfico sem converter nada. O PDF é
+        para ler e enviar: imprime e anexa num e-mail sem passar por planilha. O CSV é o formato
+        simples, para importar em outro sistema.
       </p>
     </div>
   );
 }
 
-function Numero({
-  rotulo,
-  valor,
-  apoio,
-}: {
-  rotulo: string;
-  valor: string;
-  apoio?: string;
-}) {
+function Numero({ rotulo, valor, apoio }: { rotulo: string; valor: string; apoio?: string }) {
   return (
     <div className="rounded-card border border-line bg-white px-5 py-4">
-      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray">
-        {rotulo}
-      </p>
-      <p className="mt-2 font-display text-[22px] font-bold leading-none text-ink">
-        {valor}
-      </p>
+      <p className="font-mono text-[10px] uppercase tracking-[0.15em] text-gray">{rotulo}</p>
+      <p className="mt-2 font-display text-[22px] font-bold leading-none text-ink">{valor}</p>
       {apoio ? <p className="mt-1.5 text-[11px] text-gray">{apoio}</p> : null}
     </div>
   );

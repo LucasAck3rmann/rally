@@ -22,15 +22,7 @@ import { formatarPreco } from "@/lib/formato";
 import { encerrarMensalista, materializarMensalista } from "@/lib/gestao/acoes";
 import type { Mensalista, QuadraDaGestao } from "@/lib/gestao/contratos";
 
-const DIAS = [
-  "Domingo",
-  "Segunda",
-  "Terça",
-  "Quarta",
-  "Quinta",
-  "Sexta",
-  "Sábado",
-];
+const DIAS = ["Domingo", "Segunda", "Terça", "Quarta", "Quinta", "Sexta", "Sábado"];
 
 /** "Terça, 19:00 às 20:00" — o horário é o que identifica o mensalista. */
 function horario(m: Mensalista): string {
@@ -85,9 +77,7 @@ export function MensalistasDaArena({
   return (
     <div className="p-6 md:p-10">
       <header>
-        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">
-          Mensalistas
-        </h1>
+        <h1 className="font-display text-[28px] font-bold text-ink md:text-[32px]">Mensalistas</h1>
         <p className="mt-1 text-[14px] text-gray">
           {ativos.length === 0
             ? "Nenhum mensalista ativo."
@@ -105,8 +95,8 @@ export function MensalistasDaArena({
 
       {mensalistas.length === 0 ? (
         <p className="mt-8 rounded-card border border-line bg-white p-8 text-center text-[15px] text-gray">
-          Nenhum mensalista cadastrado. O mensalista ocupa o mesmo horário toda
-          semana, e cada semana vira uma reserva de verdade na agenda.
+          Nenhum mensalista cadastrado. O mensalista ocupa o mesmo horário toda semana, e cada
+          semana vira uma reserva de verdade na agenda.
         </p>
       ) : (
         <ul className="mt-7 space-y-3">
@@ -126,9 +116,7 @@ export function MensalistasDaArena({
               >
                 <div className="flex flex-wrap items-start justify-between gap-4">
                   <div className="min-w-0">
-                    <p className="font-display text-[17px] font-bold text-ink">
-                      {m.cliente}
-                    </p>
+                    <p className="font-display text-[17px] font-bold text-ink">{m.cliente}</p>
                     <p className="mt-0.5 text-[14px] text-ink">
                       {horario(m)} · {m.quadra}
                     </p>
@@ -154,10 +142,7 @@ export function MensalistasDaArena({
                 {m.status === "ATIVA" ? (
                   <div className="mt-4 flex flex-wrap items-center gap-3 border-t border-line/60 pt-3">
                     <p
-                      className={cn(
-                        "flex-1 text-[13px]",
-                        curto ? "text-coral-deep" : "text-gray",
-                      )}
+                      className={cn("flex-1 text-[13px]", curto ? "text-coral-deep" : "text-gray")}
                     >
                       {folga === null
                         ? "Nenhuma semana gerada ainda."
@@ -196,19 +181,17 @@ export function MensalistasDaArena({
       {/* O que esta tela não faz, dito de frente — como a nota do gateway na
           conciliação e a de melhor esforço na trilha. */}
       <p className="mt-10 text-[13px] text-gray">
-        O mensalista ocupa o horário por <strong>reservas de verdade</strong>,
-        uma por semana, protegidas contra sobreposição pelo banco como qualquer
-        outra. A <strong>cobrança mensal é combinada fora do sistema</strong>:
-        o Rally registra quem tem o horário e quanto vale, e não emite a fatura.
-        Para trocar o dia ou a hora de um mensalista, encerre e cadastre de
-        novo — assim nenhuma reserva fica discordando da série que a gerou.
+        O mensalista ocupa o horário por <strong>reservas de verdade</strong>, uma por semana,
+        protegidas contra sobreposição pelo banco como qualquer outra. A{" "}
+        <strong>cobrança mensal é combinada fora do sistema</strong>: o Rally registra quem tem o
+        horário e quanto vale, e não emite a fatura. Para trocar o dia ou a hora de um mensalista,
+        encerre e cadastre de novo — assim nenhuma reserva fica discordando da série que a gerou.
       </p>
 
       <p className="mt-3 text-[13px] text-gray">
-        O horizonte de oito semanas <strong>avança sozinho todo dia</strong>.
-        O botão de gerar existe para pressa — cadastrou agora e quer ver as
-        semanas na agenda — e para o caso em que o aviso acima aparece, que
-        é sinal de que o trabalho automático parou.
+        O horizonte de oito semanas <strong>avança sozinho todo dia</strong>. O botão de gerar
+        existe para pressa — cadastrou agora e quer ver as semanas na agenda — e para o caso em que
+        o aviso acima aparece, que é sinal de que o trabalho automático parou.
       </p>
     </div>
   );

@@ -29,9 +29,7 @@ export class SegredoDeIngestaoGuard implements CanActivate {
   canActivate(contexto: ExecutionContext): boolean {
     const esperado = this.config.get<string>("REPLAY_INGEST_SECRET");
     if (!esperado) {
-      throw new ServiceUnavailableException(
-        "Ingestão de replay não configurada neste ambiente.",
-      );
+      throw new ServiceUnavailableException("Ingestão de replay não configurada neste ambiente.");
     }
 
     const req = contexto.switchToHttp().getRequest<Request>();

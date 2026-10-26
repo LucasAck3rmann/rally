@@ -14,19 +14,11 @@ import {
 } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
-import {
-  contaDaReserva,
-  motivoDaRecusa,
-  type CupomParaAplicar,
-} from "./cupom";
+import { contaDaReserva, motivoDaRecusa, type CupomParaAplicar } from "./cupom";
 import { PagamentosService } from "../pagamentos/pagamentos.service";
 import { QuadrasService } from "../quadras/quadras.service";
 import { CreateReservaDto } from "./dto/create-reserva.dto";
-import {
-  estaDentroDoPrazo,
-  garantirQueAceitaMudanca,
-  limiteDoPrazo,
-} from "./politica-reserva";
+import { estaDentroDoPrazo, garantirQueAceitaMudanca, limiteDoPrazo } from "./politica-reserva";
 import { RemarcarReservaDto } from "./dto/remarcar-reserva.dto";
 
 /** Como a reserva é devolvida ao app (traz quadra e estabelecimento juntos). */
@@ -88,22 +80,14 @@ const COM_CONTEXTO = {
  * o cliente.
  */
 export function ehCupomEsgotado(erro: unknown): boolean {
-  return (
-    erro instanceof Error &&
-    erro.message.includes("promocao_usos_dentro_do_limite")
-  );
+  return erro instanceof Error && erro.message.includes("promocao_usos_dentro_do_limite");
 }
 
 export function ehConflitoDeHorario(erro: unknown): boolean {
-  if (
-    erro instanceof Prisma.PrismaClientKnownRequestError &&
-    erro.code === "P2002"
-  ) {
+  if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
     return true;
   }
-  return (
-    erro instanceof Error && erro.message.includes("reserva_sem_sobreposicao")
-  );
+  return erro instanceof Error && erro.message.includes("reserva_sem_sobreposicao");
 }
 
 /**
@@ -143,8 +127,7 @@ export function ehImpasseDeHorario(erro: unknown): boolean {
  * mediu; dizer para tentar de novo é verdadeiro e acionável, porque a
  * segunda tentativa encontra o intervalo decidido.
  */
-export const HORARIO_DISPUTADO =
-  "Esse horário está sendo disputado neste instante. Tente de novo.";
+export const HORARIO_DISPUTADO = "Esse horário está sendo disputado neste instante. Tente de novo.";
 
 /**
  * Executa a escrita e, se o banco abortar por **impasse**, repete uma vez.
@@ -269,8 +252,7 @@ export class ReservasService {
     }
 
     const metodo = dto.metodo ?? PagamentoMetodo.PIX;
-    const descontoPixPct =
-      metodo === PagamentoMetodo.PIX ? Number(est.descontoPixPct) : 0;
+    const descontoPixPct = metodo === PagamentoMetodo.PIX ? Number(est.descontoPixPct) : 0;
 
     const cupom = dto.cupom
       ? await this.acharCupom(quadra.estabelecimentoId, dto.cupom)
@@ -332,9 +314,7 @@ export class ReservasService {
         throw new ConflictException(HORARIO_DISPUTADO);
       }
       if (ehCupomEsgotado(erro)) {
-        throw new ConflictException(
-          "Esse cupom acabou de atingir o limite de usos.",
-        );
+        throw new ConflictException("Esse cupom acabou de atingir o limite de usos.");
       }
       throw erro;
     }
@@ -509,19 +489,14 @@ export class ReservasService {
     const agora = new Date();
     garantirQueAceitaMudanca(reserva, agora, "remarcada");
 
-    if (
-      reserva.inicio.getTime() === inicio.getTime() &&
-      reserva.fim.getTime() === fim.getTime()
-    ) {
+    if (reserva.inicio.getTime() === inicio.getTime() && reserva.fim.getTime() === fim.getTime()) {
       throw new BadRequestException("A reserva já está nesse horário.");
     }
 
     const est = reserva.quadra.estabelecimento;
     const horas = est.cancelamentoHoras;
     if (!estaDentroDoPrazo(reserva.inicio, horas, agora)) {
-      throw new ConflictException(
-        `A remarcação vale até ${horas} h antes do horário.`,
-      );
+      throw new ConflictException(`A remarcação vale até ${horas} h antes do horário.`);
     }
 
     const dataLocal = new Intl.DateTimeFormat("en-CA", {
@@ -530,10 +505,7 @@ export class ReservasService {
       month: "2-digit",
       day: "2-digit",
     }).format(inicio);
-    const { slots } = await this.quadras.disponibilidade(
-      reserva.quadraId,
-      dataLocal,
-    );
+    const { slots } = await this.quadras.disponibilidade(reserva.quadraId, dataLocal);
     const slot = slots.find(
       (s) =>
         new Date(s.inicio).getTime() === inicio.getTime() &&
@@ -548,10 +520,7 @@ export class ReservasService {
 
     const pagamento = reserva.pagamento;
     const jaPago = pagamento?.status === PagamentoStatus.PAGO;
-    const desconto =
-      pagamento?.metodo === PagamentoMetodo.PIX
-        ? Number(est.descontoPixPct)
-        : 0;
+    const desconto = pagamento?.metodo === PagamentoMetodo.PIX ? Number(est.descontoPixPct) : 0;
     const novoValor = Number((slot.preco * (1 - desconto / 100)).toFixed(2));
 
     if (jaPago && Number(pagamento.valor) !== novoValor) {
@@ -650,8 +619,7 @@ export class ReservasService {
     const agora = new Date();
     const gratuitoAte = limiteDoPrazo(r.inicio, est.cancelamentoHoras);
     const ativa =
-      r.status === ReservaStatus.PENDENTE_PAGAMENTO ||
-      r.status === ReservaStatus.CONFIRMADA;
+      r.status === ReservaStatus.PENDENTE_PAGAMENTO || r.status === ReservaStatus.CONFIRMADA;
 
     return {
       id: r.id,

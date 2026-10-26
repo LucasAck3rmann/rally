@@ -1,9 +1,5 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
-import {
-  BadRequestException,
-  Injectable,
-  NotFoundException,
-} from "@nestjs/common";
+import { BadRequestException, Injectable, NotFoundException } from "@nestjs/common";
 import { NotificacaoTipo, Prisma, ReplayStatus, ReservaStatus } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
@@ -55,11 +51,7 @@ export class IngestaoDeReplaysService {
     });
     if (existente) return { ...this.paraDto(existente), jaExistia: true };
 
-    const reserva = await this.reservaNoInstante(
-      quadra.id,
-      quadra.estabelecimentoId,
-      gravadoEm,
-    );
+    const reserva = await this.reservaNoInstante(quadra.id, quadra.estabelecimentoId, gravadoEm);
 
     try {
       const criado = await this.prisma.replay.create({
@@ -104,10 +96,7 @@ export class IngestaoDeReplaysService {
       // Duas entregas simultâneas: a segunda perde no índice único. Devolver
       // o vencedor é o comportamento idempotente — o provedor pediu que o
       // clipe exista, e ele existe.
-      if (
-        erro instanceof Prisma.PrismaClientKnownRequestError &&
-        erro.code === "P2002"
-      ) {
+      if (erro instanceof Prisma.PrismaClientKnownRequestError && erro.code === "P2002") {
         const vencedor = await this.prisma.replay.findUnique({
           where: { s3Key: dto.s3Key },
           select: SAIDA,
@@ -128,11 +117,7 @@ export class IngestaoDeReplaysService {
    * Não há como dar empate: a `reserva_sem_sobreposicao` garante no banco
    * que duas reservas ativas não cobrem o mesmo instante na mesma quadra.
    */
-  private async reservaNoInstante(
-    quadraId: string,
-    estabelecimentoId: string,
-    quando: Date,
-  ) {
+  private async reservaNoInstante(quadraId: string, estabelecimentoId: string, quando: Date) {
     return this.prisma.reserva.findFirst({
       where: {
         quadraId,
