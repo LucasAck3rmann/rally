@@ -154,6 +154,27 @@ async function main() {
   });
   const token = cadastro.dados?.accessToken;
   if (!token) {
+    // **429 não é falha da pré-condição, é a ferramenta batendo no próprio
+    // limite.** O cadastro está no balde de credencial (RNF-06), e rodar o
+    // ensaio várias vezes em sequência o esgota. Confundir os dois faria o
+    // ensaio acusar "o cadastro não abre sessão" na véspera de uma sessão —
+    // e é o mesmo engano que o `/auth/me` custou em 23/10, quando ele herdou
+    // o balde da senha errada e a tela caía sem dizer por quê.
+    if (cadastro.status === 429) {
+      falha(
+        "T1",
+        "o limite de tentativas do cadastro foi atingido (429) — este ensaio " +
+          "rodou demais, e não há nada errado com o ambiente",
+      );
+      console.log(
+        "\nCada execução gasta um cadastro do balde `cadastro`, que é de 20 por" +
+          "\nhora (ver `apps/api/src/modules/auth/limites.ts`). No uso normal —" +
+          "\numa ou duas execuções antes da sessão — isso não aparece; esgotá-lo" +
+          "\nexige rodar o ensaio mais de vinte vezes na mesma hora, que foi o" +
+          "\nque aconteceu enquanto esta ferramenta era escrita.",
+      );
+      process.exit(3);
+    }
     falha("T1", `o cadastro não abriu sessão: ${JSON.stringify(cadastro.dados)}`);
     console.log("\nSem sessão não há como seguir: T3 a T6 dependem dela.");
     process.exit(1);
