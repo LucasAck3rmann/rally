@@ -19,6 +19,76 @@ const comBanco = process.env.DATABASE_URL ? describe : describe.skip;
 const PREFIXO = "teste-sobrep-";
 
 /**
+ * Quantas tentativas simultâneas o teste de carga dispara (RNF-03).
+ *
+ * Fica no escopo do arquivo porque o **pool de conexões é dimensionado por
+ * ela**: eram duas constantes separadas, e a divergência entre as duas
+ * reprovou a `main` em 26/10 com `P2024` — "Timed out fetching a new
+ * connection from the connection pool (connection limit: 5)".
+ */
+const TENTATIVAS = 20;
+
+/**
+ * A URL do banco com pool suficiente para a carga **deste teste**.
+ *
+ * O `new PrismaClient()` sem argumento usa o `DATABASE_URL` como está, e sem
+ * `connection_limit` o Prisma calcula `núcleos * 2 + 1` — **5** no runner de
+ * dois núcleos do GitHub. Vinte tentativas simultâneas contra cinco conexões
+ * fazem quinze esperarem, e quem espera mais de 10 s morre com `P2024`.
+ *
+ * Isso reprovava o portão da garantia central do projeto por um motivo que
+ * **não é a garantia**: a tentativa que morre no pool nunca chega ao banco,
+ * de modo que ela não disputou o horário nem perdeu para a restrição. A
+ * contagem final no banco continuava correta — uma reserva — e a falha era na
+ * classificação do motivo de cada derrota.
+ *
+ * O pool é recurso do teste, então é o teste que o dimensiona. A folga de
+ * cinco é para os ganchos de preparo e limpeza, que usam o mesmo cliente.
+ */
+function urlComPool(bruta: string | undefined, limite: number): string {
+  // Sem `DATABASE_URL` a suíte é pulada, mas o corpo do `describe` roda
+  // mesmo assim para registrar os testes — e o cliente é construído aqui.
+  // Uma URL de mentira serve: ele nunca conecta.
+  if (!bruta) return "postgresql://sem:banco@localhost:5432/vazio";
+  const url = new URL(bruta);
+  url.searchParams.set("connection_limit", String(limite));
+  return url.toString();
+}
+
+/** Conexões que a suíte pede: a carga que ela cria, mais folga. */
+const LIMITE_DE_POOL = TENTATIVAS + 5;
+
+/**
+ * O dimensionamento é conferido **sem banco**, de propósito.
+ *
+ * O resto do arquivo é pulado numa máquina sem Postgres, e foi por isso que a
+ * divergência entre a carga e o pool só apareceu na CI. Esta conta é de
+ * cadeia de texto: ela roda em todo lugar, e é o que impede a folga de voltar
+ * a ser convenção.
+ */
+describe("o pool da suíte acompanha a carga que ela cria", () => {
+  it("pede mais conexões do que tentativas simultâneas", () => {
+    expect(LIMITE_DE_POOL).toBeGreaterThan(TENTATIVAS);
+  });
+
+  it("escreve o limite na URL e preserva o resto dela", () => {
+    const url = new URL(urlComPool("postgresql://u:p@host:5432/rally?schema=public", 25));
+
+    expect(url.searchParams.get("connection_limit")).toBe("25");
+    // O `schema` é o que o Prisma usa para achar as tabelas: perdê-lo ao
+    // reescrever a URL faria a suíte procurar no esquema `public` por acaso.
+    expect(url.searchParams.get("schema")).toBe("public");
+    expect(url.host).toBe("host:5432");
+  });
+
+  it("sem DATABASE_URL devolve uma URL que não conecta, em vez de estourar", () => {
+    // O corpo do `describe` pulado ainda constrói o cliente.
+    expect(() => urlComPool(undefined, 25)).not.toThrow();
+    expect(urlComPool(undefined, 25)).not.toContain("connection_limit");
+  });
+});
+
+/**
  * **Prazo de arquivo, porque aqui nada é teste de unidade.**
  *
  * O teste de carga faz vinte inserções simultâneas pelo mesmo intervalo, e a
@@ -53,7 +123,25 @@ jest.setTimeout(30_000);
 function derrota(erro: unknown): string {
   if (ehConflitoDeHorario(erro)) return "derrota prevista";
   if (ehImpasseDeHorario(erro)) return "derrota prevista";
+  // **`P2024` não é derrota, e chamá-la de derrota seria pior que reprovar.**
+  // A tentativa morreu esperando conexão no pool: ela nunca chegou ao banco,
+  // não disputou o horário e não perdeu para a restrição. Tratá-la como
+  // "derrota prevista" faria o portão afirmar que a garantia foi exercitada
+  // vinte vezes quando uma delas nem rodou — e o portão passaria a esconder
+  // justamente o que ele existe para medir.
+  //
+  // Então ela ganha nome próprio: o rótulo diz que o limite é **do teste** e
+  // não do produto, para que a próxima ocorrência não pareça defeito da
+  // restrição de exclusão.
+  if (ehFaltaDeConexao(erro)) {
+    return "a tentativa não chegou ao banco: pool do teste esgotado (P2024)";
+  }
   return descrever(erro);
+}
+
+/** `P2024`: esperou conexão no pool além do prazo e desistiu. */
+function ehFaltaDeConexao(erro: unknown): boolean {
+  return (erro as { code?: string } | null | undefined)?.code === "P2024";
 }
 
 function descrever(erro: unknown): string {
@@ -67,7 +155,9 @@ function descrever(erro: unknown): string {
 }
 
 comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
-  const prisma = new PrismaClient();
+  const prisma = new PrismaClient({
+    datasourceUrl: urlComPool(process.env.DATABASE_URL, LIMITE_DE_POOL),
+  });
   let quadraId = "";
   let estabelecimentoId = "";
 
@@ -170,12 +260,8 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
    * sempre uma".
    */
   it("sob carga, n clientes disputando o mesmo slot produzem exatamente uma reserva", async () => {
-    const TENTATIVAS = 20;
-
     const resultados = await Promise.allSettled(
-      Array.from({ length: TENTATIVAS }, (_, i) =>
-        reservar(`carga-${i}`, as19, as20),
-      ),
+      Array.from({ length: TENTATIVAS }, (_, i) => reservar(`carga-${i}`, as19, as20)),
     );
 
     const ganharam = resultados.filter((r) => r.status === "fulfilled");
@@ -220,13 +306,9 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     const horarios = [8, 9, 10, 11, 12, 13].map((h) => [hora(h), hora(h + 1)]);
 
     const resultados = await Promise.allSettled(
-      horarios.map(([inicio, fim], i) =>
-        reservar(`paralelo-${i}`, inicio, fim),
-      ),
+      horarios.map(([inicio, fim], i) => reservar(`paralelo-${i}`, inicio, fim)),
     );
 
-    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(
-      horarios.length,
-    );
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(horarios.length);
   });
 });
