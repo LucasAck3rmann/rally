@@ -108,8 +108,22 @@ fica aberto.
 - [x] **Validação de entrada em toda borda.** `ValidationPipe({ whitelist:
 true, transform: true })` global no `main.ts` — campo não declarado no
       DTO é **descartado**, não ignorado.
-- [x] **Rate limiting.** `ThrottlerModule.forRoot(LIMITES)`; os limites e o
-      que cada um protege estão em `modules/auth/limites.ts`.
+- [x] **Rate limiting nas rotas de credencial.** `ThrottlerModule.forRoot(LIMITES)`;
+      os baldes e o que cada um protege estão em `modules/auth/limites.ts`. O
+      alcance é **deliberadamente** só as cinco rotas de autenticação, e o
+      motivo está escrito no `app.module.ts`: a grade de disponibilidade é
+      consultada em rajada pela própria tela. O portão `toda-rota-tem-porta`
+      afirma esse alcance nos dois sentidos — balde a menos numa rota de
+      credencial abre tentativa de senha em volume, e balde a mais numa
+      leitura derruba a tela, que foi o que aconteceu com o `/auth/me` em
+      23/10.
+- [x] **Toda rota tem porta, e a porta está declarada.** O portão
+      `toda-rota-tem-porta` varre o `AppModule` e exige que cada uma das
+      rotas esteja numa de cinco famílias — arena, "os meus dados",
+      credencial, segredo de máquina e **aberta de propósito**. Rota nova
+      fica fora de todas até alguém classificá-la, e nenhuma rota sem guarda
+      pode escrever: leitura aberta é escolha de produto, escrita aberta não
+      é escolha nenhuma.
 - [x] **Webhook com segredo e idempotência.** `segredo-de-webhook.guard.ts`.
       Sem segredo configurado a rota responde **503 e não 401**: 401 diria
       "seu segredo está errado" quando o problema é o servidor não ter
