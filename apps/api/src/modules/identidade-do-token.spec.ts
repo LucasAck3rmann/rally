@@ -1,6 +1,10 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
+import { AuthController } from "./auth/auth.controller";
+import { AuthService } from "./auth/auth.service";
 import { EquipeController } from "./gestao/equipe.controller";
 import { EquipeService } from "./gestao/equipe.service";
+import { GestaoController } from "./gestao/gestao.controller";
+import { GestaoService } from "./gestao/gestao.service";
 import { NotificacoesController } from "./notificacoes/notificacoes.controller";
 import { NotificacoesService } from "./notificacoes/notificacoes.service";
 import { PagamentosService } from "./pagamentos/pagamentos.service";
@@ -16,9 +20,9 @@ import type { JwtPayload } from "./auth/types/jwt-payload";
 /**
  * **A identidade vem do token, nunca do corpo (RNF-06 · ADR-0011).**
  *
- * Esta suíte não existe para cobrir controlador. Existe porque os cinco
- * controladores do cliente compartilham **uma propriedade de segurança** que
- * nenhum deles declara sozinho: o identificador do usuário que chega ao
+ * Esta suíte não existe para cobrir controlador. Existe porque as rotas que
+ * operam sobre "os meus dados" compartilham **uma propriedade de segurança**
+ * que nenhuma delas declara sozinha: o identificador do usuário que chega ao
  * serviço é sempre o `sub` do token, e **nunca** um valor que o cliente
  * mandou. É o que impede que alguém peça as reservas, os avisos ou a
  * exportação de dados de outra pessoa.
@@ -28,6 +32,14 @@ import type { JwtPayload } from "./auth/types/jwt-payload";
  * algum dia alguém trocar `user.sub` por `dto.usuarioId` — a forma mais comum
  * de abrir um IDOR, e sempre com aparência de simplificação —, o teste aponta
  * qual rota passou a confiar no cliente.
+ *
+ * **A lista daqui é escrita à mão, e por isso tem portão.** Ela dizia "os
+ * cinco controladores do cliente" quando já havia rotas fora dessa conta — a
+ * leitura da própria conta (`/auth/me`) e a porta de entrada do painel
+ * (`/gestao/estabelecimentos`) nunca entraram. Quem apontou foi o
+ * `toda-rota-tem-porta`, que varre o `AppModule` e cobra que toda rota da
+ * família "minha" seja exercitada aqui. É a lição de 17/10: alimentação à
+ * mão precisa de âncora que cubra a alimentação.
  *
  * É o mesmo raciocínio que o contrato de ingestão de replay já aplica ao
  * recusar o identificador do cliente vindo do parceiro, e que o `PapelGuard`
@@ -121,9 +133,12 @@ describe("a identidade do usuário vem do token, e não do pedido", () => {
     // É rota de desenvolvimento, e por isso mesmo: rota de conveniência é
     // onde a verificação costuma ser esquecida.
     const simularPagamento = espiao();
-    const c = new ReservasController({} as ReservasService, {
-      simularPagamento,
-    } as unknown as PagamentosService);
+    const c = new ReservasController(
+      {} as ReservasService,
+      {
+        simularPagamento,
+      } as unknown as PagamentosService,
+    );
 
     await c.simularPagamento("r1", EU);
 
@@ -201,15 +216,47 @@ describe("a identidade do usuário vem do token, e não do pedido", () => {
     expect(remover).toHaveBeenCalledWith("e1", OUTRO, EU.sub);
   });
 
+  it("auth · a leitura da própria conta", async () => {
+    // **Faltava**, e quem apontou foi o `toda-rota-tem-porta`: esta suíte é
+    // escrita à mão, e a docstring dela dizia "os cinco controladores do
+    // cliente" quando já havia sete rotas fora dessa conta.
+    //
+    // A rota alimenta o cabeçalho de toda tela autenticada — é ela que diz o
+    // nome, o e-mail e se o e-mail está verificado. Se o identificador viesse
+    // do pedido, trocar um valor na requisição mostraria a conta de outra
+    // pessoa, e a web guarda essa resposta para decidir o que exibir.
+    const me = espiao();
+    // Os outros dois serviços do controlador não participam desta rota, e
+    // deixá-los vazios é a afirmação de que ela não os toca.
+    const c = new AuthController({ me } as unknown as AuthService, {} as never, {} as never);
+
+    await c.me(EU);
+
+    expect(me).toHaveBeenCalledWith(EU.sub);
+  });
+
+  it("gestão · quais arenas o usuário administra", async () => {
+    // **Faltava também, e é a porta de entrada do painel.** O que esta rota
+    // devolve decide o que o seletor da barra lateral mostra e quais arenas o
+    // usuário consegue abrir. Se o identificador viesse do pedido, bastaria
+    // trocá-lo para listar as arenas de outra pessoa — e o `PapelGuard`
+    // recusaria a tela seguinte, mas só depois de a existência da arena já
+    // ter sido revelada.
+    const meusEstabelecimentos = espiao();
+    const c = new GestaoController({
+      meusEstabelecimentos,
+    } as unknown as GestaoService);
+
+    await c.meusEstabelecimentos(EU);
+
+    expect(meusEstabelecimentos).toHaveBeenCalledWith(EU.sub);
+  });
+
   it("nenhuma das rotas recebe o identificador contaminado", async () => {
     // Asserção de rede: qualquer chamada que tenha visto `OUTRO` como
     // identificador de usuário falha aqui, mesmo que um teste acima seja
     // afrouxado no futuro.
-    const todas = [
-      espiao(),
-      espiao(),
-      espiao(),
-    ];
+    const todas = [espiao(), espiao(), espiao()];
     const [minhas, exportar, meus] = todas;
 
     await new ReservasController(
