@@ -79,11 +79,38 @@ export default defineConfig({
       // O que resta descoberto são os três formulários de gestão, entre 37% e
       // 43%, e a grade de horários. São componentes de interface, e o que os
       // cobre de verdade é o ensaio de usabilidade de novembro.
+      //
+      // **Medido em 25/10: 82,05% de instruções, 77,29% de ramos, 75,92% de
+      // funções e 83,06% de linhas.** Três medidas subiram e **uma caiu**: as
+      // funções vinham de 76,39% em 15/10. Quem contou foi a margem, não o
+      // piso — ela estava a **0,92 ponto** da medida, abaixo do ponto de
+      // folga que a nota acima exige, e piso colado teria deixado a regressão
+      // passar calada. É a segunda vez que a margem avisa antes de o piso
+      // quebrar; a primeira foi nos ramos da API, em 23/10.
+      //
+      // O que estava descoberto não era interface. Eram **três arquivos de
+      // `lib` em 0%**, e os três carregam decisão:
+      //
+      // - `auth/sessao.ts` — as quatro bandeiras do cookie, entre elas o
+      //   `secure` **condicional**, cujo lado de produção nenhuma execução
+      //   local percorre.
+      // - `gestao/repassar-arquivo.ts` — doze ramos, nenhum percorrido, por
+      //   onde saem os três relatórios e a exportação do titular. Ali moram o
+      //   desvio para o login sem sessão e a **lista de permissão** de `de` e
+      //   `ate`, que é o que impede parâmetro posto na URL da tela de
+      //   atravessar para a chamada autenticada da API.
+      // - `gestao/consultas.ts` — doze leituras, nenhuma chamada. Não é
+      //   lógica: é par **caminho + contrato**, e o defeito que mora ali é par
+      //   trocado, que compila porque o tipo do esquema não fala do caminho.
+      //
+      // **Medido depois: 86,38/79,54/82,22/87,50.** Os pisos sobem mantendo o
+      // mesmo ponto de margem — e as funções, que eram a medida gasta, passam
+      // a ter 7,22 pontos de folga.
       thresholds: {
-        statements: 79,
-        lines: 80,
-        branches: 75,
-        functions: 75,
+        statements: 85,
+        lines: 86,
+        branches: 78,
+        functions: 81,
       },
     },
   },
