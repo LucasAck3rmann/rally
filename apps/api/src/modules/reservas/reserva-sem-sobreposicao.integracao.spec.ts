@@ -173,9 +173,7 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     const TENTATIVAS = 20;
 
     const resultados = await Promise.allSettled(
-      Array.from({ length: TENTATIVAS }, (_, i) =>
-        reservar(`carga-${i}`, as19, as20),
-      ),
+      Array.from({ length: TENTATIVAS }, (_, i) => reservar(`carga-${i}`, as19, as20)),
     );
 
     const ganharam = resultados.filter((r) => r.status === "fulfilled");
@@ -220,13 +218,9 @@ comBanco("constraint reserva_sem_sobreposicao (integração)", () => {
     const horarios = [8, 9, 10, 11, 12, 13].map((h) => [hora(h), hora(h + 1)]);
 
     const resultados = await Promise.allSettled(
-      horarios.map(([inicio, fim], i) =>
-        reservar(`paralelo-${i}`, inicio, fim),
-      ),
+      horarios.map(([inicio, fim], i) => reservar(`paralelo-${i}`, inicio, fim)),
     );
 
-    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(
-      horarios.length,
-    );
+    expect(resultados.filter((r) => r.status === "fulfilled")).toHaveLength(horarios.length);
   });
 });
