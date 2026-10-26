@@ -152,4 +152,15 @@
 
 ---
 
+## ADR-0018 — Remoção do `packages/ui` e do `packages/config`
+
+**Status:** Aceito · **Data:** 2026-10-26 · **Fecha a pendência de:** ADR-0017 · **Substitui parcialmente:** ADR-0007
+**Contexto:** o ADR-0017 deixou escrito que os outros dois pacotes seguiam sem consumidor pela mesma medição, declarados como pendência. Refeita em 26/10: o `ui` tinha **um `.gitkeep` e nada mais** — nunca teve `package.json`, de modo que não era nem pacote do espaço de trabalho —, e o `tsconfig.base.json` do `config` não era estendido por ninguém. Mais importante que as duas pastas, **a documentação afirmava três coisas que não aconteciam**: que os componentes da web moravam em `packages/ui`, que as configurações de Prettier e ESLint ficavam em `packages/config` (ficam na raiz) e, como regra de processo, que componente novo entrava no `packages/ui`.
+**Decisão (resumo):** remover as duas pastas e corrigir as três afirmações. Pasta vazia com nome bom é pior que pasta nenhuma: ela faz a documentação soar verdadeira e convida o próximo componente a um lugar que ninguém usa. A entrada do ADR-0007 não é reescrita.
+**Alternativas:** mover os componentes da web para o `packages/ui` (recusada — há **uma** superfície web, e extrair biblioteca para um consumidor só paga o custo da fronteira; a que se paga é a do `tokens`, consumido pela web **e** espelhado no Flutter); estender o `tsconfig.base.json` nos dois `tsconfig.json` (recusada — ele **não serve** a nenhum dos dois: apertaria a API, que é deliberadamente mais frouxa, e contradiria o `moduleResolution: "bundler"` da web); deixar como estava com a pendência declarada (recusada — declarar não é resolver).
+**Consequências:** (+) saem três afirmações falsas, e a fronteira `apps/*`/`packages/*` passa a ter **um** habitante, que é o que de fato a atravessa; (+) fecha a pendência do ADR-0017, e o `packages/` deixa de ter mais pasta morta que viva — eram duas de três. (−) segunda superfície web, ou componente que o app precise espelhar, exige recriar o pacote, e o molde é o `tokens`: pacote nasce quando o **segundo** consumidor aparece; (−) as opções de compilador seguem declaradas nos dois `tsconfig.json`, que é repetição de configuração e não de regra.
+**Versão por extenso:** [ADR-0018 — Remoção do `packages/ui` e do `packages/config`](0018-remocao-dos-pacotes-sem-consumidor.md).
+
+---
+
 > Próximos ADRs conforme o código evoluir (ex.: busca OpenSearch, event streaming Kafka, IA nos replays). Cada novo ADR recebe o próximo número e nunca se reescreve um aceito — cria-se um que o **substitui**.

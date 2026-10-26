@@ -4,12 +4,21 @@
 
 ## 1. Árvore de pastas
 
+> **Três pacotes planejados não sobreviveram, e o plano não os recria.** O
+> `shared` saiu pelo [ADR-0017](adr/0017-remocao-do-pacote-compartilhado.md) e
+> o `ui` e o `config` pelo [ADR-0018](adr/0018-remocao-dos-pacotes-sem-consumidor.md),
+> os três pela mesma medição: **nenhum consumidor**. Cada superfície passou a
+> validar na própria borda, os componentes da web ficaram em
+> `apps/web/src/components` e as configurações de ferramenta ficaram na raiz.
+> O que atravessa a fronteira de verdade é o `tokens`, importado por 22
+> arquivos da web e espelhado no app.
+
 ```text
 rally/
 ├─ apps/
 │  ├─ web/                      # Next.js (site + painel + landing)
 │  │  ├─ src/app/               # rotas (App Router)
-│  │  ├─ src/components/        # UI da app (usa packages/ui)
+│  │  ├─ src/components/        # UI da web (sobre packages/tokens)
 │  │  ├─ src/lib/               # api client, auth, utils
 │  │  ├─ Dockerfile
 │  │  └─ package.json
@@ -41,10 +50,7 @@ rally/
 │     ├─ test/
 │     └─ pubspec.yaml
 ├─ packages/
-│  ├─ shared/                   # tipos, schemas Zod, contratos da API
-│  ├─ ui/                       # componentes web (shadcn + tokens)
-│  ├─ tokens/                   # Style Dictionary (Figma → Tailwind/Flutter)
-│  └─ config/                   # eslint, tsconfig, tailwind preset (compartilhados)
+│  └─ tokens/                   # Style Dictionary (Figma → Tailwind/Flutter)
 ├─ docs/
 │  ├─ adr/                      # 0001-nestjs.md, 0002-flutter.md, ...
 │  └─ DESIGN.md
@@ -292,8 +298,8 @@ CMD ["node", "dist/main.js"]
 2. `apps/api`: `nest new` dentro do workspace + Prisma (`pnpm dlx prisma init`).
 3. `apps/web`: `create-next-app` (TS, Tailwind, App Router).
 4. `apps/mobile`: `flutter create` com a estrutura clean.
-5. `packages/tokens|ui|config`.
-6. Husky + commitlint + lint-staged + Prettier/ESLint (configs em `packages/config`).
+5. `packages/tokens`.
+6. Husky + commitlint + lint-staged + Prettier/ESLint (configs na **raiz**: `.prettierrc.json`, `eslint.config.mjs`, `commitlint.config.js`).
 7. `docker-compose up` e validar `web↔api↔postgres↔redis↔localstack`.
 8. `infra/terraform`: VPC, RDS, ElastiCache, ECS, S3, CloudFront (incremental).
 9. Apontar `CLAUDE.md` e `.cursor/rules` para o `DESIGN.md` e a skill `rally-design-system`.

@@ -30,7 +30,7 @@
 
 - **Fonte única de verdade:** tokens no **Figma → Style Dictionary → Tailwind/Flutter**. Nada de hex solto; nada de fonte fora de Sora/Inter/Space Mono. Base: skill `rally-design-system` + [DESIGN.md (raiz do repo)](../DESIGN.md).
 - **Design review:** toda tela nova passa pelo checklist do design system **antes** do merge.
-- **Contribuição de componente:** novo componente entra em `packages/ui` (web) com variantes e estados; reaproveitar antes de criar.
+- **Contribuição de componente:** novo componente entra em `apps/web/src/components` com variantes e estados, usando os tokens de `packages/tokens`; reaproveitar antes de criar.
 - **Acessibilidade é gate, não opinião:** WCAG AA obrigatório (contraste, teclado, foco, alvos ≥ 44px) — PR de UI que falha **não** entra.
 - **DoD de UI:** responsivo (mobile→desktop), estados (vazio/carregando/erro), tokens aplicados, a11y conferida.
 
