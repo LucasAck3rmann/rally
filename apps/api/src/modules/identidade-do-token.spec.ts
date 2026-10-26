@@ -121,9 +121,12 @@ describe("a identidade do usuário vem do token, e não do pedido", () => {
     // É rota de desenvolvimento, e por isso mesmo: rota de conveniência é
     // onde a verificação costuma ser esquecida.
     const simularPagamento = espiao();
-    const c = new ReservasController({} as ReservasService, {
-      simularPagamento,
-    } as unknown as PagamentosService);
+    const c = new ReservasController(
+      {} as ReservasService,
+      {
+        simularPagamento,
+      } as unknown as PagamentosService,
+    );
 
     await c.simularPagamento("r1", EU);
 
@@ -205,11 +208,7 @@ describe("a identidade do usuário vem do token, e não do pedido", () => {
     // Asserção de rede: qualquer chamada que tenha visto `OUTRO` como
     // identificador de usuário falha aqui, mesmo que um teste acima seja
     // afrouxado no futuro.
-    const todas = [
-      espiao(),
-      espiao(),
-      espiao(),
-    ];
+    const todas = [espiao(), espiao(), espiao()];
     const [minhas, exportar, meus] = todas;
 
     await new ReservasController(
