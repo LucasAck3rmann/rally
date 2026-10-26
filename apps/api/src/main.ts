@@ -2,14 +2,22 @@
 import { NestFactory } from "@nestjs/core";
 import { ValidationPipe } from "@nestjs/common";
 import { NestExpressApplication } from "@nestjs/platform-express";
+import helmet from "helmet";
 import { join } from "node:path";
 
 import { AppModule } from "./app.module";
+import { opcoesDeCors, opcoesDeHelmet } from "./common/seguranca";
 
 async function bootstrap() {
   const app = await NestFactory.create<NestExpressApplication>(AppModule);
   app.useGlobalPipes(new ValidationPipe({ whitelist: true, transform: true }));
-  app.enableCors();
+
+  // O `x-powered-by` sai: anunciar "Express" entrega ao atacante qual lista
+  // de falhas conhecidas consultar, e não serve a mais ninguém. A política
+  // dos outros cabeçalhos está em `common/seguranca.ts`, onde é testada.
+  app.getHttpAdapter().getInstance().disable("x-powered-by");
+  app.use(helmet(opcoesDeHelmet()));
+  app.enableCors(opcoesDeCors());
   app.setGlobalPrefix("api/v1");
 
   // Fotos do seed de desenvolvimento (ver public/fotos/README.md).
