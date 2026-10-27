@@ -230,6 +230,57 @@ describe("AgendaService", () => {
       const { servico: s } = servico({ erroAoCriar: new Error("conexão caiu") });
       await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow("conexão caiu");
     });
+
+    it("data que não é data é 400, e não um bloqueio em `Invalid Date`", async () => {
+      // `new Date("qualquer coisa")` não estoura: devolve `Invalid Date`, que
+      // o Prisma rejeitaria com erro de banco — ou, pior, gravaria algo que
+      // a grade do cliente não sabe interpretar. A recusa é na borda.
+      const { servico: s, prisma } = servico();
+
+      await expect(
+        s.criarBloqueio("e1", { ...BLOQUEIO, inicio: "amanhã às sete" }),
+      ).rejects.toThrow(BadRequestException);
+      await expect(s.criarBloqueio("e1", { ...BLOQUEIO, fim: "" })).rejects.toThrow(
+        BadRequestException,
+      );
+
+      // E recusa **antes** de olhar o banco: a validação de borda não paga
+      // consulta para descobrir que a entrada não presta.
+      expect(prisma.quadra.findFirst).not.toHaveBeenCalled();
+    });
+
+    it("impasse do banco vira 409 que não manda cancelar reserva nenhuma", async () => {
+      // **A distinção que o `40P01` obriga.** A violação de exclusão prova
+      // que o horário está ocupado, e a mensagem dela manda cancelar a
+      // reserva antes. O impasse prova apenas que esta transação foi
+      // abortada para desfazer um ciclo de espera — o horário pode estar
+      // livre, e mandar cancelar uma reserva que talvez não exista seria
+      // instrução errada. O `semImpasse` repete uma vez; aqui o banco falha
+      // nas duas, que é o caminho até este `catch`.
+      const { servico: s } = servico({
+        erroAoCriar: new Error("40P01: impasse detectado"),
+      });
+
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(ConflictException);
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.toThrow(/tente de novo|disputad/i);
+      await expect(s.criarBloqueio("e1", BLOQUEIO)).rejects.not.toThrow(/[Cc]ancele/);
+    });
+
+    it("sem fuso no estabelecimento, a hora local sai em UTC", async () => {
+      // Caminho defensivo: a quadra é achada dentro do estabelecimento, de
+      // modo que estabelecimento nulo aqui é estado inconsistente do banco.
+      // O `?? "UTC"` existe para não estourar em cima disso — e o teste
+      // registra **qual** é o comportamento, em vez de deixar a escolha
+      // implícita num operador.
+      const { servico: s } = servico({ estabelecimento: null });
+
+      const criado = await s.criarBloqueio("e1", BLOQUEIO);
+
+      // 17:00Z com o fuso de São Paulo sairia como 14:00; em UTC, 17:00. É
+      // esta diferença que prova qual dos dois ramos foi tomado.
+      expect(criado.horaInicio).toBe("17:00");
+      expect(criado.horaFim).toBe("19:00");
+    });
   });
 
   describe("removerBloqueio", () => {
@@ -423,6 +474,49 @@ describe("AgendaService", () => {
       await expect(s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
         "conexão caiu",
       );
+    });
+
+    it("impasse do banco ao mover vira 409, e não 500", async () => {
+      // Mesma distinção do `criarBloqueio`, e aqui ela custa mais: mover é
+      // ação de balcão, com o cliente na frente. Um 500 na tela diz "deu
+      // errado" quando a resposta certa é "tente de novo" — e o horário de
+      // destino pode estar livre, porque o impasse não prova o contrário.
+      const { servico: s } = servico({
+        reserva: reservaFutura(),
+        erroAoMover: new Error("40P01: impasse detectado"),
+      });
+
+      await expect(s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) })).rejects.toThrow(
+        ConflictException,
+      );
+      // E a mensagem **não** é a de sobreposição: aquela afirma que o
+      // horário tem reserva, o que aqui não se sabe.
+      await expect(
+        s.moverReserva("e1", "r1", { inicio: daqui(5), fim: daqui(6) }),
+      ).rejects.not.toThrow(/já tem reserva/);
+    });
+
+    it("sem fuso no estabelecimento, a reserva movida sai em UTC", async () => {
+      // Caminho defensivo, como no `criarBloqueio`: a reserva é achada
+      // dentro do estabelecimento, de modo que estabelecimento nulo aqui é
+      // estado inconsistente. O teste registra a escolha do `?? "UTC"`.
+      const { servico: s } = servico({
+        reserva: reservaFutura(),
+        estabelecimento: null,
+        movida: {
+          ...RESERVA_NA_AGENDA,
+          inicio: new Date("2026-10-05T22:00:00.000Z"),
+          fim: new Date("2026-10-05T23:00:00.000Z"),
+        },
+      });
+
+      const movida = await s.moverReserva("e1", "r1", {
+        inicio: daqui(5),
+        fim: daqui(6),
+      });
+
+      // 22:00Z com o fuso de São Paulo sairia como 19:00; em UTC, 22:00.
+      expect(movida.horaInicio).toBe("22:00");
     });
   });
 });

@@ -54,7 +54,10 @@ export class CuponsService {
   }
 
   async criar(estabelecimentoId: string, dto: CriarCupomDto) {
-    const { inicio, fim } = this.validarJanela(dto.validadeInicio, dto.validadeFim);
+    const { inicio, fim } = this.validarJanela(
+      new Date(dto.validadeInicio),
+      new Date(dto.validadeFim),
+    );
     this.validarValor(dto.tipo, dto.valor);
 
     try {
@@ -99,7 +102,10 @@ export class CuponsService {
     const inicio =
       dto.validadeInicio !== undefined ? new Date(dto.validadeInicio) : atual.validadeInicio;
     const fim = dto.validadeFim !== undefined ? new Date(dto.validadeFim) : atual.validadeFim;
-    this.validarJanela(inicio.toISOString(), fim.toISOString());
+    // `inicio` e `fim` já são `Date`; passá-los como texto obrigava o
+    // `toISOString()`, que **estoura `RangeError` em `Invalid Date`** — antes
+    // de o guarda poder recusar. Era 500 onde a resposta é 400.
+    this.validarJanela(inicio, fim);
 
     if (dto.usosMax !== undefined && dto.usosMax !== null && dto.usosMax < atual.usosFeitos) {
       // A restrição do banco recusaria do mesmo jeito; recusar aqui devolve
@@ -124,10 +130,21 @@ export class CuponsService {
     return this.paraDto(atualizado);
   }
 
-  /** Começo e fim válidos, ou a recusa com o motivo. */
-  private validarJanela(validadeInicio: string, validadeFim: string) {
-    const inicio = new Date(validadeInicio);
-    const fim = new Date(validadeFim);
+  /**
+   * Começo e fim válidos, ou a recusa com o motivo.
+   *
+   * **Recebe `Date` e não texto**, e a diferença custou um defeito. Antes, o
+   * `atualizar` já tinha convertido as pontas e as passava de volta como
+   * texto com `toISOString()` — que **estoura `RangeError: Invalid time
+   * value`** quando a data não presta. O erro subia como 500 antes de este
+   * guarda rodar, de modo que `?validadeInicio=primeiro de abril` derrubava
+   * a rota em vez de receber "Datas inválidas".
+   *
+   * O `criar` sempre funcionou porque passava o texto do DTO direto. Tomar
+   * `Date` resolve os dois: some a conversão em dobro e o guarda passa a ser
+   * alcançável pelos dois caminhos.
+   */
+  private validarJanela(inicio: Date, fim: Date) {
     if (Number.isNaN(inicio.getTime()) || Number.isNaN(fim.getTime())) {
       throw new BadRequestException("Datas inválidas.");
     }

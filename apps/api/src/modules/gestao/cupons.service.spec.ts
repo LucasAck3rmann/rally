@@ -234,5 +234,51 @@ describe("CuponsService (RF-25)", () => {
         /não passa de 100/i,
       );
     });
+
+    it("mudar o valor grava Decimal, e não o número que veio do JSON", async () => {
+      // **O caminho de edição que mexe em preço, e que nada exercitava.** O
+      // campo é `Decimal` no banco: gravar o `number` do JSON perderia a
+      // precisão que a coluna existe para guardar, e é a mesma razão de a
+      // conciliação comparar em centavos.
+      const { servico: s, prisma } = servico();
+
+      const saida = await s.atualizar("e1", "c1", { valor: 12.5 });
+
+      const { data } = (prisma.promocao.update as jest.Mock).mock.calls[0][0];
+      expect(data.valor).toBeInstanceOf(Prisma.Decimal);
+      expect(Number(data.valor)).toBe(12.5);
+      expect(saida.valor).toBe(12.5);
+    });
+
+    it("mudar as duas pontas da validade aplica as duas", async () => {
+      // O `undefined` significa "não mexe", e cada ponta tem o seu ternário:
+      // é fácil escrever um e esquecer o outro, e o sintoma seria uma edição
+      // que o dono faz, a tela confirma e o banco ignora pela metade.
+      const { servico: s, prisma } = servico();
+      const novoInicio = new Date(AGORA.getTime() + 1 * DIA);
+      const novoFim = new Date(AGORA.getTime() + 40 * DIA);
+
+      await s.atualizar("e1", "c1", {
+        validadeInicio: novoInicio.toISOString(),
+        validadeFim: novoFim.toISOString(),
+      });
+
+      const { data } = (prisma.promocao.update as jest.Mock).mock.calls[0][0];
+      expect(data.validadeInicio).toEqual(novoInicio);
+      expect(data.validadeFim).toEqual(novoFim);
+    });
+
+    it("data que não é data é 400, e não um cupom com validade `Invalid Date`", async () => {
+      // `new Date("qualquer coisa")` devolve `Invalid Date` em silêncio. Sem
+      // esta recusa, o cupom seria gravado com validade que nenhuma
+      // comparação resolve — e um cupom cuja validade não dá para comparar
+      // vale sempre ou nunca, dependendo de quem lê.
+      const { servico: s, prisma } = servico();
+
+      await expect(
+        s.atualizar("e1", "c1", { validadeInicio: "primeiro de abril" }),
+      ).rejects.toThrow(BadRequestException);
+      expect(prisma.promocao.update).not.toHaveBeenCalled();
+    });
   });
 });

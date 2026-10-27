@@ -116,12 +116,31 @@ module.exports = {
   //
   // Ramos **não sobem**: 93,34 contra piso 92 é 1,34 ponto, que é a margem
   // mínima. Instruções, linhas e funções sobem.
+  //
+  // **Medido em 26/10, depois dos ramos de agenda e cupons: 98,49/95,11/94,22/98,56.**
+  // Os dois arquivos eram os maiores da lista de descobertos — 5 ramos cada —,
+  // e os de `agenda` eram os mesmos três caminhos repetidos em dois métodos:
+  // data que não é data, o recuo para `UTC` sem fuso no estabelecimento, e o
+  // **impasse do banco**, que já havia sido tratado nas reservas e nunca
+  // exercitado aqui.
+  //
+  // **E os cupons renderam um defeito.** O `atualizar` convertia as pontas da
+  // validade para `Date` e as passava de volta como texto, com
+  // `toISOString()` — que **estoura `RangeError: Invalid time value`** em data
+  // inválida, antes de o guarda de `Number.isNaN` poder recusar. Era 500 onde
+  // a resposta é 400, e explica por que aquele ramo estava descoberto: ele era
+  // **inalcançável** por aquele caminho. O `criar` nunca teve o problema
+  // porque passava o texto do DTO direto.
+  //
+  // Sobem ramos e funções, que foi onde a folga apareceu. Instruções e linhas
+  // ficam: a margem delas é de um ponto e meio, e apertar sem necessidade é o
+  // que a nota acima adverte.
   coverageThreshold: {
     global: {
       statements: 97,
       lines: 97,
-      branches: 92,
-      functions: 92,
+      branches: 94,
+      functions: 93,
     },
   },
 };
