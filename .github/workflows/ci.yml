@@ -228,6 +228,18 @@ jobs:
       - uses: actions/setup-node@v7
         with: { node-version: 22, cache: pnpm }
       - run: pnpm install --frozen-lockfile
+      # Antes de julgar as mensagens deste PR, confere o **portao**: a unica
+      # excecao que ele abre e a do Dependabot, que nao consegue obedecer a
+      # convencao (ver o cabecalho do `commitlint.config.js`). Uma excecao
+      # larga demais torna a convencao opcional para quem descobrir o atalho;
+      # estreita demais e todo PR de dependencia nasce vermelho, e foi o que
+      # aconteceu com dezesseis deles em 26/10. Os dois erros deixam o arquivo
+      # valido e o CI verde, de modo que so uma medida os separa.
+      #
+      # Vem **antes** porque, se a excecao estiver errada, o veredito da faixa
+      # logo abaixo nao quer dizer nada.
+      - name: Confere a exceção do Dependabot
+        run: node tools/confere-commitlint.mjs
       - name: Confere as mensagens do PR
         run: >-
           npx commitlint
