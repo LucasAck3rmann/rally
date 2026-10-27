@@ -28,7 +28,7 @@ import { mkdir, stat, unlink } from "node:fs/promises";
 import { dirname, join, resolve } from "node:path";
 import { chromium } from "playwright";
 
-import { TELAS, LARGURA, argumento, abrir, contextoAutenticado, responde } from "./telas.mjs";
+import { TELAS, argumento, abrir, contextoAutenticado, responde } from "./telas.mjs";
 
 const BYTES_MINIMOS = 8 * 1024;
 
