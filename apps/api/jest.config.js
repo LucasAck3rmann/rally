@@ -135,12 +135,30 @@ module.exports = {
   // Sobem ramos e funções, que foi onde a folga apareceu. Instruções e linhas
   // ficam: a margem delas é de um ponto e meio, e apertar sem necessidade é o
   // que a nota acima adverte.
+  //
+  // **Medido em 26/10, depois de `privacidade` e `quadras-gestao`:
+  // 98,85/96,50/95,53/98,85.** No `privacidade` os quatro ramos eram recuos
+  // `?? null` da **exportação de dados do titular** — exportar quem não
+  // verificou o e-mail, não tem consentimento registrado e deixou um Pix
+  // pendente, que é a conta comum de quem experimentou o aplicativo uma vez.
+  // A exportação é obrigação legal e tem de funcionar em qualquer estado da
+  // conta, não no estado bonito.
+  //
+  // No `quadras-gestao` o `detalhe` **não tinha teste nenhum**, e é a leitura
+  // que alimenta o formulário de edição; e o `map` das faixas de preço nunca
+  // rodava, porque toda fixture do arquivo trazia `faixasPreco: []`.
+  //
+  // **A regra da margem impediu subir dois dos quatro pisos, e vale
+  // registrar.** Instruções e linhas medem 98,85: piso 98 deixaria **0,85
+  // ponto**, abaixo do ponto que esta nota exige. Ficam em 97. É a primeira
+  // vez que a regra age como freio em vez de como alarme — e é o mesmo
+  // raciocínio, porque piso colado quebra na primeira linha nova.
   coverageThreshold: {
     global: {
       statements: 97,
       lines: 97,
-      branches: 94,
-      functions: 93,
+      branches: 95,
+      functions: 94,
     },
   },
 };

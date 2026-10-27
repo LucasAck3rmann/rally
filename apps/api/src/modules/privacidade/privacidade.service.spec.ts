@@ -164,6 +164,55 @@ describe("PrivacidadeService.exportar (RNF-07)", () => {
     const { servico: s } = servico({ usuario: null });
     await expect(s.exportar("u9")).rejects.toThrow(NotFoundException);
   });
+
+  it("conta incompleta exporta com `null` explícito, e não quebra nem omite", async () => {
+    // **O caso mais provável de verdade, e o que estava sem teste.** Quem se
+    // cadastra e não verifica o e-mail, não tem consentimento registrado e
+    // deixa um Pix pendente é a conta comum de quem experimentou o
+    // aplicativo uma vez — e a exportação é obrigação legal (RNF-07), de
+    // modo que ela precisa funcionar em **qualquer** estado da conta, não no
+    // estado bonito.
+    //
+    // Cada campo aqui passa por um `?.toISOString() ?? null`. Sem o recuo, o
+    // acesso em `undefined` estouraria; com ele devolvendo `undefined` em vez
+    // de `null`, a chave **desapareceria** do JSON — e um arquivo que omite o
+    // campo diz ao titular algo diferente de um que o traz vazio.
+    const { servico: s } = servico({
+      usuario: usuarioCompleto({
+        consentLgpdEm: null,
+        emailVerificadoEm: null,
+        reservas: [
+          {
+            id: "r1",
+            inicio: AGORA,
+            fim: AGORA,
+            status: "PENDENTE_PAGAMENTO",
+            preco: new Prisma.Decimal(80),
+            createdAt: AGORA,
+            canceladaEm: null,
+            quadra: { nome: "Quadra 1", estabelecimento: { nome: "Arena Beira-Rio" } },
+            pagamento: {
+              status: "PENDENTE",
+              metodo: "PIX",
+              valor: new Prisma.Decimal(76),
+              pagoEm: null,
+            },
+          },
+        ],
+      }),
+    });
+
+    const saida = await s.exportar("u1");
+
+    expect(saida.conta.consentimentoLgpdEm).toBeNull();
+    expect(saida.conta.emailVerificadoEm).toBeNull();
+    expect(saida.reservas[0].pagamento?.pagoEm).toBeNull();
+    // As chaves **existem**, com valor nulo — é a diferença entre "não há" e
+    // "não perguntamos".
+    expect(saida.conta).toHaveProperty("consentimentoLgpdEm");
+    expect(saida.conta).toHaveProperty("emailVerificadoEm");
+    expect(saida.reservas[0].pagamento).toHaveProperty("pagoEm");
+  });
 });
 
 describe("PrivacidadeService.excluirConta (RNF-07)", () => {
@@ -239,6 +288,28 @@ describe("PrivacidadeService.excluirConta (RNF-07)", () => {
 
     await expect(s.excluirConta("u1")).rejects.toThrow(ConflictException);
     await expect(s.excluirConta("u1")).rejects.toThrow(/promova outra pessoa/i);
+    expect(atualizarUsuario).not.toHaveBeenCalled();
+  });
+
+  it("sem conseguir ler o nome da arena, a recusa ainda diz o que fazer", async () => {
+    // Caminho defensivo: o vínculo aponta um estabelecimento que a consulta
+    // seguinte não acha — estado inconsistente do banco. O `?? "uma arena"`
+    // existe para que a recusa **continue acionável**: sem ele a mensagem
+    // sairia com `undefined` no meio, e quem a lê não saberia onde promover
+    // outro administrador. A recusa em si é o que importa, e ela se mantém.
+    const {
+      servico: s,
+      prisma,
+      atualizarUsuario,
+    } = servico({
+      adminDe: [{ estabelecimentoId: "e1" }],
+      outrosAdmins: 0,
+    });
+    (prisma.estabelecimento.findUnique as jest.Mock).mockResolvedValue(null);
+
+    await expect(s.excluirConta("u1")).rejects.toThrow(ConflictException);
+    await expect(s.excluirConta("u1")).rejects.toThrow(/uma arena/);
+    await expect(s.excluirConta("u1")).rejects.not.toThrow(/undefined/);
     expect(atualizarUsuario).not.toHaveBeenCalled();
   });
 

@@ -1,5 +1,6 @@
 // SPDX-License-Identifier: AGPL-3.0-or-later
 import { BadRequestException, NotFoundException } from "@nestjs/common";
+import { Prisma } from "@prisma/client";
 
 import { PrismaService } from "../../prisma/prisma.service";
 import { QuadrasGestaoService } from "./quadras-gestao.service";
@@ -231,6 +232,54 @@ describe("QuadrasGestaoService", () => {
       expect(prisma.faixaPreco.deleteMany).not.toHaveBeenCalled();
     });
 
+    it("mudar o preço grava Decimal, e não o número do JSON", async () => {
+      // O campo é `Decimal` no banco. Gravar o `number` do JSON perderia a
+      // precisão que a coluna existe para guardar — e este é o número que a
+      // vitrine multiplica pela duração para dizer quanto o jogador paga.
+      const { servico: s, prisma } = servico();
+
+      await s.atualizar("e1", "q1", { precoHora: 92.5 });
+
+      const { data } = (prisma.quadra.update as jest.Mock).mock.calls[0][0];
+      expect(data.precoHora).toBeInstanceOf(Prisma.Decimal);
+      expect(Number(data.precoHora)).toBe(92.5);
+    });
+
+    it("mudar as modalidades resolve os nomes e troca o conjunto inteiro", async () => {
+      // `set` e não `connect`: a edição **substitui** a lista, porque tirar
+      // uma modalidade é tão legítimo quanto acrescentar. Com `connect`, a
+      // modalidade removida ficaria, e a tela diria uma coisa e o filtro da
+      // vitrine outra.
+      const { servico: s, prisma } = servico();
+
+      // Os dois nomes existem no catálogo do dublê. Nome fora dele é
+      // recusado, e isso já tem teste no `criar` — aqui o assunto é o
+      // `set`, e não a validação do nome.
+      await s.atualizar("e1", "q1", { modalidades: ["Futevôlei", "Beach Tennis"] });
+
+      const { data } = (prisma.quadra.update as jest.Mock).mock.calls[0][0];
+      expect(data.modalidades).toHaveProperty("set");
+      expect(data.modalidades.set).toHaveLength(2);
+      // Identificadores, e não os nomes: é o que o `resolverModalidades`
+      // existe para traduzir, e é ele que recusa nome desconhecido.
+      for (const m of data.modalidades.set) {
+        expect(m).toHaveProperty("id");
+        expect(typeof m.id).toBe("string");
+      }
+    });
+
+    it("sem modalidades no corpo, o conjunto não é tocado", async () => {
+      // O par do teste acima: `undefined` significa "não mexe". Mandar `set`
+      // com lista vazia apagaria todas as modalidades de uma quadra em que
+      // alguém só quis trocar o nome.
+      const { servico: s, prisma } = servico();
+
+      await s.atualizar("e1", "q1", { nome: "Quadra Coberta" });
+
+      const { data } = (prisma.quadra.update as jest.Mock).mock.calls[0][0];
+      expect(data.modalidades).toBeUndefined();
+    });
+
     it("pausa a quadra sem apagar nada", async () => {
       const { servico: s, prisma } = servico();
       await s.atualizar("e1", "q1", { ativo: false });
@@ -243,6 +292,128 @@ describe("QuadrasGestaoService", () => {
     });
   });
 
+  describe("o DTO da quadra", () => {
+    it("a mensagem de modalidade desconhecida nomeia só a que falta", async () => {
+      // **O caso que faltava:** o teste existente manda um nome inválido
+      // sozinho, de modo que nada é achado e a lista de "faltando" sai da
+      // diferença contra o vazio. Com um nome válido e um inválido juntos, a
+      // mensagem tem de citar **apenas** o inválido — citar os dois faria o
+      // dono procurar erro na modalidade que está certa.
+      const { servico: s } = servico();
+
+      await expect(
+        s.criar("e1", {
+          nome: "Quadra 2",
+          precoHora: 80,
+          modalidades: ["Beach Tennis", "Peteca"],
+        } as never),
+      ).rejects.toThrow(/Peteca/);
+      await expect(
+        s.criar("e1", {
+          nome: "Quadra 2",
+          precoHora: 80,
+          modalidades: ["Beach Tennis", "Peteca"],
+        } as never),
+      ).rejects.not.toThrow(/Beach Tennis/);
+    });
+
+    it("as faixas de preço saem com número, e não com Decimal", async () => {
+      // As fixtures do arquivo trazem `faixasPreco: []`, de modo que este
+      // trecho do DTO nunca rodava. A faixa é o que decide o preço do
+      // horário na vitrine: `Decimal` do Prisma não atravessa JSON de um
+      // jeito que a tela saiba ler, e o `id` vai junto porque a tela precisa
+      // dele para editar a faixa sem recriar as outras.
+      const { servico: s } = servico({
+        quadraExistente: {
+          id: "q1",
+          nome: "Quadra 1",
+          descricao: null,
+          precoHora: new Prisma.Decimal(80),
+          capacidade: 4,
+          fotos: [],
+          comodidades: [],
+          ativo: true,
+          createdAt: new Date("2026-09-29T12:00:00.000Z"),
+          modalidades: [{ nome: "Beach Tennis" }, { nome: "Futevôlei" }],
+          faixasPreco: [
+            {
+              id: "f1",
+              diaSemana: 2,
+              horaInicio: "19:00",
+              horaFim: "22:00",
+              precoHora: new Prisma.Decimal(120),
+            },
+            {
+              id: "f2",
+              diaSemana: null,
+              horaInicio: "08:00",
+              horaFim: "12:00",
+              precoHora: new Prisma.Decimal(60),
+            },
+          ],
+        },
+      });
+
+      const saida = await s.detalhe("e1", "q1");
+
+      expect(saida.modalidades).toEqual(["Beach Tennis", "Futevôlei"]);
+      expect(saida.faixasPreco).toHaveLength(2);
+      expect(saida.faixasPreco[0]).toEqual({
+        id: "f1",
+        diaSemana: 2,
+        horaInicio: "19:00",
+        horaFim: "22:00",
+        precoHora: 120,
+      });
+      // `null` no dia significa "todos os dias", e tem de sobreviver ao DTO:
+      // virar `undefined` faria a tela mostrar a faixa sem dia nenhum.
+      expect(saida.faixasPreco[1].diaSemana).toBeNull();
+    });
+  });
+
+  describe("detalhe", () => {
+    it("procura a quadra dentro do estabelecimento da rota", async () => {
+      // **Não tinha teste nenhum, e é a leitura que alimenta o formulário de
+      // edição.** O escopo aqui é o mesmo do resto da gestão: sem o
+      // `estabelecimentoId` no filtro, um admin leria a quadra de outra
+      // arena pelo id — com preço, fotos e faixas.
+      const { servico: s, prisma } = servico({
+        quadraExistente: {
+          id: "q1",
+          nome: "Quadra 1",
+          descricao: null,
+          precoHora: new Prisma.Decimal(80),
+          capacidade: 4,
+          fotos: [],
+          comodidades: [],
+          ativo: true,
+          createdAt: new Date("2026-09-29T12:00:00.000Z"),
+          modalidades: [{ nome: "Beach Tennis" }],
+          faixasPreco: [],
+        },
+      });
+
+      const saida = await s.detalhe("e1", "q1");
+
+      expect(prisma.quadra.findFirst).toHaveBeenCalledWith(
+        expect.objectContaining({ where: { id: "q1", estabelecimentoId: "e1" } }),
+      );
+      expect(saida.nome).toBe("Quadra 1");
+      // E o preço sai como número, como no resto da gestão: `Decimal` do
+      // Prisma não atravessa JSON de um jeito que a tela saiba ler.
+      expect(saida.precoHora).toBe(80);
+    });
+
+    it("quadra de outra arena é 404, e não devolve nulo", async () => {
+      // Devolver `null` empurraria a decisão para a tela, que mostraria
+      // formulário vazio em vez de dizer que não existe — e esconderia a
+      // única informação útil: o id não é desta arena.
+      const { servico: s } = servico({ quadraExistente: null });
+
+      await expect(s.detalhe("e1", "q-de-outra")).rejects.toThrow(NotFoundException);
+    });
+  });
+
   describe("listar", () => {
     it("filtra pelo estabelecimento da rota", async () => {
       const { servico: s, prisma } = servico();
@@ -251,6 +422,32 @@ describe("QuadrasGestaoService", () => {
       expect(prisma.quadra.findMany).toHaveBeenCalledWith(
         expect.objectContaining({ where: { estabelecimentoId: "e1" } }),
       );
+    });
+
+    it("converte cada quadra da lista, e não só a primeira", async () => {
+      // O teste acima roda com lista vazia, de modo que a conversão nunca
+      // acontecia. Duas quadras aqui porque "converte a lista" e "converte
+      // um item" são afirmações diferentes.
+      const { servico: s, prisma } = servico();
+      const base = {
+        descricao: null,
+        capacidade: 4,
+        fotos: [],
+        comodidades: [],
+        ativo: true,
+        createdAt: new Date("2026-09-29T12:00:00.000Z"),
+        modalidades: [{ nome: "Beach Tennis" }],
+        faixasPreco: [],
+      };
+      (prisma.quadra.findMany as jest.Mock).mockResolvedValue([
+        { ...base, id: "q1", nome: "Quadra 1", precoHora: new Prisma.Decimal(80) },
+        { ...base, id: "q2", nome: "Quadra 2", precoHora: new Prisma.Decimal(95.5) },
+      ]);
+
+      const saida = await s.listar("e1");
+
+      expect(saida.map((q) => q.nome)).toEqual(["Quadra 1", "Quadra 2"]);
+      expect(saida.map((q) => q.precoHora)).toEqual([80, 95.5]);
     });
   });
 });
