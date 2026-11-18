@@ -1,7 +1,40 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--
+        **O aplicativo instalado nao falava com servidor nenhum, e foram duas
+        causas somadas.** Descobertas em 18/11/2026, na primeira vez que o APK
+        rodou num Android fisico.
+
+        1. A permissao de INTERNET vinha declarada **somente** em
+           `src/debug/AndroidManifest.xml` e `src/profile/...`, que e como o
+           scaffold do Flutter nasce: ali ela existe para o hot reload, e o
+           template presume que o aplicativo declare a sua. Este nunca
+           declarou. Sem ela o build de release nao faz chamada de rede
+           alguma.
+
+        2. Do Android 9 em diante o sistema bloqueia **HTTP puro** por padrao,
+           e a API de desenvolvimento e HTTP na rede local. O Flutter injeta
+           `usesCleartextTraffic` sozinho no manifesto de debug; no de release,
+           nao.
+
+        **Por que nenhum teste pegou.** Os 348 testes do app rodam na maquina
+        virtual do Dart, onde nao ha Android, nem permissao, nem politica de
+        rede. O emulador e a execucao de desenvolvimento usam o manifesto de
+        debug, que ja tinha as duas coisas. So o APK de release, num aparelho
+        de verdade, reune as duas ausencias — e essa era exatamente a lacuna
+        que a Matriz declarava no RNF-09: "nunca rodou num Android fisico".
+
+        O sintoma enganava: o navegador do mesmo aparelho abria a mesma URL
+        sem problema, o que faz parecer defeito do aplicativo e nao do
+        empacotamento.
+
+        **O `usesCleartextTraffic` sai quando houver HTTPS em producao** (M5).
+        A permissao de INTERNET fica.
+    -->
+    <uses-permission android:name="android.permission.INTERNET"/>
     <application
         android:label="Rally"
         android:name="${applicationName}"
+        android:usesCleartextTraffic="true"
         android:icon="@mipmap/ic_launcher">
         <activity
             android:name=".MainActivity"
